@@ -41,12 +41,9 @@ class TMOnline(Steam):
         print(self.username + '  ' + tm_apikey + '  ' + self.steamclient.access_token)
         url = f"https://market.csgo.com/api/v2/ping-new?key=" + tm_apikey
         response = requests.post(url, json={
-                'access_token': self.steamclient.access_token
+                'access_token': self.steamclient.access_token,
+                'proxy': self.steamclient.proxies['http']
             })
-        print(response.text)
-        if response.text:  # Перевірка, чи не є відповідь порожньою
-            response_data = response.json()
-            print(response_data)
         if response:
             try:
                 response_data = response.json()
@@ -58,7 +55,6 @@ class TMOnline(Steam):
         else:
             try:
                 response = response.json()
-                print('1111' + response)
                 if "message" in response and "You cant trade until" in response["message"]:
                     Logs.log(f"TM Seller: Store OFFLINE: haven`t transferred too many items")
             except Exception:

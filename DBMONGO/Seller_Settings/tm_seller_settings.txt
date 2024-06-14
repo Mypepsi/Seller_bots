@@ -1,0 +1,32 @@
+{
+    "_id" : ObjectId("666850b0ad5e5201b1aa709d"),
+    "general" : {
+        "waiting start time" : NumberInt(20),
+        "thread start time" : NumberInt(5),
+        "thread function time" : NumberInt(3),
+        "tg id" : NumberLong(-1001807211917),
+        "tg token" : "6710866120:AAElhQPr-4PkOnZvvLDSnYA163Ez0td4KzQ",
+        "history tg id" : NumberLong(-1001807211917),
+        "history tg token" : "6710866120:AAElhQPr-4PkOnZvvLDSnYA163Ez0td4KzQ",
+        "tm url" : "http://market.csgo.com"
+    },
+    "online" : {
+        "tm ping" : NumberInt(180),
+        "tm store ping" : NumberInt(7200)
+    },
+    "restart" : {
+        "restart server global time" : NumberInt(300),
+        "restart server validity time" : NumberInt(86400),
+        "restart tm global time" : NumberInt(300),
+        "restart tm name bots" : [
+            {
+                "name" : "TM_Seller",
+                "restart validity time" : NumberInt(7200)
+            },
+            {
+                "name" : "Creator",
+                "restart validity time" : NumberInt(7200)
+            }
+        ]
+    }
+}

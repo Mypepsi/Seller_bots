@@ -1,0 +1,7 @@
+{
+    "_id" : ObjectId("6665e281138aa83633283fbe"),
+    "Time" : NumberInt(1718275707),
+    "DataBasePrices" : [
+        {        }
+    ]
+}
