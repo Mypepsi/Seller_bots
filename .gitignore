@@ -1,0 +1,68 @@
+# Ignore IDE settings
+.idea/
+
+# Ignore virtual environments
+venv/
+env/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore configuration files
+*.env
+*.ini
+*.cfg
+*.yaml
+*.yml
+
+# Ignore log and output files
+*.log
+*.out
+*.err
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore build outputs
+build/
+dist/
+*.egg-info/
+*.eggs/
+*.wheel
+pip-wheel-metadata/
+
+# Ignore other IDE and editor settings
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore SQLite database files
+*.sqlite3
+
+# Ignore pytest settings
+.pytest_cache/
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore test coverage results
+htmlcov/
+.coverage
+.tox/
+.nox/
+
+# Ignore C compilation files
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+*.exe
+
+# Ignore temporary files from common text editors
+*~
+*.swp
+*.swo
