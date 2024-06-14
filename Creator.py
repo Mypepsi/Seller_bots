@@ -20,10 +20,10 @@ if __name__ == '__main__':
         steam_acstn = CreatorSteam()
 
         refresh_db_thread = threading.Thread(target=database.refresh_db_thread)
-        get_server_uptime_thread = threading.Thread(target=restarter.get_server_uptime,
+        restart_server_schedule_thread = threading.Thread(target=restarter.schedule_restart_server,
                                                     args=(restarter.creator_restart_time_sleep,
                                                           restarter.creator_restart_global_sleep))
-        restart_bots_thread = threading.Thread(target=restarter.restart_bots,
+        restart_bots_schedule_thread = threading.Thread(target=restarter.schedule_restart_bots,
                                                args=(restarter.creator_restart_info_bots,
                                                      restarter.creator_restart_global_sleep))
         refresh_settings_thread = threading.Thread(target=database.refresh_settings_thread)
@@ -43,8 +43,8 @@ if __name__ == '__main__':
         time.sleep(mongo.creator_sleep_before_start)
         refresh_db_thread.start()
 
-        get_server_uptime_thread.start()
-        restart_bots_thread.start()
+        restart_server_schedule_thread.start()
+        restart_bots_schedule_thread.start()
 
         time.sleep(mongo.creator_sleep_between_threads)
         refresh_settings_thread.start()
@@ -65,8 +65,8 @@ if __name__ == '__main__':
         steam_access_token_thread.start()
 
         refresh_db_thread.join()
-        get_server_uptime_thread.join()
-        restart_bots_thread.join()
+        restart_server_schedule_thread.join()
+        restart_bots_schedule_thread.join()
         refresh_settings_thread.join()
         authorization_thread.join()
         steam_api_key_thread.join()

@@ -28,6 +28,7 @@ class Steam(Mongo):
         i = steam_session
         steam_cookie_file = io.BytesIO(i)
         self.steamclient = pickle.load(steam_cookie_file)
+        requests.proxies = self.steamclient.proxies
 
     def work_with_steam_settings(self, function, time_sleep):
         while True:
@@ -66,6 +67,7 @@ class Steam(Mongo):
                     self.proxy = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
                                   'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
 
+                    requests.proxies = self.proxy
 
                 function()
             modified_function_name = function.__name__.replace("_", " ").title()

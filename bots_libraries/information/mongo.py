@@ -11,7 +11,7 @@ class Mongo:
         self.database_settings_collection = self.get_collection(self.database, 'database_settings')
 
         self.settings = self.get_database('Seller_Settings')
-        self.creator_settings_collection = self.get_collection(self.settings, 'creators_settings')
+        self.creator_settings_collection = self.get_collection(self.settings, 'creator_settings')
         self.tm_settings_collection = self.get_collection(self.settings, 'tm_seller_settings')
 
         self.accs = self.get_database('Seller_Accounts')
