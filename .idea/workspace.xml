@@ -4,7 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ef78ffa6-03b5-4f7e-9f2e-5b903dfec04b" name="Changes" comment="added DMMONGO" />
+    <list default="true" id="ef78ffa6-03b5-4f7e-9f2e-5b903dfec04b" name="Changes" comment="added DMMONGO">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Creator.py" beforeDir="false" afterPath="$PROJECT_DIR$/Creator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DBMONGO/Seller_Accounts/accounts_settings/andrey0eegtal.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DBMONGO/Seller_Accounts/accounts_settings/anskpvl6ov.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DBMONGO/Seller_Accounts/accounts_settings/gaigapirft.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/bots_libraries/information/mongo.py" beforeDir="false" afterPath="$PROJECT_DIR$/bots_libraries/information/mongo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bots_libraries/tm_seller/tm_seller_online.py" beforeDir="false" afterPath="$PROJECT_DIR$/bots_libraries/tm_seller/tm_seller_online.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -41,6 +50,7 @@
     "Python.restart.executor": "Run",
     "Python.test.executor": "Run",
     "Python.tm_seller_online.executor": "Run",
+    "Python.translate_clipboard.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"

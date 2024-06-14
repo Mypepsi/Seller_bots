@@ -39,30 +39,30 @@ if __name__ == '__main__':
                                                   args=(steam_acstn.steam_access_token, steam_acstn.creator_access_token_global_sleep))
 
         Logs.log(f'Creator STARTED')
-        #
-        # time.sleep(mongo.creator_sleep_before_start)
-        # refresh_db_thread.start()
-        #
-        # get_server_uptime_thread.start()
-        # restart_bots_thread.start()
-        #
-        # time.sleep(mongo.creator_sleep_between_threads)
-        # refresh_settings_thread.start()
-        #
-        # time.sleep(mongo.creator_sleep_between_threads)
+
+        time.sleep(mongo.creator_sleep_before_start)
+        refresh_db_thread.start()
+
+        get_server_uptime_thread.start()
+        restart_bots_thread.start()
+
+        time.sleep(mongo.creator_sleep_between_threads)
+        refresh_settings_thread.start()
+
+        time.sleep(mongo.creator_sleep_between_threads)
         authorization_thread.start()
-        #
-        # time.sleep(mongo.creator_sleep_between_threads)
-        # steam_proxy_checker_thread.start()
-        #
-        # time.sleep(mongo.creator_sleep_between_threads)
-        # steam_inventory_thread.start()
-        #
-        # time.sleep(mongo.creator_sleep_between_threads)
+
+        time.sleep(mongo.creator_sleep_between_threads)
+        steam_proxy_checker_thread.start()
+
+        time.sleep(mongo.creator_sleep_between_threads)
+        steam_inventory_thread.start()
+
+        time.sleep(mongo.creator_sleep_between_threads)
         steam_api_key_thread.start()
-        #
-        # time.sleep(mongo.creator_access_token_start_sleep)
-        # steam_access_token_thread.start()
+
+        time.sleep(mongo.creator_access_token_start_sleep)
+        steam_access_token_thread.start()
 
         refresh_db_thread.join()
         get_server_uptime_thread.join()

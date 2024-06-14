@@ -38,12 +38,14 @@ class TMOnline(Steam):
 
     def online(self):
         tm_apikey = self.content_accs_dict[self.username]['tm apikey']
-        print(self.username + '  ' + tm_apikey + '  ' + self.steamclient.access_token)
+        json_data = {
+            'access_token': f"sasas{self.steamclient.access_token}"
+        }
+        if 'http' in self.steamclient.proxies:
+            json_data['proxy'] = self.steamclient.proxies['http']
+
         url = f"https://market.csgo.com/api/v2/ping-new?key=" + tm_apikey
-        response = requests.post(url, json={
-                'access_token': self.steamclient.access_token,
-                'proxy': self.steamclient.proxies['http']
-            })
+        response = requests.post(url, json=json_data)
         if response:
             try:
                 response_data = response.json()
