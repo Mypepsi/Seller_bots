@@ -12,41 +12,36 @@ import time
 
 
 if __name__ == '__main__':
-    while True:
-        #try:
+        try:
             mongo = Mongo()
-            onl_thrds = TMOnline()
+            restarter = Restarter()
+            onl_thd = TMOnline()
+            str_png = TMOnline()
+
             print(1)
-            onl_thrds.work_with_steam_create_thread(onl_thrds.online, onl_thrds.tm_thread_function_sleep)
-            # і так даліекземпляри класів
-
+            #onl_thd.work_with_steam_create_thread(onl_thd.online, onl_thd.self.tm_ping)  #shouldn't be a thread
+            str_png.work_with_steam_create_thread(str_png.sales_restart, str_png.tm_store_ping)  #shouldn't be a thread
             print(2)
-            #authorization_thread = threading.Thread(target=steam_aut.work_with_steam_settings,
-            #                                        args=(steam_aut.steam_login, steam_aut.authorization_global_sleep))
-            # і так далі присвоєння тредів
+            # restart_server_schedule_thread = threading.Thread(target=restarter.schedule_restart_server,
+            #                                                   args=(restarter.creator_restart_time_sleep,
+            #                                                         restarter.creator_restart_global_sleep))
+            # restart_bots_schedule_thread = threading.Thread(target=restarter.schedule_restart_bots,
+            #                                                 args=(restarter.creator_restart_info_bots,
+            #                                                       restarter.creator_restart_global_sleep))
 
 
-            # Library.check_and_install_libraries()
-            # Logs.log(f'Creator STARTED')
-            #refresh_settings_thread.start() і так далі запуск тредів
-            #time.sleep(mongo.tm_sleep_before_start)
-            # рестарт сервера
-            # рестарт бота
-            time.sleep(mongo.tm_sleep_between_threads)
-            time.sleep(mongo.tm_sleep_between_threads)
-            time.sleep(mongo.tm_sleep_between_threads)
-            time.sleep(mongo.tm_sleep_between_threads)
+
+            # Logs.log(f'TM Seller STARTED')
+            # restart_server_schedule_thread.start()
+            # restart_bots_schedule_thread.start()
+            #
 
 
-            #refresh_db_thread.join() і так далі по join тредам
+        except ServerSelectionTimeoutError:
+           Logs.log("Connecting to MongoDB ERROR")
+        except Exception as e:
+           Logs.log(f"FATAL ERROR: {e}")
 
-
-        #except ServerSelectionTimeoutError:
-        #    Logs.log("Connecting to MongoDB ERROR")
-        #except Exception as e:
-        #    Logs.log(f"FATAL ERROR: {e}")
-
-        #time.sleep(300)
 
 
 

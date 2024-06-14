@@ -28,12 +28,11 @@ class Steam(Mongo):
         i = steam_session
         steam_cookie_file = io.BytesIO(i)
         self.steamclient = pickle.load(steam_cookie_file)
-        requests.proxies = self.steamclient.proxies
 
     def work_with_steam_settings(self, function, time_sleep):
         while True:
             self.update_mongo_info()
-            for acc in self.content_accs:
+            for acc in self.content_accs_list:
                 try:
                     username = acc['username']
                     session = self.content_accs_parsed_dict[username]['steam session']
@@ -45,13 +44,16 @@ class Steam(Mongo):
 
                 self.username = acc[self.username_title]
                 self.password = acc[self.password_title]
-                self.steam_id = acc[self.steam_id_title]
-                self.shared_secret = acc[self.shared_secret_title]
-                self.identity_secret = acc[self.identity_secret_title]
-                self.steam_guard = {"steamid": self.steam_id,
-                                    "shared_secret": self.shared_secret,
-                                    "identity_secret": self.identity_secret
+                self.steamclient.steam_id = acc[self.steam_id_title]
+                self.steamclient.shared_secret = acc[self.shared_secret_title]
+                self.steamclient.identity_secret = acc[self.identity_secret_title]
+                self.steam_guard = {"steamid": self.steamclient.steam_id,
+                                    "shared_secret": self.steamclient.shared_secret,
+                                    "identity_secret": self.steamclient.identity_secret
                                     }
+                self.steamclient.tm_api = acc['tm apikey']
+
+
 
 
                 proxy = acc[self.proxy_title]
@@ -72,7 +74,7 @@ class Steam(Mongo):
                 function()
             modified_function_name = function.__name__.replace("_", " ").title()
             Logs.log(
-                f'{modified_function_name}: All accounts authorized ({len(self.content_accs)} accounts in MongoDB)')
+                f'{modified_function_name}: All accounts authorized ({len(self.content_accs_list)} accounts in MongoDB)')
             time.sleep(time_sleep)
 
     def work_with_steam_parsed(self, function, time_sleep):
@@ -91,32 +93,28 @@ class Steam(Mongo):
         while True:
             self.update_mongo_info()
             function()
-            # modified_function_name = function.__name__.replace("_", " ").title()
-            # Logs.log(
-            #     f'Steam {modified_function_name}: All proxy checked ({len(self.proxy_for_check)} proxies)')
             time.sleep(time_sleep)
 
-    # def work_with_steam_create_thread(self, function, time_sleep):
-    #
-    #     threads = []
-    #     print(self.content_accs_parsed_list)
-    #     for acc in self.content_accs_parsed_list:
-    #         self.username = acc['username']
-    #         print(self.username)
-    #         steam_session = acc['steam session']
-    #         self.take_session(steam_session)
-    #         thread = threading.Thread(target=function)
-    #         threads.append(thread)
-    #
-    #     # Запуск потоків
-    #     for thread in threads:
-    #         thread.start()
-    #
-    #     # Очікування завершення всіх потоків
-    #     for thread in threads:
-    #         thread.join()
-    #
-    #     print(11)
+    def work_with_steam_create_thread(self, function, time_sleep):
+        self.update_mongo_info()
+        for acc in self.content_accs_parsed_list:
+            try:
+                steam_session = acc['steam session']
+                self.take_session(steam_session)
+                print(f"{acc['username']} has started")
+                thread = threading.Thread(target=function, args=(time_sleep,))
+                thread.start()
+                modified_function_name = function.__name__.replace("_", " ").title()
+                Logs.log(f"Thread {modified_function_name} for {acc['username']} has started")
+                time.sleep(5)
+            except:
+                try:
+                    Logs.log(f"Error during create thread in {function.__name__} for {acc['username']}")
+                except:
+                    Logs.log(f'Error during create thread in {function.__name__}')
+
+
+
 
 
 

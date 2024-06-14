@@ -39,41 +39,30 @@ if __name__ == '__main__':
                                                   args=(steam_acstn.steam_access_token, steam_acstn.creator_access_token_global_sleep))
 
         Logs.log(f'Creator STARTED')
-
-        time.sleep(mongo.creator_sleep_before_start)
-        refresh_db_thread.start()
-
-        restart_server_schedule_thread.start()
-        restart_bots_schedule_thread.start()
-
-        time.sleep(mongo.creator_sleep_between_threads)
-        refresh_settings_thread.start()
-
-        time.sleep(mongo.creator_sleep_between_threads)
+        #
+        # time.sleep(mongo.creator_sleep_before_start)
+        # refresh_db_thread.start()
+        #
+        # restart_server_schedule_thread.start()
+        # restart_bots_schedule_thread.start()
+        #
+        # time.sleep(mongo.creator_sleep_between_threads)
+        # refresh_settings_thread.start()
+        #
+        # time.sleep(mongo.creator_sleep_between_threads)
         authorization_thread.start()
-
-        time.sleep(mongo.creator_sleep_between_threads)
-        steam_proxy_checker_thread.start()
-
-        time.sleep(mongo.creator_sleep_between_threads)
-        steam_inventory_thread.start()
-
-        time.sleep(mongo.creator_sleep_between_threads)
-        steam_api_key_thread.start()
-
-        time.sleep(mongo.creator_access_token_start_sleep)
-        steam_access_token_thread.start()
-
-        refresh_db_thread.join()
-        restart_server_schedule_thread.join()
-        restart_bots_schedule_thread.join()
-        refresh_settings_thread.join()
-        authorization_thread.join()
-        steam_api_key_thread.join()
-        steam_inventory_thread.join()
-        steam_proxy_checker_thread.join()
-        steam_access_token_thread.join()
-
+        #
+        # time.sleep(mongo.creator_sleep_between_threads)
+        # steam_proxy_checker_thread.start()
+        #
+        # time.sleep(mongo.creator_sleep_between_threads)
+        # steam_inventory_thread.start()
+        #
+        # time.sleep(mongo.creator_sleep_between_threads)
+        # steam_api_key_thread.start()
+        #
+        # time.sleep(mongo.creator_access_token_start_sleep)
+        # steam_access_token_thread.start()
 
     except ServerSelectionTimeoutError:
         Logs.log("Connecting to MongoDB ERROR")

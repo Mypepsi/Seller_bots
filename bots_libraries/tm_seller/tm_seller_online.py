@@ -24,40 +24,76 @@ class TMOnline(Steam):
         super().__init__()
 
 
-    def work_with_steam_create_thread(self, function, time_sleep):
-
-        for acc in self.content_accs_parsed_list:
-            self.username = acc['username']
-            steam_session = acc['steam session']
-            self.take_session(steam_session)
-            thread = threading.Thread(target=function)
-            thread.start()
-            thread.join()
-        time.sleep(time_sleep)
 
 
-    def online(self):
-        tm_apikey = self.content_accs_dict[self.username]['tm apikey']
+
+    def online(self, time_sleep):
+        while True:
+            self.update_mongo_info() #який сенс? ми ж працюєм далі з сесією
+            json_data = {
+                'access_token': f"{self.steamclient.access_token}"
+            }
+            if 'http' in self.steamclient.proxies:
+                json_data['proxy'] = self.steamclient.proxies['http']
+            url = f"https://market.csgo.com/api/v2/ping-new?key=" + self.steamclient.tm_api
+            response = requests.post(url, json=json_data)
+            if response:
+                try:
+                    response_data = response.json()
+                    print(response_data)
+                    if "message" in response_data and "You cant trade until" in response_data["message"]: #прим. далі не опрацьовано
+                        Logs.log(f'ответ {response_data }')
+                except Exception:
+                    Logs.log(f'{self.steamclient.username}: Ping Json-Error')
+            else:
+                try:
+                    response = response.json()
+                    if "message" in response and "You cant trade until" in response["message"]:
+                        Logs.log(f"TM Seller: Store OFFLINE: haven`t transferred too many items")
+                        self.tm_tg_bot.send_message(self.tm_tg_id,
+                                                    (f'TM Seller: Store OFFLINE: {self.steamclient.username}'))
+
+                except Exception:
+                    Logs.log(f'{self.steamclient.username}: Ping Error')
+            time.sleep(time_sleep)
+
+    def sales_restart(self, time_sleep):
+        # выключение продаж
+        url = f'https://market.csgo.com/api/v2/go-offline?key={self.steamclient.tm_api}'
+        response = requests.get(url)
+        if response['success']:
+            try:
+                response = response.json()
+                Logs.log(f'Sales Stopped')
+            except Exception:
+                Logs.log(f'Sales doesn`t Stopped')
+        else:
+            return
+        time.sleep(2)
+        #прим. нижче вставити функцію онлайн?
         json_data = {
-            'access_token': f"sasas{self.steamclient.access_token}"
+            'access_token': f"{self.steamclient.access_token}"
         }
         if 'http' in self.steamclient.proxies:
             json_data['proxy'] = self.steamclient.proxies['http']
-
-        url = f"https://market.csgo.com/api/v2/ping-new?key=" + tm_apikey
+        url = f"https://market.csgo.com/api/v2/ping-new?key=" + self.steamclient.tm_api
         response = requests.post(url, json=json_data)
         if response:
             try:
                 response_data = response.json()
                 print(response_data)
-                if "message" in response_data and "You cant trade until" in response_data["message"]:
-                    Logs.log(f'ответ {response_data }')
+                if "message" in response_data and "You cant trade until" in response_data["message"]:  # прим. далі не опрацьовано
+                    Logs.log(f'ответ {response_data}')
             except Exception:
-                Logs.log(f'ошибка json')
+                Logs.log(f'{self.steamclient.username}: Ping Json-Error')
         else:
             try:
                 response = response.json()
                 if "message" in response and "You cant trade until" in response["message"]:
                     Logs.log(f"TM Seller: Store OFFLINE: haven`t transferred too many items")
+                    self.tm_tg_bot.send_message(self.tm_tg_id,
+                                                (f'TM Seller: Store OFFLINE: {self.steamclient.username}'))
+
             except Exception:
-                pass
+                Logs.log(f'{self.steamclient.username}: Ping Error')
+        time.sleep(time_sleep)

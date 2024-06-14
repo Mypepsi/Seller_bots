@@ -26,7 +26,8 @@ class Mongo:
         self.creator_tg_id = self.get_keys(self.creator_settings_general, 'tg id')
         self.creator_sleep_before_start = self.get_keys(self.creator_settings_general, 'waiting start time')
         self.creator_sleep_between_threads = self.get_keys(self.creator_settings_general, 'thread start time')
-        self.creator_tg_bot = telebot.TeleBot(self.creator_tg_token)
+        if self.creator_tg_token:
+            self.creator_tg_bot = telebot.TeleBot(self.creator_tg_token)
 
         self.creator_settings_database = self.get_keys(self.content_settings_creator, 'database')
         self.creator_db_prices_url = self.get_keys(self.creator_settings_database, 'db prices url')
@@ -64,8 +65,13 @@ class Mongo:
         self.tm_thread_function_sleep = self.get_keys(self.tm_settings_general, 'thread function time')
         self.tm_tg_id = self.get_keys(self.tm_settings_general, 'tg id')
         self.tm_tg_token = self.get_keys(self.tm_settings_general, 'tg token')
+        if self.tm_tg_token:
+            self.tm_tg_bot = telebot.TeleBot(self.tm_tg_token)
         self.tm_history_tg_id = self.get_keys(self.tm_settings_general, 'history tg id')
         self.tm_history_tg_token = self.get_keys(self.tm_settings_general, 'history tg token')
+        if self.tm_history_tg_token:
+            self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
+
         self.tm_url = self.get_keys(self.tm_settings_general, 'tm url')
 
         self.tm_settings_online = self.get_keys(self.content_settings_tm, 'online')
@@ -84,15 +90,18 @@ class Mongo:
             self.content_settings_creator = self.get_from_mongo_doc(self.creator_settings_collection)
             self.content_settings_tm = self.get_from_mongo_doc(self.tm_settings_collection)
 
-            self.content_accs = self.get_from_mongo_doc_list(self.accounts_settings_collection)
+            self.content_accs_list = self.get_from_mongo_doc_list(self.accounts_settings_collection)
             self.content_accs_dict = self.get_from_mongo_doc_dict(self.accounts_settings_collection,
                                          'username')
             self.content_accs_parsed_list = self.get_from_mongo_doc_list(self.accs_parsed_collection)
             self.content_accs_parsed_dict = self.get_from_mongo_doc_dict(self.accs_parsed_collection,
                                                                          'username')
+
             if self.content_settings_creator is None:
                 Logs.log(f'Settings creator is empty or does not exist')
-            if self.content_accs is None:
+            if self.content_settings_tm is None:
+                Logs.log(f'Settings TM is empty or does not exist')
+            if self.content_accs_list is None:
                 Logs.log(f'Accounts settings is empty or does not exist')
         except Exception as e:
             Logs.log(f'Error while updating data from mongo: {e}')
