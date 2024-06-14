@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ef78ffa6-03b5-4f7e-9f2e-5b903dfec04b" name="Changes" comment="tm. first">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bots_libraries/tm_seller/tm_seller_online.py" beforeDir="false" afterPath="$PROJECT_DIR$/bots_libraries/tm_seller/tm_seller_online.py" afterDir="false" />
-    </list>
+    <list default="true" id="ef78ffa6-03b5-4f7e-9f2e-5b903dfec04b" name="Changes" comment="added DMMONGO" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -73,12 +70,32 @@
       <option name="project" value="LOCAL" />
       <updated>1718347729816</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="added DMMONGO">
+      <option name="closed" value="true" />
+      <created>1718368322235</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1718368322235</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="tm. first" />
-    <option name="LAST_COMMIT_MESSAGE" value="tm. first" />
+    <MESSAGE value="added DMMONGO" />
+    <option name="LAST_COMMIT_MESSAGE" value="added DMMONGO" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
