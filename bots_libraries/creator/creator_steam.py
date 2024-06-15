@@ -33,8 +33,8 @@ class CreatorSteam(Steam):
         while True:
             try:
                 current_timestamp = int(time.time())
-                if self.username in self.content_accs_parsed_dict:
-                    last_update_time = self.content_accs_parsed_dict[self.username].get('time steam session', 0)
+                if self.username in self.content_acc_parsed_dict:
+                    last_update_time = self.content_acc_parsed_dict[self.username].get('time steam session', 0)
                     difference_to_update = current_timestamp - int(last_update_time)
                     if difference_to_update > self.creator_authorization_time_sleep:
                         self.user_agent = self.steamclient.user_agent
@@ -42,13 +42,13 @@ class CreatorSteam(Steam):
                         Logs.log(
                             f'{self.username}: Steam authorization is successful')
 
-                        self.accs_parsed_collection.update_one({"username": self.username},
+                        self.acc_parsed_collection.update_one({"username": self.username},
                                                                 {"$set": {"time steam session": current_timestamp,
                                                                           "steam session": pickle.dumps(self.steamclient),
                                                                           "steam access token": self.steamclient.access_token}})
                         time.sleep(10)
 
-                elif self.username not in self.content_accs_parsed_dict:
+                elif self.username not in self.content_acc_parsed_dict:
                     self.steamclient.login_steam(self.username, self.password, self.steam_guard, self.proxy)
                     Logs.log(
                         f'{self.username}: Steam authorization is successful')
@@ -62,7 +62,7 @@ class CreatorSteam(Steam):
                             "steam inventory": {},
                             "steam inventory phases": {}
                         }
-                    self.accs_parsed_collection.insert_one(new_doc)
+                    self.acc_parsed_collection.insert_one(new_doc)
                     time.sleep(10)
                 break
             except Exception:
@@ -77,7 +77,7 @@ class CreatorSteam(Steam):
                     break
 
     def steam_inventory(self):
-        if self.username in self.content_accs_parsed_dict:
+        if self.username in self.content_acc_parsed_dict:
             try:
                 my_items = self.steamclient.get_inventory_from_link_with_session(
                     self.steamclient.steam_guard['steamid'],
@@ -105,11 +105,11 @@ class CreatorSteam(Steam):
                         for item_id, item_info in my_items.items()
                         if item_info.get("tradable", 0) != 0
                     }
-                    self.accs_parsed_collection.update_one({"username": self.username},
+                    self.acc_parsed_collection.update_one({"username": self.username},
                                                            {"$set": {"steam inventory": filtered_items}})
 
                     try:
-                        inventory_from_mongo = self.content_accs_parsed_dict[self.username]['steam inventory phases']
+                        inventory_from_mongo = self.content_acc_parsed_dict[self.username]['steam inventory phases']
                     except:
                         inventory_from_mongo = {}
 
@@ -131,7 +131,7 @@ class CreatorSteam(Steam):
                     for item_id in items_to_remove:
                         del inventory_from_mongo[item_id]
 
-                    self.accs_parsed_collection.update_one({"username": self.username},
+                    self.acc_parsed_collection.update_one({"username": self.username},
                                                            {"$set": {"steam inventory phases": inventory_from_mongo}})
             except:
                 Logs.log(f'{self.username}: Steam Inventory Error')
@@ -139,7 +139,7 @@ class CreatorSteam(Steam):
 
     def steam_proxy(self):
         self.proxy_for_check = []
-        for acc in self.content_accs_parsed_list:
+        for acc in self.content_acc_parsed_list:
             steam_session = acc['steam session']
             self.take_session(steam_session)
             self.proxy_for_check.append(self.steamclient.proxies)
@@ -175,13 +175,13 @@ class CreatorSteam(Steam):
             f'Steam Proxy: All proxies checked ({len(self.proxy_for_check)} proxies in MongoDB)')
 
     def steam_access_token(self):
-        if self.username in self.content_accs_parsed_dict:
+        if self.username in self.content_acc_parsed_dict:
             try:
                 url = 'https://steamcommunity.com/pointssummary/ajaxgetasyncconfig'
                 response = self.steamclient._session.get(url, timeout=10)
                 reply = json.loads(response.text)
                 if str(self.steamclient.access_token) != reply['data']['webapi_token']:
-                    self.accs_parsed_collection.update_one({"username": self.username},
+                    self.acc_parsed_collection.update_one({"username": self.username},
                                                            {"$set": {"time steam session": 0}})
                     self.creator_tg_bot.send_message(self.creator_tg_id,
                                                      (f'Creator: Access Token Error: {self.username}'))
@@ -194,7 +194,7 @@ class CreatorSteam(Steam):
     # region steam api key
     def steam_api_key(self):
         api_key_ = 0
-        if self.username in self.content_accs_parsed_dict:
+        if self.username in self.content_acc_parsed_dict:
             try:
                 response = self.steamclient._session.get('https://steamcommunity.com/dev/apikey')    #, headers=headers)
                 if response.status_code == 200:
@@ -205,9 +205,9 @@ class CreatorSteam(Steam):
                         if api_key_ == '00000000000000000000000000000000':
                             self.revoke_api_key()
                             raise Exception
-                        old_api_key = self.content_accs_parsed_dict[self.username]['steam apikey']
+                        old_api_key = self.content_acc_parsed_dict[self.username]['steam apikey']
                         if api_key_ != '' and api_key_ != '00000000000000000000000000000000' and api_key_ != old_api_key:
-                            self.accs_parsed_collection.update_one({"username": self.username},
+                            self.acc_parsed_collection.update_one({"username": self.username},
                                                                     {"$set": {"steam apikey": api_key_}})
                             raise Exception
                         else:
@@ -280,7 +280,7 @@ class CreatorSteam(Steam):
                                                  data=json_data).json()
 
                         if 'api_key' in response_second and isinstance(response_second['api_key'], str):
-                            self.accs_parsed_collection.update_one({"username": self.username},
+                            self.acc_parsed_collection.update_one({"username": self.username},
                                                                     {"$set": {"steam apikey": response_second['api_key']}})
                             break
                         else:

@@ -15,8 +15,9 @@ class Mongo:
         self.tm_settings_collection = self.get_collection(self.settings, 'tm_seller_settings')
 
         self.accs = self.get_database('Seller_Accounts')
-        self.accounts_settings_collection = self.get_collection(self.accs, 'accounts_settings')
-        self.accs_parsed_collection = self.get_collection(self.accs, 'accounts_parsed')
+        self.acc_settings_collection = self.get_collection(self.accs, 'account_settings')
+        self.acc_parsed_collection = self.get_collection(self.accs, 'account_parsed')
+        self.acc_for_parsing_collection = self.get_collection(self.accs, 'account_for_parsing')
 
         self.update_mongo_info()
 
@@ -90,21 +91,45 @@ class Mongo:
             self.content_settings_creator = self.get_from_mongo_doc(self.creator_settings_collection)
             self.content_settings_tm = self.get_from_mongo_doc(self.tm_settings_collection)
 
-            self.content_accs_list = self.get_from_mongo_doc_list(self.accounts_settings_collection)
-            self.content_accs_dict = self.get_from_mongo_doc_dict(self.accounts_settings_collection,
+            self.content_acc_list = self.get_from_mongo_doc_list(self.acc_settings_collection)
+            self.content_acc_dict = self.get_from_mongo_doc_dict(self.acc_settings_collection,
                                          'username')
-            self.content_accs_parsed_list = self.get_from_mongo_doc_list(self.accs_parsed_collection)
-            self.content_accs_parsed_dict = self.get_from_mongo_doc_dict(self.accs_parsed_collection,
+
+            self.content_acc_parsed_list = self.get_from_mongo_doc_list(self.acc_parsed_collection)
+            self.content_acc_parsed_dict = self.get_from_mongo_doc_dict(self.acc_parsed_collection,
                                                                          'username')
+
+            self.content_acc_for_parsing_list = self.get_from_mongo_doc_list(self.acc_for_parsing_collection)
+            self.content_matches = self.create_match_acc_for_parsing_and_acc_sittings()
 
             if self.content_settings_creator is None:
                 Logs.log(f'Settings creator is empty or does not exist')
             if self.content_settings_tm is None:
                 Logs.log(f'Settings TM is empty or does not exist')
-            if self.content_accs_list is None:
+            if self.content_acc_list is None:
                 Logs.log(f'Accounts settings is empty or does not exist')
         except Exception as e:
             Logs.log(f'Error while updating data from mongo: {e}')
+
+    def create_match_acc_for_parsing_and_acc_sittings(self):
+        self.update_mongo_info()
+        result = []
+        try:
+            if len(self.content_acc_for_parsing_list) < len(self.content_acc_list):
+                raise ValueError
+            unique_iterator = iter(self.content_acc_for_parsing_list)
+            for acc in self.content_acc_list:
+                unique_acc = next(unique_iterator)
+                result.append([acc, unique_acc])
+            return result
+
+        except ValueError:
+            Logs.log("Not enough parsing objects for all accounts in accounts for parsing")
+            return result
+        except:
+            Logs.log("Error during taking info for parsing")
+            return result
+
 
     def get_database(self, db_name):
         try:

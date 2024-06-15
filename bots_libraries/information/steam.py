@@ -28,14 +28,15 @@ class Steam(Mongo):
         i = steam_session
         steam_cookie_file = io.BytesIO(i)
         self.steamclient = pickle.load(steam_cookie_file)
+        self.steamclient.tm_api = self.content_acc_dict[self.steamclient.username]['tm apikey']
 
     def work_with_steam_settings(self, function, time_sleep):
         while True:
             self.update_mongo_info()
-            for acc in self.content_accs_list:
+            for acc in self.content_acc_list:
                 try:
                     username = acc['username']
-                    session = self.content_accs_parsed_dict[username]['steam session']
+                    session = self.content_acc_parsed_dict[username]['steam session']
                     self.take_session(session)
                     self.user_agent = self.steamclient.user_agent
                 except:
@@ -74,19 +75,19 @@ class Steam(Mongo):
                 function()
             modified_function_name = function.__name__.replace("_", " ").title()
             Logs.log(
-                f'{modified_function_name}: All accounts authorized ({len(self.content_accs_list)} accounts in MongoDB)')
+                f'{modified_function_name}: All accounts authorized ({len(self.content_acc_list)} accounts in MongoDB)')
             time.sleep(time_sleep)
 
     def work_with_steam_parsed(self, function, time_sleep):
         while True:
             self.update_mongo_info()
-            for acc in self.content_accs_parsed_list:
+            for acc in self.content_acc_parsed_list:
                 self.username = acc['username']
                 steam_session = acc['steam session']
                 self.take_session(steam_session)
                 function()
             modified_function_name = function.__name__.replace("_", " ").title()
-            Logs.log(f'{modified_function_name}: All accounts parsed ({len(self.content_accs_parsed_list)} accounts in MongoDB)')
+            Logs.log(f'{modified_function_name}: All accounts parsed ({len(self.content_acc_parsed_list)} accounts in MongoDB)')
             time.sleep(time_sleep)
 
     def work_with_steam_loop(self, function, time_sleep):
@@ -95,23 +96,18 @@ class Steam(Mongo):
             function()
             time.sleep(time_sleep)
 
-    def work_with_steam_create_thread(self, function, time_sleep):
+    def work_with_steam_create_thread(self, function, function_time_sleep, thread_time_sleep):
         self.update_mongo_info()
-        for acc in self.content_accs_parsed_list:
-            try:
-                steam_session = acc['steam session']
-                self.take_session(steam_session)
-                print(f"{acc['username']} has started")
-                thread = threading.Thread(target=function, args=(time_sleep,))
-                thread.start()
-                modified_function_name = function.__name__.replace("_", " ").title()
-                Logs.log(f"Thread {modified_function_name} for {acc['username']} has started")
-                time.sleep(5)
-            except:
-                try:
-                    Logs.log(f"Error during create thread in {function.__name__} for {acc['username']}")
-                except:
-                    Logs.log(f'Error during create thread in {function.__name__}')
+        counter = 0
+        for acc in self.content_acc_parsed_list:
+            thread = threading.Thread(target=function, args=(acc, function_time_sleep))
+            thread.start()
+            counter += 1
+            time.sleep(thread_time_sleep)
+        modified_function_name = function.__name__.replace("_", " ").title()
+        Logs.log(f'{modified_function_name}: {counter} threads are running '
+                 f'({len(self.content_acc_parsed_list)} accounts in MongoDB)')
+
 
 
 
