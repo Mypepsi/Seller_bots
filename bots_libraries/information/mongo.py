@@ -16,10 +16,21 @@ class Mongo:
 
         self.accs = self.get_database('Seller_Accounts')
         self.acc_settings_collection = self.get_collection(self.accs, 'account_settings')
-        self.acc_parsed_collection = self.get_collection(self.accs, 'account_parsed')
+        self.acc_data_collection = self.get_collection(self.accs, 'account_data')
         self.acc_for_parsing_collection = self.get_collection(self.accs, 'account_for_parsing')
 
         self.update_mongo_info()
+
+        self.content_settings_creator = self.get_from_mongo_doc(self.creator_settings_collection)
+        self.content_settings_tm = self.get_from_mongo_doc(self.tm_settings_collection)
+
+        self.content_acc_list = self.get_from_mongo_doc_list(self.acc_settings_collection)
+        self.content_acc_dict = self.get_from_mongo_doc_dict(self.acc_settings_collection,
+                                                             'username')
+        self.content_acc_for_parsing_list = self.get_from_mongo_doc_list(self.acc_for_parsing_collection)
+        self.content_matches = self.create_merge_acc_for_parsing_and_acc_sittings()
+
+
 
         # region information from creator settings collection
         self.creator_settings_general = self.get_keys(self.content_settings_creator, 'general')
@@ -50,12 +61,11 @@ class Mongo:
         self.creator_access_token_start_sleep = self.get_keys(self.creator_settings_steam, 'steam access token waiting start time')
 
         self.creator_settings_restart = self.get_keys(self.content_settings_creator, 'restart')
-        self.creator_restart_time_sleep = self.get_keys(self.creator_settings_restart, 'restart creator validity time')
-        self.creator_restart_global_sleep = self.get_keys(self.creator_settings_restart, 'restart creator global time')
-        self.creator_restart_info_bots = self.get_keys(self.creator_settings_restart, 'restart creator name bots')  # list of dict
-        if self.creator_restart_info_bots:
-            self.creator_bots_names = [d['name'] for d in self.creator_restart_info_bots]
-            self.creator_validity_time = [d['restart validity time'] for d in self.creator_restart_info_bots]
+        self.creator_restart_time_sleep = self.get_keys(self.creator_settings_restart, 'restart server validity time')
+        self.creator_restart_server_global_sleep = self.get_keys(self.creator_settings_restart, 'restart server global time')
+        self.creator_restart_bots_global_sleep = self.get_keys(self.creator_settings_restart, 'restart bots global time')
+        self.creator_restart_info_bots = self.get_keys(self.creator_settings_restart, 'restart bots name')  # list of dict
+
 
         # endregion
 
@@ -80,39 +90,21 @@ class Mongo:
         self.tm_store_ping = self.get_keys(self.tm_settings_online, 'tm store ping')
 
         self.tm_settings_restart = self.get_keys(self.content_settings_tm, 'restart')
-        self.tm_restart_global_sleep = self.get_keys(self.tm_settings_restart, 'restart tm global time')
-        self.tm_restart_name_bots = self.get_keys(self.tm_settings_restart, 'restart tm name bots')  # list of dict
-        self.tm_restart_global_sleep = self.get_keys(self.tm_settings_restart, 'restart server global time')
         self.tm_restart_time_sleep = self.get_keys(self.tm_settings_restart, 'restart server validity time')
+        self.tm_restart_server_global_sleep = self.get_keys(self.tm_settings_restart, 'restart server global time')
+        self.tm_restart_bots_global_sleep = self.get_keys(self.tm_settings_restart, 'restart bots global time')
+        self.tm_restart_info_bots = self.get_keys(self.tm_settings_restart, 'restart bots name')  # list of dict
         # endregion
 
     def update_mongo_info(self):
         try:
-            self.content_settings_creator = self.get_from_mongo_doc(self.creator_settings_collection)
-            self.content_settings_tm = self.get_from_mongo_doc(self.tm_settings_collection)
-
-            self.content_acc_list = self.get_from_mongo_doc_list(self.acc_settings_collection)
-            self.content_acc_dict = self.get_from_mongo_doc_dict(self.acc_settings_collection,
-                                         'username')
-
-            self.content_acc_parsed_list = self.get_from_mongo_doc_list(self.acc_parsed_collection)
-            self.content_acc_parsed_dict = self.get_from_mongo_doc_dict(self.acc_parsed_collection,
+            self.content_acc_data_list = self.get_from_mongo_doc_list(self.acc_data_collection)
+            self.content_acc_data_dict = self.get_from_mongo_doc_dict(self.acc_data_collection,
                                                                          'username')
-
-            self.content_acc_for_parsing_list = self.get_from_mongo_doc_list(self.acc_for_parsing_collection)
-            self.content_matches = self.create_match_acc_for_parsing_and_acc_sittings()
-
-            if self.content_settings_creator is None:
-                Logs.log(f'Settings creator is empty or does not exist')
-            if self.content_settings_tm is None:
-                Logs.log(f'Settings TM is empty or does not exist')
-            if self.content_acc_list is None:
-                Logs.log(f'Accounts settings is empty or does not exist')
         except Exception as e:
             Logs.log(f'Error while updating data from mongo: {e}')
 
-    def create_match_acc_for_parsing_and_acc_sittings(self):
-        self.update_mongo_info()
+    def create_merge_acc_for_parsing_and_acc_sittings(self):
         result = []
         try:
             if len(self.content_acc_for_parsing_list) < len(self.content_acc_list):

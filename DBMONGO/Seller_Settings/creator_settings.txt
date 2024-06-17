@@ -26,9 +26,10 @@
         "steam access token waiting start time" : NumberInt(10)
     },
     "restart" : {
-        "restart creator validity time" : NumberInt(28800),
-        "restart creator global time" : NumberInt(28800),
-        "restart creator name bots" : [
+        "restart server validity time" : NumberInt(28800),
+        "restart server global time" : NumberInt(28800),
+        "restart bots global time" : NumberInt(28800),
+        "restart bots name" : [
             {
                 "name" : "TM_Seller",
                 "restart validity time" : NumberInt(7200)

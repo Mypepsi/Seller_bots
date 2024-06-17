@@ -25,11 +25,11 @@ if __name__ == '__main__':
                                                   onl_thd.tm_thread_function_sleep)  #shouldn't be a thread
             print(2)
             # restart_server_schedule_thread = threading.Thread(target=restarter.schedule_restart_server,
-            #                                                   args=(restarter.creator_restart_time_sleep,
-            #                                                         restarter.creator_restart_global_sleep))
+            #                                                   args=(restarter.tm_restart_time_sleep,
+            #                                                         restarter.tm_restart_global_sleep))
             # restart_bots_schedule_thread = threading.Thread(target=restarter.schedule_restart_bots,
-            #                                                 args=(restarter.creator_restart_info_bots,
-            #                                                       restarter.creator_restart_global_sleep))
+            #                                                 args=(restarter.tm_restart_info_bots,
+            #                                                       restarter.tm_restart_global_sleep))
 
 
 

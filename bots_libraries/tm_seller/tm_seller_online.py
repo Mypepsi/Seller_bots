@@ -24,6 +24,9 @@ class TMOnline(Steam):
         super().__init__()
 
 
+
+
+
     def request_ping(self):
         json_data = {
             'access_token': f"{self.steamclient.access_token}"
@@ -32,7 +35,7 @@ class TMOnline(Steam):
             json_data['proxy'] = self.steamclient.proxies['http']
         url = f"https://market.csgo.com/api/v2/ping-new?key=" + self.steamclient.tm_api
 
-        response = requests.post(url, json=json_data)
+        response = requests.post(url, json=json_data, timeout=10)
         if response:
             try:
                 response_data = response.json()
@@ -75,7 +78,7 @@ class TMOnline(Steam):
                 steam_session = acc_info['steam session']
                 self.take_session(steam_session)
                 url = f'https://market.csgo.com/api/v2/go-offline?key={self.steamclient.tm_api}'
-                response = requests.get(url)
+                response = requests.get(url, timeout=10)
                 if response['success']:
                     Logs.log(f'Sales Stopped')
                 else:
@@ -94,7 +97,7 @@ class TMOnline(Steam):
             # if 'http' in self.steamclient.proxies:
             #     json_data['proxy'] = self.steamclient.proxies['http']
             # url = f"https://market.csgo.com/api/v2/ping-new?key=" + self.steamclient.tm_api
-            # response = requests.post(url, json=json_data)
+            # response = requests.post(url, json=json_data, timeout=10)
             # if response:
             #     try:
             #         response_data = response.json()
