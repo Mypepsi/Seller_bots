@@ -4,7 +4,6 @@ from bots_libraries.steampy.confirmation import ConfirmationExecutor
 from bots_libraries.steampy.confirmation import Confirmation
 from bots_libraries.steampy.models import GameOptions
 from lxml import html
-from fake_useragent import UserAgent
 import string
 import pickle
 import json
@@ -16,16 +15,6 @@ import requests
 class CreatorSteam(Steam):
     def __init__(self):
         super().__init__()
-
-        self.username_title = 'username'
-        self.password_title = 'password'
-        self.steam_id_title = 'steam id'
-        self.shared_secret_title = 'shared secret'
-        self.identity_secret_title = 'identity secret'
-        self.proxy_title = 'proxy'
-        self.questionable_proxies = {}
-
-        self.ua = UserAgent()
 
 
     def steam_login(self):

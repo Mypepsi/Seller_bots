@@ -5,32 +5,36 @@ import telebot
 
 class Mongo:
     def __init__(self):
+
         self.client = MongoClient("mongodb://127.0.0.1:27017")
+        # region information from MongoDB
+
         self.database = self.get_database('Seller_DataBases')
         self.database_price_collection = self.get_collection(self.database, 'database_prices')
         self.database_settings_collection = self.get_collection(self.database, 'database_settings')
 
+
         self.settings = self.get_database('Seller_Settings')
         self.creator_settings_collection = self.get_collection(self.settings, 'creator_settings')
+        self.content_settings_creator = self.get_first_doc_from_mongo_collection(self.creator_settings_collection)
+
         self.tm_settings_collection = self.get_collection(self.settings, 'tm_seller_settings')
+        self.content_settings_tm = self.get_first_doc_from_mongo_collection(self.tm_settings_collection)
+
 
         self.accs = self.get_database('Seller_Accounts')
         self.acc_settings_collection = self.get_collection(self.accs, 'account_settings')
+        self.content_acc_list = self.get_all_docs_from_mongo_collection(self.acc_settings_collection)
+        self.content_acc_dict = self.get_dict_from_collection_list(self.content_acc_list, 'username')
+
         self.acc_data_collection = self.get_collection(self.accs, 'account_data')
+        self.update_account_data_info()
+
         self.acc_for_parsing_collection = self.get_collection(self.accs, 'account_for_parsing')
+        self.content_acc_for_parsing_list = self.get_all_docs_from_mongo_collection(self.acc_for_parsing_collection)
 
-        self.update_mongo_info()
-
-        self.content_settings_creator = self.get_from_mongo_doc(self.creator_settings_collection)
-        self.content_settings_tm = self.get_from_mongo_doc(self.tm_settings_collection)
-
-        self.content_acc_list = self.get_from_mongo_doc_list(self.acc_settings_collection)
-        self.content_acc_dict = self.get_from_mongo_doc_dict(self.acc_settings_collection,
-                                                             'username')
-        self.content_acc_for_parsing_list = self.get_from_mongo_doc_list(self.acc_for_parsing_collection)
-        self.content_matches = self.create_merge_acc_for_parsing_and_acc_sittings()
-
-
+        self.content_merges = self.create_merge_acc_for_parsing_and_acc_sittings()
+        # endregion
 
         # region information from creator settings collection
         self.creator_settings_general = self.get_keys(self.content_settings_creator, 'general')
@@ -96,10 +100,10 @@ class Mongo:
         self.tm_restart_info_bots = self.get_keys(self.tm_settings_restart, 'restart bots name')  # list of dict
         # endregion
 
-    def update_mongo_info(self):
+    def update_account_data_info(self):
         try:
-            self.content_acc_data_list = self.get_from_mongo_doc_list(self.acc_data_collection)
-            self.content_acc_data_dict = self.get_from_mongo_doc_dict(self.acc_data_collection,
+            self.content_acc_data_list = self.get_all_docs_from_mongo_collection(self.acc_data_collection)
+            self.content_acc_data_dict = self.get_dict_from_collection_list(self.content_acc_data_list,
                                                                          'username')
         except Exception as e:
             Logs.log(f'Error while updating data from mongo: {e}')
@@ -147,22 +151,17 @@ class Mongo:
             else:
                 Logs.log(f"Key '{key}' not found in {dictionary}")
             return dictionary
-        # except TypeError:
-        #     Logs.log(f"Error during receiving {key}: it does not exist in MongoDB")
-        #     return None
-        except Exception as e:
-            # Logs.log(f"Error during receiving key: {key} in {dictionary}: {e}")
+        except:
             return None
 
+    @staticmethod
+    def get_first_doc_from_mongo_collection(collection):
+        result = collection.find_one()
+        return result or {}
+
 
     @staticmethod
-    def get_from_mongo_doc(collection):
-        results = collection.find({})
-        for result in results:
-            return result
-
-    @staticmethod
-    def get_from_mongo_doc_list(collection):
+    def get_all_docs_from_mongo_collection(collection):
         results = collection.find({})
         results_list = []
         for result in results:
@@ -170,18 +169,10 @@ class Mongo:
         return results_list
 
     @staticmethod
-    def get_from_mongo_doc_dict(collection, key_name):
-        results = collection.find({})
+    def get_dict_from_collection_list(doc_list, key_name):
         results_dict = {}
-        for doc in results:
+        for doc in doc_list:
             account_name = doc.get(key_name)
             if account_name:
                 results_dict[account_name] = doc
         return results_dict
-
-
-
-
-
-
-

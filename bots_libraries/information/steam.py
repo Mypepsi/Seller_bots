@@ -32,7 +32,7 @@ class Steam(Mongo):
 
     def work_with_steam_settings(self, function, time_sleep):
         while True:
-            self.update_mongo_info()
+            self.update_account_data_info()
             for acc in self.content_acc_list:
                 try:
                     username = acc['username']
@@ -80,7 +80,7 @@ class Steam(Mongo):
 
     def work_with_steam_parsed(self, function, time_sleep):
         while True:
-            self.update_mongo_info()
+            self.update_account_data_info()
             for acc in self.content_acc_data_list:
                 self.username = acc['username']
                 steam_session = acc['steam session']
@@ -92,12 +92,12 @@ class Steam(Mongo):
 
     def work_with_steam_loop(self, function, time_sleep):
         while True:
-            self.update_mongo_info()
+            self.update_account_data_info()
             function()
             time.sleep(time_sleep)
 
     def work_with_steam_create_thread(self, function, function_time_sleep, thread_time_sleep):
-        self.update_mongo_info()
+        self.update_account_data_info()
         counter = 0
         for acc in self.content_acc_data_list:
             thread = threading.Thread(target=function, args=(acc, function_time_sleep))
