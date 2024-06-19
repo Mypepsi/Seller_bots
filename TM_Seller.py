@@ -20,9 +20,9 @@ if __name__ == '__main__':
 
             print(1)
             onl_thd.work_with_steam_create_thread(onl_thd.ping, onl_thd.tm_ping,
-                                                  onl_thd.tm_thread_function_sleep)  #shouldn't be a thread
+                                                  onl_thd.tm_thread_function_sleep)
             str_png.work_with_steam_create_thread(str_png.store_ping, str_png.tm_store_ping,
-                                                  onl_thd.tm_thread_function_sleep)  #shouldn't be a thread
+                                                  onl_thd.tm_thread_function_sleep)
             print(2)
             # restart_server_schedule_thread = threading.Thread(target=restarter.schedule_restart_server,
             #                                                   args=(restarter.tm_restart_time_sleep,
