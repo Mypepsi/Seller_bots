@@ -14,13 +14,14 @@ class Restarter(Mongo):
     def schedule_restart_server(self, validity_time, global_time):
         while True:
             try:
+                time.sleep(global_time)
                 server_uptime = uptime.uptime()
                 if server_uptime > validity_time:
                     self.restart_server()
             except Exception as e:
                 Logs.log(f'Get server uptime Error: {e}')
                 self.restart_server()
-            time.sleep(global_time)
+
 
     def restart_server(self):
         try:
@@ -35,6 +36,7 @@ class Restarter(Mongo):
             command_json = "pm2 jlist"
             process_list = []
             try:
+                time.sleep(global_time)
                 result = subprocess.run(command_json, shell=True, check=True, capture_output=True, text=True)
                 if result.stdout:
                     start_index = result.stdout.find("[")
@@ -61,7 +63,7 @@ class Restarter(Mongo):
                                 break
             except Exception as e:
                 Logs.log(f"Error during bot restart - 2: {e}")
-            time.sleep(global_time)
+
 
     def restart_bot(self, bot_name):
         try:

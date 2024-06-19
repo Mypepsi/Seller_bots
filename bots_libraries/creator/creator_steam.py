@@ -42,11 +42,20 @@ class CreatorSteam(Steam):
                     Logs.log(
                         f'{self.username}: Steam authorization is successful')
 
+
+                    accounts_data = {
+                        "access token": self.steamclient.access_token,
+                        "user-agent": self.steamclient.user_agent,
+                        "proxy": self.steamclient.proxies,
+                        "tm apikey": self.steamclient.tm_api
+                    }
+
+
                     new_doc = {
                             "username": self.username,
                             "time steam session": current_timestamp,
                             "steam session": pickle.dumps(self.steamclient),
-                            "steam access token": self.steamclient.access_token,
+                            "accounts data": accounts_data,
                             "steam apikey": "",
                             "steam inventory": {},
                             "steam inventory phases": {}

@@ -1,6 +1,9 @@
 from pymongo import MongoClient
 from bots_libraries.information.logs import Logs
 import telebot
+import inspect
+import os
+import itertools
 
 
 class Mongo:
@@ -37,67 +40,71 @@ class Mongo:
         # endregion
 
         # region information from creator settings collection
-        self.creator_settings_general = self.get_keys(self.content_settings_creator, 'general')
-        self.creator_tg_token = self.get_keys(self.creator_settings_general, 'tg token')
-        self.creator_tg_id = self.get_keys(self.creator_settings_general, 'tg id')
-        self.creator_sleep_before_start = self.get_keys(self.creator_settings_general, 'waiting start time')
-        self.creator_sleep_between_threads = self.get_keys(self.creator_settings_general, 'thread start time')
+        self.creator_settings_general = self.get_key(self.content_settings_creator, 'general')
+        self.creator_tg_token = self.get_key(self.creator_settings_general, 'tg token')
+        self.creator_tg_id = self.get_key(self.creator_settings_general, 'tg id')
+        self.creator_sleep_before_start = self.get_key(self.creator_settings_general, 'waiting start time')
+        self.creator_sleep_between_threads = self.get_key(self.creator_settings_general, 'thread start time')
         if self.creator_tg_token:
             self.creator_tg_bot = telebot.TeleBot(self.creator_tg_token)
 
-        self.creator_settings_database = self.get_keys(self.content_settings_creator, 'database')
-        self.creator_db_prices_url = self.get_keys(self.creator_settings_database, 'db prices url')
-        self.creator_db_settings_url = self.get_keys(self.creator_settings_database, 'db settings url')
-        self.creator_db_price_sleep_time = self.get_keys(self.creator_settings_database, 'db prices validity time')
-        self.creator_db_settings_sleep_time = self.get_keys(self.creator_settings_database, 'db settings validity time')
-        self.creator_db_prices_global_time = self.get_keys(self.creator_settings_database, 'db prices global time')
-        self.creator_db_settings_global_time = self.get_keys(self.creator_settings_database, 'db settings global time')
+        self.creator_settings_database = self.get_key(self.content_settings_creator, 'database')
+        self.creator_db_prices_url = self.get_key(self.creator_settings_database, 'db prices url')
+        self.creator_db_settings_url = self.get_key(self.creator_settings_database, 'db settings url')
+        self.creator_db_price_sleep_time = self.get_key(self.creator_settings_database, 'db prices validity time')
+        self.creator_db_settings_sleep_time = self.get_key(self.creator_settings_database, 'db settings validity time')
+        self.creator_db_prices_global_time = self.get_key(self.creator_settings_database, 'db prices global time')
+        self.creator_db_settings_global_time = self.get_key(self.creator_settings_database, 'db settings global time')
 
-        self.creator_settings_steam = self.get_keys(self.content_settings_creator, 'steam')
-        self.creator_authorization_time_sleep = self.get_keys(self.creator_settings_steam, 'steam session validity time')
-        self.creator_steam_api_key_global_sleep = self.get_keys(self.creator_settings_steam, 'steam apikey global time')
-        self.creator_steam_inventory_global_sleep = self.get_keys(self.creator_settings_steam, 'steam inventory global time')
-        self.creator_authorization_global_sleep = self.get_keys(self.creator_settings_steam, 'steam session global time')
-        self.creator_hashname_difference_time = self.get_keys(self.creator_settings_steam, 'steam inventory hashname validity time')
-        self.creator_proxy_check_url = self.get_keys(self.creator_settings_steam, 'proxy url')
-        self.creator_proxy_global_sleep = self.get_keys(self.creator_settings_steam, 'proxy global time')
-        self.creator_access_token_global_sleep = self.get_keys(self.creator_settings_steam, 'steam access token global time')
-        self.creator_access_token_start_sleep = self.get_keys(self.creator_settings_steam, 'steam access token waiting start time')
+        self.creator_settings_steam = self.get_key(self.content_settings_creator, 'steam')
+        self.creator_authorization_time_sleep = self.get_key(self.creator_settings_steam, 'steam session validity time')
+        self.creator_steam_api_key_global_sleep = self.get_key(self.creator_settings_steam, 'steam apikey global time')
+        self.creator_steam_inventory_global_sleep = self.get_key(self.creator_settings_steam, 'steam inventory global time')
+        self.creator_authorization_global_sleep = self.get_key(self.creator_settings_steam, 'steam session global time')
+        self.creator_hashname_difference_time = self.get_key(self.creator_settings_steam, 'steam inventory hashname validity time')
+        self.creator_proxy_check_url = self.get_key(self.creator_settings_steam, 'proxy url')
+        self.creator_proxy_global_sleep = self.get_key(self.creator_settings_steam, 'proxy global time')
+        self.creator_access_token_global_sleep = self.get_key(self.creator_settings_steam, 'steam access token global time')
+        self.creator_access_token_start_sleep = self.get_key(self.creator_settings_steam, 'steam access token waiting start time')
 
-        self.creator_settings_restart = self.get_keys(self.content_settings_creator, 'restart')
-        self.creator_restart_time_sleep = self.get_keys(self.creator_settings_restart, 'restart server validity time')
-        self.creator_restart_server_global_sleep = self.get_keys(self.creator_settings_restart, 'restart server global time')
-        self.creator_restart_bots_global_sleep = self.get_keys(self.creator_settings_restart, 'restart bots global time')
-        self.creator_restart_info_bots = self.get_keys(self.creator_settings_restart, 'restart bots name')  # list of dict
+        self.creator_settings_restart = self.get_key(self.content_settings_creator, 'restart')
+        self.creator_restart_time_sleep = self.get_key(self.creator_settings_restart, 'restart server validity time')
+        self.creator_restart_server_global_sleep = self.get_key(self.creator_settings_restart, 'restart server global time')
+        self.creator_restart_bots_global_sleep = self.get_key(self.creator_settings_restart, 'restart bots global time')
+        self.creator_restart_info_bots = self.get_key(self.creator_settings_restart, 'restart bots name')  # list of dict
 
 
         # endregion
 
         # region information from tm settings collection
-        self.tm_settings_general = self.get_keys(self.content_settings_tm, 'general')
-        self.tm_sleep_before_start = self.get_keys(self.tm_settings_general, 'waiting start time')
-        self.tm_sleep_between_threads = self.get_keys(self.tm_settings_general, 'thread start time')
-        self.tm_thread_function_sleep = self.get_keys(self.tm_settings_general, 'thread function time')
-        self.tm_tg_id = self.get_keys(self.tm_settings_general, 'tg id')
-        self.tm_tg_token = self.get_keys(self.tm_settings_general, 'tg token')
+        self.tm_settings_general = self.get_key(self.content_settings_tm, 'general')
+        self.tm_sleep_before_start = self.get_key(self.tm_settings_general, 'waiting start time')
+        self.tm_sleep_between_threads = self.get_key(self.tm_settings_general, 'thread start time')
+        self.tm_thread_function_sleep = self.get_key(self.tm_settings_general, 'thread function time')
+        self.tm_tg_id = self.get_key(self.tm_settings_general, 'tg id')
+        self.tm_tg_token = self.get_key(self.tm_settings_general, 'tg token')
         if self.tm_tg_token:
             self.tm_tg_bot = telebot.TeleBot(self.tm_tg_token)
-        self.tm_history_tg_id = self.get_keys(self.tm_settings_general, 'history tg id')
-        self.tm_history_tg_token = self.get_keys(self.tm_settings_general, 'history tg token')
+        self.tm_history_tg_id = self.get_key(self.tm_settings_general, 'history tg id')
+        self.tm_history_tg_token = self.get_key(self.tm_settings_general, 'history tg token')
         if self.tm_history_tg_token:
             self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
+        self.tm_sda_global_sleep = self.get_key(self.tm_settings_general, 'sda global time')
 
-        self.tm_url = self.get_keys(self.tm_settings_general, 'tm url')
+        self.tm_url = self.get_key(self.tm_settings_general, 'tm url')
 
-        self.tm_settings_online = self.get_keys(self.content_settings_tm, 'online')
-        self.tm_ping = self.get_keys(self.tm_settings_online, 'tm ping')
-        self.tm_store_ping = self.get_keys(self.tm_settings_online, 'tm store ping')
+        self.tm_settings_online = self.get_key(self.content_settings_tm, 'online')
+        self.tm_ping = self.get_key(self.tm_settings_online, 'tm ping')
+        self.tm_store_ping = self.get_key(self.tm_settings_online, 'tm store ping')
+        self.tm_visible_store_global_sleep = self.get_key(self.tm_settings_online, 'visible store global time')
+        self.tm_api_key_checker_global_sleep = self.get_key(self.tm_settings_online, 'tm api key checker global time')
 
-        self.tm_settings_restart = self.get_keys(self.content_settings_tm, 'restart')
-        self.tm_restart_time_sleep = self.get_keys(self.tm_settings_restart, 'restart server validity time')
-        self.tm_restart_server_global_sleep = self.get_keys(self.tm_settings_restart, 'restart server global time')
-        self.tm_restart_bots_global_sleep = self.get_keys(self.tm_settings_restart, 'restart bots global time')
-        self.tm_restart_info_bots = self.get_keys(self.tm_settings_restart, 'restart bots name')  # list of dict
+
+        self.tm_settings_restart = self.get_key(self.content_settings_tm, 'restart')
+        self.tm_restart_time_sleep = self.get_key(self.tm_settings_restart, 'restart server validity time')
+        self.tm_restart_server_global_sleep = self.get_key(self.tm_settings_restart, 'restart server global time')
+        self.tm_restart_bots_global_sleep = self.get_key(self.tm_settings_restart, 'restart bots global time')
+        self.tm_restart_info_bots = self.get_key(self.tm_settings_restart, 'restart bots name')  # list of dict
         # endregion
 
     def update_account_data_info(self):
@@ -111,21 +118,22 @@ class Mongo:
     def create_merge_acc_for_parsing_and_acc_sittings(self):
         result = []
         try:
-            if len(self.content_acc_for_parsing_list) < len(self.content_acc_list):
-                raise ValueError
-            unique_iterator = iter(self.content_acc_for_parsing_list)
+            unique_iterator = itertools.cycle(self.content_acc_for_parsing_list)
             for acc in self.content_acc_list:
                 unique_acc = next(unique_iterator)
                 result.append([acc, unique_acc])
             return result
 
-        except ValueError:
-            Logs.log("Not enough parsing objects for all accounts in accounts for parsing")
-            return result
-        except:
-            Logs.log("Error during taking info for parsing")
+        except Exception as e:
+            Logs.log(f"Error during merging accounts: {e}")
             return result
 
+
+    def search_in_merges_by_username(self, username):
+        for sublist in self.content_merges:
+            if sublist[0]['username'] == username:
+                return sublist[1]
+        return None
 
     def get_database(self, db_name):
         try:
@@ -134,7 +142,8 @@ class Mongo:
             Logs.log(f"Error during receiving database {db_name}: {e}")
             return None
 
-    def get_collection(self, database, collection_name):
+    @staticmethod
+    def get_collection(database, collection_name):
         if database is None:
             return None
         try:
@@ -144,7 +153,7 @@ class Mongo:
             return None
 
     @staticmethod
-    def get_keys(dictionary, key):
+    def get_key(dictionary, key):
         try:
             if key in dictionary:
                 dictionary = dictionary[key]
@@ -176,3 +185,26 @@ class Mongo:
             if account_name:
                 results_dict[account_name] = doc
         return results_dict
+
+    def error_alert(self, thread_name: str, error: Exception) -> None:
+        global threads_alert
+        if 'threads_alert' not in globals():
+            threads_alert = False
+
+        current_frame = inspect.currentframe()
+        caller_frame = inspect.getouterframes(current_frame, 2)[1]
+        file_path = caller_frame.filename
+        document_name = os.path.splitext(os.path.basename(file_path))[0]  # Извлекаем имя файла без пути и расширения
+
+        function_name = thread_name
+        modified_function_name = function_name.replace("_", " ").title()
+        Logs.log(f'{modified_function_name} has not started: {error}')
+        try:
+            acc_setting_first_username = self.content_acc_list[0]['username']
+        except:
+            acc_setting_first_username = ''
+        if not threads_alert:
+            self.creator_tg_bot.send_message(self.creator_tg_id,
+                                              f'{document_name}: Fatal Error: '
+                                              f'threads not running: {acc_setting_first_username}')
+            threads_alert = True

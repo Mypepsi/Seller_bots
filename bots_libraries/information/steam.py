@@ -52,7 +52,7 @@ class Steam(Mongo):
                                     "shared_secret": self.steamclient.shared_secret,
                                     "identity_secret": self.steamclient.identity_secret
                                     }
-                self.steamclient.tm_api = acc['tm apikey']
+                self.steamclient.tm_api = self.get_key(acc, 'tm apikey')
 
 
 
