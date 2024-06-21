@@ -13,9 +13,9 @@ class Mongo:
         # region information from MongoDB
 
         self.database = self.get_database('Seller_DataBases')
-        self.database_price_collection = self.get_collection(self.database, 'database_prices')
+        self.database_prices_collection = self.get_collection(self.database, 'database_prices')
         self.database_settings_collection = self.get_collection(self.database, 'database_settings')
-
+        self.update_db_prices_and_setting()
 
         self.settings = self.get_database('Seller_Settings')
         self.creator_settings_collection = self.get_collection(self.settings, 'creator_settings')
@@ -23,6 +23,9 @@ class Mongo:
 
         self.tm_settings_collection = self.get_collection(self.settings, 'tm_seller_settings')
         self.content_settings_tm = self.get_first_doc_from_mongo_collection(self.tm_settings_collection)
+
+
+        self.history = self.get_database('Seller_History')
 
 
         self.accs = self.get_database('Seller_Accounts')
@@ -90,6 +93,7 @@ class Mongo:
         if self.tm_history_tg_token:
             self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
         self.tm_sda_global_sleep = self.get_key(self.tm_settings_general, 'sda global time')
+        self.tm_add_to_sale_global_sleep = self.get_key(self.tm_settings_general, 'add to sale global time')
 
         self.tm_url = self.get_key(self.tm_settings_general, 'tm url')
 
@@ -112,6 +116,13 @@ class Mongo:
             self.content_acc_data_list = self.get_all_docs_from_mongo_collection(self.acc_data_collection)
             self.content_acc_data_dict = self.get_dict_from_collection_list(self.content_acc_data_list,
                                                                          'username')
+        except Exception as e:
+            Logs.log(f'Error while updating data from mongo: {e}')
+
+    def update_db_prices_and_setting(self):
+        try:
+            self.content_database_prices = self.get_all_docs_from_mongo_collection(self.database_prices_collection)
+            self.content_database_settings = self.get_all_docs_from_mongo_collection(self.database_settings_collection)
         except Exception as e:
             Logs.log(f'Error while updating data from mongo: {e}')
 
@@ -167,7 +178,6 @@ class Mongo:
     def get_first_doc_from_mongo_collection(collection):
         result = collection.find_one()
         return result or {}
-
 
     @staticmethod
     def get_all_docs_from_mongo_collection(collection):

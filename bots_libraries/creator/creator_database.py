@@ -14,7 +14,7 @@ class DataBase(Mongo):
         while True:
             current_timestamp = int(time.time())
             try:
-                db_doc = self.database_price_collection.find_one()
+                db_doc = self.database_prices_collection.find_one()
                 if db_doc:
                     last_update_time = int(db_doc.get("Time", 0))
                 else:
@@ -22,7 +22,7 @@ class DataBase(Mongo):
                         "Time": 0,
                         "DataBasePrices": []
                     }
-                    self.database_price_collection.insert_one(db_doc)
+                    self.database_prices_collection.insert_one(db_doc)
                     last_update_time = db_doc["Time"]
 
                 difference_to_update = current_timestamp - last_update_time
@@ -44,11 +44,9 @@ class DataBase(Mongo):
                                             db_list = []
 
                                             for hashname in db.keys():
-                                                max_round_currency_price = 0
+                                                data_dict = {}
 
-                                                buff_max_price = 0
-                                                steam_max_price = 0
-                                                tm_max_price = 0
+                                                max_round_currency_price = 0
 
                                                 service_max_price = None
 
@@ -63,12 +61,27 @@ class DataBase(Mongo):
                                                 except KeyError:
                                                     steam_full_price = 0
 
+                                                data_dict[hashname] = {
+                                                    "buff_full_price": buff_full_price,
+                                                    "steam_full_price": steam_full_price,
+                                                    "max_price": 0,
+                                                    "service_max_price": "No"
+                                                }
+
                                                 for item in db_seller_max_price_list:
-                                                    db_min_sales = item["min sales"]
+                                                    db_min_sales = item['min sales']
                                                     db_validity_time = item['validity time']
 
                                                     price_service = item['price service']
                                                     price_type_update = item['price type'] + 'Update'
+
+                                                    key_name = price_service + '_max_price'
+                                                    key_value = 0
+
+                                                    if key_name not in data_dict[hashname]:
+                                                        data_dict[hashname][key_name] = key_value
+                                                    else:
+                                                        key_value = data_dict[hashname][key_name]
 
                                                     currency_rate_name = 'DataBaseRate' + price_service
                                                     currency_rate = currency_rs['CreatorDataBaseRate'][currency_rate_name]
@@ -95,33 +108,28 @@ class DataBase(Mongo):
                                                             else:
                                                                 currency_price = 0
 
-                                                            round_currency_price = round(currency_price, 2)
+                                                            commission_type = item['commission type']
+                                                            commission = item['commission']
+                                                            if commission_type == 0 and commission > 0:
+                                                                currency_price_with_commission = currency_price * commission
+                                                            elif commission_type == 1 and commission > 0:
+                                                                currency_price_with_commission = commission_type / commission
+                                                            else:
+                                                                currency_price_with_commission = 0
 
-                                                            if (price_service == 'buff' and
-                                                                    round_currency_price > buff_max_price):
-                                                                buff_max_price = round_currency_price
-                                                            elif (price_service == 'steam' and
-                                                                  round_currency_price > steam_max_price):
-                                                                steam_max_price = round_currency_price
-                                                            elif (price_service == 'csgotm' and
-                                                                  round_currency_price > tm_max_price):
-                                                                tm_max_price = round_currency_price
+                                                            round_currency_price = round(currency_price_with_commission, 2)
+
+                                                            if round_currency_price > key_value:
+                                                                data_dict[hashname].update({key_name: round_currency_price})
 
                                                             if round_currency_price > max_round_currency_price:
                                                                 max_round_currency_price = round_currency_price
                                                                 service_max_price = price_service
 
-                                                data_dict = {
-                                                    hashname: {
-                                                        "buff_full_price": buff_full_price,
-                                                        "steam_full_price": steam_full_price,
-                                                        "buff_max_price": buff_max_price,
-                                                        "steam_max_price": steam_max_price,
-                                                        "tm_max_price": tm_max_price,
-                                                        "max_round_currency_price": max_round_currency_price,
-                                                        "service_max_price": service_max_price
-                                                    }
-                                                }
+                                                            data_dict[hashname].update({
+                                                                "max_price": max_round_currency_price,
+                                                                "service_max_price": service_max_price
+                                                            })
                                                 db_list.append(data_dict)
 
                                             if len(db_list) != 0:
@@ -129,7 +137,7 @@ class DataBase(Mongo):
                                                 db_dict = {"Time": current_timestamp,
                                                            "DataBasePrices": db_list}
 
-                                                self.database_price_collection.replace_one({}, db_dict, upsert=True)
+                                                self.database_prices_collection.replace_one({}, db_dict, upsert=True)
                                                 Logs.log(f"DataBasePrices: Database Prices has been updated in MongoDB")
                                         else:
                                             Logs.log("Error in keys refresh_db_thread-1")

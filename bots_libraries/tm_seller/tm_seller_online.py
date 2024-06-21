@@ -67,7 +67,7 @@ class TMOnline(Steam):
         while True:
             if search_result:
                 break
-            #time.sleep(time_sleep)
+            time.sleep(time_sleep)
             self.update_account_data_info()
             try:
                 username = acc_info['username']
@@ -111,7 +111,6 @@ class TMOnline(Steam):
                     tradable_inventory = []
                     for item in my_inventory:
                         if item['tradable'] == 1:
-                            print("сюда")
                             tradable_inventory.append(item)
                     if len(tradable_inventory) > 0:
                         Logs.log(f'{username}: No active items listed in Store')

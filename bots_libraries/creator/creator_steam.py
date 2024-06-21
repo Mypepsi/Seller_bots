@@ -21,6 +21,12 @@ class CreatorSteam(Steam):
         number_of_try = 1
         while True:
             try:
+                collection_name = f'history_{self.steamclient.username}'
+                if collection_name not in self.history.list_collection_names():
+                    try:
+                        self.history.create_collection(collection_name)
+                    except:
+                        pass
                 current_timestamp = int(time.time())
                 if self.username in self.content_acc_data_dict:
                     last_update_time = self.content_acc_data_dict[self.username].get('time steam session', 0)
@@ -46,8 +52,7 @@ class CreatorSteam(Steam):
                     accounts_data = {
                         "access token": self.steamclient.access_token,
                         "user-agent": self.steamclient.user_agent,
-                        "proxy": self.steamclient.proxies,
-                        "tm apikey": self.steamclient.tm_api
+                        "proxy": self.steamclient.proxies
                     }
 
 
