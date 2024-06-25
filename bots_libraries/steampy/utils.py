@@ -1,15 +1,12 @@
 import decimal
 import os
-
 import copy
 import struct
 import urllib.parse as urlparse
 import re
 from requests.structures import CaseInsensitiveDict
 from typing import List
-
 from bs4 import BeautifulSoup, Tag
-
 from bots_libraries.steampy.models import GameOptions
 
 

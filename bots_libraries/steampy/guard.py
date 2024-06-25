@@ -1,15 +1,12 @@
 import base64
 import hmac
-import json
 import struct
 import time
-import os
-
 from hashlib import sha1
 
 
 def load_steam_guard(steam_guard: dict) -> dict:
-        return steam_guard
+    return steam_guard
 
 
 def generate_one_time_code(shared_secret: str, timestamp: int = None) -> str:

@@ -4,8 +4,7 @@ from bots_libraries.steampy.models import Endpoints, SteamUrl
 from bots_libraries.steampy.utils import account_id_to_steam_id
 
 
-class SteamChat():
-
+class SteamChat:
     def __init__(self, session):
         self._session = session
         self._chat_params = {}

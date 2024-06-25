@@ -3,8 +3,8 @@ import os
 import time
 import json
 import uptime
-from bots_libraries.information.mongo import Mongo
-from bots_libraries.information.logs import Logs
+from bots_libraries.base_info.mongo import Mongo
+from bots_libraries.base_info.logs import Logs
 
 
 class Restarter(Mongo):
@@ -22,18 +22,9 @@ class Restarter(Mongo):
                 Logs.log(f'Get server uptime Error: {e}')
                 self.restart_server()
 
-
-    def restart_server(self):
-        try:
-            Logs.log(f"Server Rebooted")
-            command = "sudo reboot"
-            subprocess.run(command, shell=True, check=True)
-        except Exception as e:
-            Logs.log(f"Error during system restart: {e}")
-
     def schedule_restart_bots(self, restart_info_bots, global_time):
         while True:
-            command_json = "pm2 jlist"
+            command_json = "pm2 jlist > /dev/null"
             process_list = []
             try:
                 time.sleep(global_time)
@@ -55,7 +46,8 @@ class Restarter(Mongo):
                                 process_name = process['name']
                                 to_restart = process['pm2_env']['pm_uptime']
                                 current_timestamp = int(time.time())
-                                if (bot_validity_time + to_restart / 1000) < current_timestamp and process_name == bot_name:
+                                if ((bot_validity_time + to_restart / 1000) < current_timestamp and
+                                        process_name == bot_name):
                                     self.restart_bot(bot_name)
                                     break
                             except:
@@ -64,6 +56,13 @@ class Restarter(Mongo):
             except Exception as e:
                 Logs.log(f"Error during bot restart - 2: {e}")
 
+    def restart_server(self):
+        try:
+            Logs.log(f"Server Rebooted")
+            command = "sudo reboot"
+            subprocess.run(command, shell=True, check=True)
+        except Exception as e:
+            Logs.log(f"Error during system restart: {e}")
 
     def restart_bot(self, bot_name):
         try:
@@ -73,6 +72,3 @@ class Restarter(Mongo):
             time.sleep(5)
         except Exception as e:
             Logs.log(f"Error restarting {bot_name}: {e}")
-
-
-

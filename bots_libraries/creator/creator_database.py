@@ -1,6 +1,6 @@
 from pymongo.errors import ServerSelectionTimeoutError
-from bots_libraries.information.logs import Logs
-from bots_libraries.information.mongo import Mongo
+from bots_libraries.base_info.logs import Logs
+from bots_libraries.base_info.mongo import Mongo
 import time
 import requests
 
@@ -39,7 +39,7 @@ class DataBase(Mongo):
                                         currency_rs = currency_data.json()
                                         if currency_rs:
                                             Logs.log("DataBasePrices: Settings is uploaded")
-                                            db_seller_max_price_list = currency_rs['CreatorDataBaseMaxPrice']
+                                            db_seller_max_price_list = currency_rs['Creator_DataBaseMaxPrice']
 
                                             db_list = []
 
@@ -50,7 +50,7 @@ class DataBase(Mongo):
 
                                                 service_max_price = None
 
-                                                buff_currency_rate = currency_rs['CreatorDataBaseRate']['DataBaseRatebuff']
+                                                buff_currency_rate = currency_rs['Creator_DataBaseRate']['DataBaseRate_buff']
 
                                                 try:
                                                     buff_full_price = round(db[hashname]['buff']['price'] / buff_currency_rate, 2)
@@ -83,8 +83,8 @@ class DataBase(Mongo):
                                                     else:
                                                         key_value = data_dict[hashname][key_name]
 
-                                                    currency_rate_name = 'DataBaseRate' + price_service
-                                                    currency_rate = currency_rs['CreatorDataBaseRate'][currency_rate_name]
+                                                    currency_rate_name = 'DataBaseRate_' + price_service
+                                                    currency_rate = currency_rs['Creator_DataBaseRate'][currency_rate_name]
                                                     try:
                                                         sales_for_week = db[hashname][price_service]['salesForWeek']
                                                     except KeyError:
@@ -98,11 +98,11 @@ class DataBase(Mongo):
                                                             price_from_db = 0
                                                         difference = int(current_timestamp - price_from_db)
                                                         if difference < db_validity_time:
-                                                            currency_type = item['currency type']
-                                                            if currency_type == 0 and currency_rate > 0:
+                                                            rate_type = item['rate type']
+                                                            if rate_type == 0 and currency_rate > 0:
                                                                 currency_price = db[hashname][price_service][
                                                                                      item['price type']] * currency_rate
-                                                            elif currency_type == 1 and currency_rate > 0:
+                                                            elif rate_type == 1 and currency_rate > 0:
                                                                 currency_price = db[hashname][price_service][
                                                                                      item['price type']] / currency_rate
                                                             else:

@@ -10,8 +10,8 @@ from aiohttp import (
     ClientSession,
 )
 
-from pysteamauth.abstract import RequestStrategyAbstract
-from pysteamauth.errors import check_steam_error
+from bots_libraries.steam_auth.abstract import RequestStrategyAbstract
+from bots_libraries.steam_auth.errors import check_steam_error
 
 
 class BaseRequestStrategy(RequestStrategyAbstract):

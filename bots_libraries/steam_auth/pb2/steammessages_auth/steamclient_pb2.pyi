@@ -4,7 +4,7 @@ from typing import (
     Optional,
 )
 
-from pysteamauth.pb2.enums_pb2 import ESessionPersistence
+from bots_libraries.steam_auth.pb2.enums_pb2 import ESessionPersistence
 
 
 class EAuthTokenPlatformType(IntEnum):

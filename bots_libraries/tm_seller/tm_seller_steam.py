@@ -1,5 +1,5 @@
-from bots_libraries.information.logs import Logs
-from bots_libraries.information.mongo import Mongo
+from bots_libraries.base_info.logs import Logs
+from bots_libraries.base_info.mongo import Mongo
 from bots_libraries.creator.creator_steam import Steam
 from bots_libraries.steampy.confirmation import ConfirmationExecutor
 from bots_libraries.steampy.confirmation import Confirmation
@@ -110,7 +110,10 @@ class TMSteam(Steam):
             except:
                 Logs.log('Error during taking a session')
             collection_name = f'history_{username}'
-            self.acc_history_collection = self.get_collection(self.history, collection_name)
+            try:
+                self.acc_history_collection = self.get_collection(self.history, collection_name)
+            except:
+                Logs.log(f'Collecrion {collection_name} does not exist')
             response_data = self.request_give_p2p_all(username)
             if response_data is not None and 'offers' in response_data and type(response_data['offers']) == list:
                 send_offers = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
@@ -226,7 +229,7 @@ class TMSteam(Steam):
             acc_data_inventory = []
             try:
                 username = acc_info['username']
-                acc_data_inventory = acc_info['steam inventory']
+                acc_data_inventory = acc_info['steam inventory tradable']
                 steam_session = acc_info['steam session']
                 self.take_session(steam_session)
             except:
@@ -278,7 +281,7 @@ class TMSteam(Steam):
                     self.general_settings_path, self.add_to_sale_step_3_name, 'float')
 
                 currency_type = Settings.return_setting(
-                    self.price_calculate_path, 'currency type tm', 'int')
+                    self.price_calculate_path, 'rate type tm', 'int')
 
                 currency = Settings.return_setting(
                     self.price_calculate_path, 'currency tm', 'float')

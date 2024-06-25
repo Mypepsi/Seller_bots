@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from bots_libraries.information.logs import Logs
+from bots_libraries.base_info.logs import Logs
 import telebot
 import inspect
 import os
@@ -100,6 +100,7 @@ class Mongo:
         self.tm_settings_online = self.get_key(self.content_settings_tm, 'online')
         self.tm_ping = self.get_key(self.tm_settings_online, 'tm ping')
         self.tm_store_ping = self.get_key(self.tm_settings_online, 'tm store ping')
+        self.tm_visible_store_num_of_items = self.get_key(self.tm_settings_online, 'visible store number of inv items')
         self.tm_visible_store_global_sleep = self.get_key(self.tm_settings_online, 'visible store global time')
         self.tm_api_key_checker_global_sleep = self.get_key(self.tm_settings_online, 'tm api key checker global time')
 
@@ -204,7 +205,7 @@ class Mongo:
         current_frame = inspect.currentframe()
         caller_frame = inspect.getouterframes(current_frame, 2)[1]
         file_path = caller_frame.filename
-        document_name = os.path.splitext(os.path.basename(file_path))[0]  # Извлекаем имя файла без пути и расширения
+        document_name = os.path.splitext(os.path.basename(file_path))[0]
 
         function_name = thread_name
         modified_function_name = function_name.replace("_", " ").title()

@@ -3,20 +3,24 @@
     "general" : {
         "waiting start time" : NumberInt(20),
         "thread start time" : NumberInt(5),
-        "thread function time" : NumberInt(3),
+        "thread function time" : NumberInt(15),
         "tg id" : NumberLong(-1001807211917),
         "tg token" : "6710866120:AAElhQPr-4PkOnZvvLDSnYA163Ez0td4KzQ",
         "history tg id" : NumberLong(-1001807211917),
         "history tg token" : "6710866120:AAElhQPr-4PkOnZvvLDSnYA163Ez0td4KzQ",
-        "tm url" : "http://market.csgo.com"
+        "tm url" : "http://market.csgo.com",
+        "sda global time" : NumberInt(30),
+        "add to sale global time" : NumberInt(30)
     },
     "online" : {
         "tm ping" : NumberInt(30),
-        "tm store ping" : NumberInt(7200)
+        "tm store ping" : NumberInt(7200),
+        "visible store global time" : NumberInt(30),
+        "tm api key checker global time" : NumberInt(30)
     },
     "restart" : {
-        "restart server global time" : NumberInt(300),
         "restart server validity time" : NumberInt(86400),
+        "restart server global time" : NumberInt(300),
         "restart bots global time" : NumberInt(28800),
         "restart bots name" : [
             {

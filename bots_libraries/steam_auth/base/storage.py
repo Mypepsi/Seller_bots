@@ -3,7 +3,7 @@ from typing import (
     Mapping,
 )
 
-from pysteamauth.abstract import CookieStorageAbstract
+from bots_libraries.steam_auth.abstract import CookieStorageAbstract
 
 
 class BaseCookieStorage(CookieStorageAbstract):

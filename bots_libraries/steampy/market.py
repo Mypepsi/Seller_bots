@@ -107,22 +107,6 @@ class SteamMarket:
         if response.get("needs_mobile_confirmation"):
             return self._confirm_sell_listing(assetid)
         return response
-    
-    @login_required
-    def create_sell_order_kadda(self, assetid: str, game: GameOptions, money_to_receive: str) -> dict:
-        data = {
-            "assetid": assetid,
-            "sessionid": self._session_id,
-            "contextid": game.context_id,
-            "appid": game.app_id,
-            "amount": 1,
-            "price": money_to_receive
-        }
-        headers = {'Referer': "%s/profiles/%s/inventory" % (SteamUrl.COMMUNITY_URL, self._steam_guard['steamid'])}
-        response = self._session.post(SteamUrl.COMMUNITY_URL + "/market/sellitem/", data, headers=headers)
-        #if response.get("needs_mobile_confirmation"):
-        #    return self._confirm_sell_listing(assetid)
-        return response
 
     @login_required
     def create_buy_order(self, market_name: str, price_single_item: str, quantity: int, game: GameOptions,

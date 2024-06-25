@@ -1,4 +1,4 @@
-from bots_libraries.information.logs import Logs
+from bots_libraries.base_info.logs import Logs
 from bots_libraries.creator.creator_steam import Steam
 
 import time
@@ -10,22 +10,26 @@ import urllib.parse
 class TMOnline(Steam):
     def __init__(self):
         super().__init__()
+        self.ping_alert = False
 
     def request_to_ping(self):
+        url = f"https://market.csgo.com/api/v2/ping-new?key=" + self.steamclient.tm_api
         json_data = {
             'access_token': f"{self.steamclient.access_token}"
         }
         if 'http' in self.steamclient.proxies:
             json_data['proxy'] = self.steamclient.proxies['http']
-        url = f"https://market.csgo.com/api/v2/ping-new?key=" + self.steamclient.tm_api
+
         try:
             response = requests.post(url, json=json_data, timeout=10)
-            if response:
+            if response.status_code == 200:
                 response_data = response.json()
                 if response_data['success'] is False and response_data['message'] != 'too early for pong':
                     Logs.log(f"{self.steamclient.username}: Ping Error: {response_data['message']}")
-                    self.tm_tg_bot.send_message(self.tm_tg_id,
-                                                f'TM Seller: Ping Error: {self.steamclient.username}')
+                    if not self.ping_alert:
+                        self.tm_tg_bot.send_message(self.tm_tg_id,
+                                                    f'TM Seller: Ping Error: {self.steamclient.username}')
+                        self.ping_alert = True
         except:
             pass
 
@@ -77,8 +81,8 @@ class TMOnline(Steam):
                 response = requests.get(items_url, timeout=10)
                 response_data = response.json()
                 items_on_sale = response_data['items']
-                print(f"{self.steamclient.username}  {items_on_sale}")
-                if items_on_sale is not None and len(items_on_sale) > 0:
+                if (items_on_sale is not None
+                        and len(items_on_sale) < self.tm_visible_store_num_of_items and len(items_on_sale) != 0):
                     for _ in range(len(items_on_sale)):
                         random_item = random.choice(items_on_sale)
                         if random_item['status'] == '1':
@@ -87,7 +91,7 @@ class TMOnline(Steam):
                             item_id = random_item['item_id']
                             another_tm_api = self.search_in_merges_by_username(self.steamclient.username)['tm apikey']
                             search_url = (f'https://market.csgo.com/api/v2/search-list-items-by-hash-name-all?'
-                                   f'key={another_tm_api}&extended=1&list_hash_name[]={coded_hash_name}')
+                                          f'key={another_tm_api}&extended=1&list_hash_name[]={coded_hash_name}')
                             search_response = requests.get(search_url, timeout=10)
                             search_response_data = search_response.json()
 
@@ -102,12 +106,15 @@ class TMOnline(Steam):
                                 self.tm_tg_bot.send_message(self.tm_tg_id,
                                                             f'TM Seller: No active items listed in Store: {username}')
                             break
+                elif len(items_on_sale) > self.tm_visible_store_num_of_items:
+                    Logs.log(f'{username}: Not all items listed in Store')
+                    self.tm_tg_bot.send_message(self.tm_tg_id, f'TM Seller: Not all items listed in Store: {username}')
+                    break
                 else:
                     my_inventory_url = f'https://market.csgo.com/api/v2/my-inventory/?key={self.steamclient.tm_api}'
                     my_inventory_response = requests.get(my_inventory_url, timeout=10)
                     my_inventory_response_data = my_inventory_response.json()
                     my_inventory = my_inventory_response_data['items']
-                    print(my_inventory)
                     tradable_inventory = []
                     for item in my_inventory:
                         if item['tradable'] == 1:

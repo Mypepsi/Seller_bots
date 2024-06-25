@@ -1,12 +1,12 @@
 from pymongo.errors import ServerSelectionTimeoutError
-from bots_libraries.information.logs import Logs
-from bots_libraries.information.mongo import Mongo
+from bots_libraries.base_info.logs import Logs
+from bots_libraries.base_info.mongo import Mongo
 from bots_libraries.tm_seller.tm_seller_steam import TMSteam
 # from bots_libraries.tm_seller.tm_seller_general import TMGeneral
 from bots_libraries.tm_seller.tm_seller_online import TMOnline
 # from bots_libraries.creator.creator_steam import Steam
 # from bots_libraries.creator.creator_database import DataBase
-from bots_libraries.information.restart import Restarter
+from bots_libraries.base_info.restart import Restarter
 # import threading
 # import time
 
