@@ -29,14 +29,14 @@ class CreatorSteam(Steam):
                     difference_to_update = current_timestamp - int(last_update_time)
                     if difference_to_update > self.creator_authorization_time_sleep:
                         self.user_agent = self.steamclient.user_agent
-                        self.steamclient.login_steam(self.steamclient.username, self.steamclient.password, self.steamclient.steam_guard, self.proxy)
+                        self.steamclient.login_steam(self.steamclient.username, self.steamclient.password, self.steamclient.steam_guard, self.steamclient.proxies)
                         Logs.log(
                             f'{self.steamclient.username}: Steam authorization is successful')
                         self.handle_account_data_doc()
                         time.sleep(10)
 
                 elif self.steamclient.username not in self.content_acc_data_dict:
-                    self.steamclient.login_steam(self.steamclient.username, self.steamclient.password, self.steamclient.steam_guard, self.proxy)
+                    self.steamclient.login_steam(self.steamclient.username, self.steamclient.password, self.steamclient.steam_guard, self.steamclient.proxies)
                     Logs.log(
                         f'{self.steamclient.username}: Steam authorization is successful')
 
@@ -103,6 +103,7 @@ class CreatorSteam(Steam):
     # endregion
 
     def steam_inventory(self):
+        self.update_db_prices_and_setting()
         if self.steamclient.username in self.content_acc_data_dict:
             try:
                 my_items = self.steamclient.get_inventory_from_link_with_session(
@@ -110,7 +111,9 @@ class CreatorSteam(Steam):
                     GameOptions.CS,
                     proxy=self.steamclient.proxies
                 )
+                all_prices = self.content_database_prices['DataBasePrices']
                 if len(my_items.items()) > 0:
+
                     current_timestamp = int(time.time())
 
                     filtered_items_full = {
@@ -122,15 +125,24 @@ class CreatorSteam(Steam):
                         for item_id, item_info in my_items.items()
                     }
 
-                    filtered_items_phases = {
-                        item_id: {
-                            "asset_id": item_id,
-                            "market_hash_name": item_info["market_hash_name"],
-                            "time": current_timestamp
-                        }
-                        for item_id, item_info in my_items.items()
-                        if item_info.get("tradable", 0) != 0
-                    }
+                    filtered_items_phases = {}
+
+                    for item_id, item_info in my_items.items():
+                        if item_info.get("tradable", 0) != 0:
+                            market_hash_name = item_info["market_hash_name"]
+                            max_price = None
+
+                            for price in all_prices:
+                                if market_hash_name in price:
+                                    max_price = float(price[market_hash_name]["max_price"])
+                                    break
+
+                            filtered_items_phases[item_id] = {
+                                "asset_id": item_id,
+                                "market_hash_name": market_hash_name,
+                                "launch_price": max_price,
+                                "time": current_timestamp
+                            }
 
                     filtered_items_tradable = {
                         item_id: {
@@ -149,13 +161,12 @@ class CreatorSteam(Steam):
                     except:
                         inventory_from_mongo = {}
 
-
-
                     for item_id, item_info in filtered_items_phases.items():
                         if item_id not in inventory_from_mongo:
                             inventory_from_mongo[item_id] = {
                                 "asset_id": item_id,
                                 "market_hash_name": item_info["market_hash_name"],
+                                "launch_price": item_info["launch_price"],
                                 "time": current_timestamp
                             }
 

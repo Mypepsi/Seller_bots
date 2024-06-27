@@ -73,9 +73,9 @@ class Steam(Mongo):
         while True:
             self.update_account_data_info()
             for acc in self.content_acc_data_list:
-                self.steamclient.username = acc['username']
                 steam_session = acc['steam session']
                 self.take_session(steam_session)
+                self.steamclient.username = acc['username']
                 function()
             modified_function_name = function.__name__.replace("_", " ").title()
             Logs.log(f'{modified_function_name}: All accounts parsed ({len(self.content_acc_data_list)} accounts in MongoDB)')

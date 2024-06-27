@@ -15,7 +15,8 @@ class Mongo:
         self.database = self.get_database('Seller_DataBases')
         self.database_prices_collection = self.get_collection(self.database, 'database_prices')
         self.database_settings_collection = self.get_collection(self.database, 'database_settings')
-        self.update_db_prices_and_setting()
+        self.content_database_prices = self.get_first_doc_from_mongo_collection(self.database_prices_collection)
+        self.content_database_settings = self.get_first_doc_from_mongo_collection(self.database_settings_collection)
 
         self.settings = self.get_database('Seller_Settings')
         self.creator_settings_collection = self.get_collection(self.settings, 'creator_settings')
@@ -34,7 +35,9 @@ class Mongo:
         self.content_acc_dict = self.get_dict_from_collection_list(self.content_acc_list, 'username')
 
         self.acc_data_collection = self.get_collection(self.accs, 'account_data')
-        self.update_account_data_info()
+        self.content_acc_data_list = self.get_all_docs_from_mongo_collection(self.acc_data_collection)
+        self.content_acc_data_dict = self.get_dict_from_collection_list(self.content_acc_data_list,
+                                                                        'username')
 
         self.acc_for_parsing_collection = self.get_collection(self.accs, 'account_for_parsing')
         self.content_acc_for_parsing_list = self.get_all_docs_from_mongo_collection(self.acc_for_parsing_collection)
@@ -122,8 +125,8 @@ class Mongo:
 
     def update_db_prices_and_setting(self):
         try:
-            self.content_database_prices = self.get_all_docs_from_mongo_collection(self.database_prices_collection)
-            self.content_database_settings = self.get_all_docs_from_mongo_collection(self.database_settings_collection)
+            self.content_database_prices = self.get_first_doc_from_mongo_collection(self.database_prices_collection)
+            self.content_database_settings = self.get_first_doc_from_mongo_collection(self.database_settings_collection)
         except Exception as e:
             Logs.log(f'Error while updating data from mongo: {e}')
 

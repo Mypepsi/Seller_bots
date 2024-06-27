@@ -4,8 +4,8 @@ import time
 from typing import List
 import requests
 from bs4 import BeautifulSoup
-from steampy import guard
-from steampy.exceptions import ConfirmationExpected
+from bots_libraries.steampy import guard
+from bots_libraries.steampy.exceptions import ConfirmationExpected
 
 
 class Confirmation:

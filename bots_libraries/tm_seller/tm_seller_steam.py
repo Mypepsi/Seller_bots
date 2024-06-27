@@ -1,19 +1,8 @@
 from bots_libraries.base_info.logs import Logs
-from bots_libraries.base_info.mongo import Mongo
 from bots_libraries.creator.creator_steam import Steam
-from bots_libraries.steampy.confirmation import ConfirmationExecutor
-from bots_libraries.steampy.confirmation import Confirmation
 from bots_libraries.steampy.models import GameOptions
 from bots_libraries.steampy.client import Asset
-from lxml import html
-from fake_useragent import UserAgent
-import string
-import pickle
-import json
-import io
-import random
 import time
-import traceback
 import requests
 
 
@@ -21,6 +10,8 @@ class TMSteam(Steam):
     def __init__(self):
         super().__init__()
         self.acc_history_collection = None
+        self.commission = 0
+        self.rate = 0
 
     def request_give_p2p_all(self, username):
         try:
@@ -225,106 +216,155 @@ class TMSteam(Steam):
         while True:
             self.update_account_data_info()
             self.update_db_prices_and_setting()
-            username = ''
-            acc_data_inventory = []
+            acc_data_tradable_inventory = {}
+            acc_data_phases_inventory = {}
             try:
-                username = acc_info['username']
-                acc_data_inventory = acc_info['steam inventory tradable']
+                acc_data_tradable_inventory = acc_info['steam inventory tradable']
+                acc_data_phases_inventory = acc_info['steam inventory phases']
+
                 steam_session = acc_info['steam session']
                 self.take_session(steam_session)
             except:
                 Logs.log('Error during taking a session')
-            filtered_inventory = self.get_and_filtered_inventory(acc_data_inventory)
+            filtered_inventory = self.get_and_filtered_inventory(acc_data_tradable_inventory)
 
-            items = {}
-            if 'items' in response and type(response['items']) == list:
-                for i in range(len(response['items'])):
-                    if response['items'][i]['tradable'] != 1:
-                        continue
-                    item_name = response['items'][i]['market_hash_name']
-                    item_id = response['items'][i]['id']
-                    if item_name not in items:
-                        items.update({item_name: [item_id]})
-                    else:
-                        items[item_name].append(item_id)
-            else:
-                return
-            if len(items) == 0:
-                return
+            try:
+                self.commission = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_commission']
+                self.rate = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_rate']
+            except:
+                Logs.log(f'Error during taking a info from DataBaseSettings -> TM_Seller')
+            try:
+                database_setting_bots = self.content_database_settings['DataBaseSettings']['Sellers_SalePrice']['bots']
+            except:
+                database_setting_bots = {}
+                Logs.log(f'Error during taking a info from DataBaseSettings -> Sellers_SalePrice -> bots')
+
+            tm_seller_value = None
+            for key, value in database_setting_bots.items():
+                if 'tm_seller' in key:
+                    tm_seller_value = value
+                    break
+            for asset_id in filtered_inventory:
+                market_price = self.get_market_price(acc_data_phases_inventory[asset_id], tm_seller_value)
+                add_to_sale_url = (f'https://market.csgo.com/api/v2/add-to-sale?key={self.steamclient.tm_api}'
+                       f'&cur=RUB&id={asset_id}&price={market_price}')
+                #requests.get(add_to_sale_url, timeout=10)
+                time.sleep(2)
+            time.sleep(time_sleep)
 
 
+
+
+
+
+    @staticmethod
+    def find_matching_key(wanted, dictionary):
+        keys = sorted([int(k) for k in dictionary.keys()])  # turn into integer
+        found_key = None
+        for i in range(len(keys) - 1):
+            if keys[i] <= wanted < keys[i + 1]:
+                found_key = str(keys[i])
+                break
+        if found_key is None and wanted >= keys[-1]:
+            found_key = str(keys[-1])
+        return found_key
+
+    def get_market_price(self, asset_id_in_phases_inventory, conditions):
+        start_sale_time = asset_id_in_phases_inventory['time']
+        hash_name = asset_id_in_phases_inventory['market_hash_name']
+        for condition in conditions:
+            if condition['date to'] >= start_sale_time >= condition['date from']:
+                current_timestamp = int(time.time())
+                phases_difference = (current_timestamp - start_sale_time) // 86400
+                phases_key = self.find_matching_key(phases_difference, condition['days from'])
+                all_prices = self.content_database_prices['DataBasePrices']
+                for price in all_prices:
+                    if hash_name in price:
+                        max_price = float(price[hash_name]["max_price"])
+                        price_range = self.find_matching_key(max_price,
+                                                             condition['days from'][phases_key]['prices'])
+                        margin_max_price = max_price * condition['days from'][phases_key]['prices'][price_range]
+                        limits_margin_max_price = (margin_max_price *
+                                                   condition['days from'][phases_key]['limits']['max'])
+
+                        try:
+                            market_price = round(limits_margin_max_price * self.commission * self.rate, 2)
+                        except:
+                            market_price = 0
+                        return market_price
+        return None
 
             # выставление по списку
-            if add_to_sale_mode == 2:
-                mode_2_items = {}
-                listed_items = Bot.get_listed_items()
-                for i in range(len(listed_items)):
-                    if listed_items[i] in items:
-                        mode_2_items.update({listed_items[i]: items[listed_items[i]]})
-                items = mode_2_items
-
-            # выставление
-            if len(items) == 0:
-                return
-            else:
-                # получение цен для выставления
-                self.db_lock.acquire()
-                prices = dict(self.db)
-                self.db_lock.release()
-
-                # шаги для выставления
-                add_to_sale_step_1 = Settings.return_setting(
-                    self.general_settings_path, self.add_to_sale_step_1_name, 'float')
-                add_to_sale_step_2 = Settings.return_setting(
-                    self.general_settings_path, self.add_to_sale_step_2_name, 'float')
-                add_to_sale_step_3 = Settings.return_setting(
-                    self.general_settings_path, self.add_to_sale_step_3_name, 'float')
-
-                currency_type = Settings.return_setting(
-                    self.price_calculate_path, 'rate type tm', 'int')
-
-                currency = Settings.return_setting(
-                    self.price_calculate_path, 'currency tm', 'float')
-                if currency_type == 1:
-                    currency = 1 / currency
-
-                for key in items:
-                    item_name = key
-                    try:
-                        item_price = prices[item_name]['price']['max_price']
-                    except KeyError:
-                        continue
-
-                    if item_price != 0:
-                        if 0 < item_price <= 15:
-                            item_price = item_price * add_to_sale_step_1
-                        elif 15 < item_price <= 150:
-                            item_price = item_price * add_to_sale_step_2
-                        else:
-                            item_price = item_price * add_to_sale_step_3
-
-                        # умножение или деление на валюту цены и выставление
-                        sale_price = int(item_price * currency * 100)
-                        # выставление на продажу
-                        for i in range(len(items[key])):
-                            url = self.market_add_to_sale_url + items[key][i].replace('&', '%26') + f'&price={sale_price}'
-                            response = self.request(url, 'get')
-                            if response['success']:
-                                try:
-                                    response = response['rs'].json()
-                                    if 'success' in response and response['success']:
-                                        self.logs.write_log(self.logs_path, 'add to sale', f'предмет {key} '
-                                                                                           f'выставлен за {round(sale_price / 100, 2)} RUB')
-                                except Exception:
-                                    self.logs.write_log(self.logs_path, 'add to sale', f'ошибка json')
-                            else:
-                                self.logs.write_log(self.logs_path,
-                                                    'add to sale',
-                                                    f'ошибка маркета, не удалось выставить предмет.')
-
-                    else:
-                        continue
-
+            # if add_to_sale_mode == 2:
+            #     mode_2_items = {}
+            #     listed_items = Bot.get_listed_items()
+            #     for i in range(len(listed_items)):
+            #         if listed_items[i] in items:
+            #             mode_2_items.update({listed_items[i]: items[listed_items[i]]})
+            #     items = mode_2_items
+            #
+            # # выставление
+            # if len(items) == 0:
+            #     return
+            # else:
+            #     # получение цен для выставления
+            #     self.db_lock.acquire()
+            #     prices = dict(self.db)
+            #     self.db_lock.release()
+            #
+            #     # шаги для выставления
+            #     add_to_sale_step_1 = Settings.return_setting(
+            #         self.general_settings_path, self.add_to_sale_step_1_name, 'float')
+            #     add_to_sale_step_2 = Settings.return_setting(
+            #         self.general_settings_path, self.add_to_sale_step_2_name, 'float')
+            #     add_to_sale_step_3 = Settings.return_setting(
+            #         self.general_settings_path, self.add_to_sale_step_3_name, 'float')
+            #
+            #     currency_type = Settings.return_setting(
+            #         self.price_calculate_path, 'rate type tm', 'int')
+            #
+            #     currency = Settings.return_setting(
+            #         self.price_calculate_path, 'currency tm', 'float')
+            #     if currency_type == 1:
+            #         currency = 1 / currency
+            #
+            #     for key in items:
+            #         item_name = key
+            #         try:
+            #             item_price = prices[item_name]['price']['max_price']
+            #         except KeyError:
+            #             continue
+            #
+            #         if item_price != 0:
+            #             if 0 < item_price <= 15:
+            #                 item_price = item_price * add_to_sale_step_1
+            #             elif 15 < item_price <= 150:
+            #                 item_price = item_price * add_to_sale_step_2
+            #             else:
+            #                 item_price = item_price * add_to_sale_step_3
+            #
+            #             # умножение или деление на валюту цены и выставление
+            #             sale_price = int(item_price * currency * 100)
+            #             # выставление на продажу
+            #             for i in range(len(items[key])):
+            #                 url = self.market_add_to_sale_url + items[key][i].replace('&', '%26') + f'&price={sale_price}'
+            #                 response = self.request(url, 'get')
+            #                 if response['success']:
+            #                     try:
+            #                         response = response['rs'].json()
+            #                         if 'success' in response and response['success']:
+            #                             self.logs.write_log(self.logs_path, 'add to sale', f'предмет {key} '
+            #                                                                                f'выставлен за {round(sale_price / 100, 2)} RUB')
+            #                     except Exception:
+            #                         self.logs.write_log(self.logs_path, 'add to sale', f'ошибка json')
+            #                 else:
+            #                     self.logs.write_log(self.logs_path,
+            #                                         'add to sale',
+            #                                         f'ошибка маркета, не удалось выставить предмет.')
+            #
+            #         else:
+            #             continue
+            #
 
 
 
