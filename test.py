@@ -1,2 +1,2 @@
-lol = 186400 // 86400
+lol = int(None)
 print(lol)

@@ -148,10 +148,13 @@ class TMSteam(Steam):
                     try:
                         msg = response_data['offers'][i]['tradeoffermessage']
                         unique_msg_in_send_offers = []
-                        for offer in send_offers:
+                        for offer in send_offers:  # Resending
                             if msg in offer.values() and msg not in unique_msg_in_send_offers:
                                 unique_msg_in_send_offers.append(msg)
                                 trade_id = offer['trade id']
+                                if trade_id is None:
+                                    continue
+
                                 response_steam_trade_offer = self.steamclient.get_trade_offer_state(trade_id)
 
                                 if not isinstance(response_steam_trade_offer, dict):
@@ -162,8 +165,13 @@ class TMSteam(Steam):
                                 else:
                                     continue
 
+                                if int(offer_status) == 9:
+                                    self.steamclient.confirm_offer_via_tradeofferid({'tradeofferid': trade_id})
+                                    continue
+
                                 if int(offer_status) not in [1, 4, 8, 10]:
                                     continue
+
                             self.make_steam_offer(response_data['offers'][i], send_offers, acc_data_inventory_phases)
                     except:
                         Logs.log('Error in tm trades')
