@@ -1,6 +1,5 @@
 import base64
 import decimal
-import time
 import bs4
 import urllib.parse as urlparse
 from typing import List, Union
@@ -19,7 +18,7 @@ from bots_libraries.steampy.models import Asset, TradeOfferState, SteamUrl, Game
 from bots_libraries.steampy.utils import text_between, texts_between, merge_items_with_descriptions_from_inventory, \
     steam_id_to_account_id, merge_items_with_descriptions_from_offers, get_description_key, \
     merge_items_with_descriptions_from_offer, account_id_to_steam_id, get_key_value_from_url, parse_price
-from pysteamauth.pb2.steammessages_auth.steamclient_pb2 import (
+from bots_libraries.steam_auth.pb2.steammessages_auth.steamclient_pb2 import (
     CAuthentication_AllowedConfirmation,
     CAuthentication_BeginAuthSessionViaCredentials_Request,
     CAuthentication_BeginAuthSessionViaCredentials_Response,
@@ -76,7 +75,7 @@ class SteamClient:
         message = CAuthentication_GetPasswordRSAPublicKey_Request(
             account_name=username,
         )
-        rsa_data = self._fetch_rsa_params_new_pidorasi(message)
+        rsa_data = self._fetch_rsa_params(message)
         encrypted_password = self._encrypt_password_new(password, rsa_data)
         message = CAuthentication_BeginAuthSessionViaCredentials_Request(
             account_name=username,
@@ -158,19 +157,6 @@ class SteamClient:
             return merge_items_with_descriptions_from_inventory(response_dict, game)
         return response_dict
 
-    @staticmethod
-    def get_inventory_from_link(partner_steam_id: str, game: GameOptions, proxy=None, merge: bool = True,
-                                count: int = 5000) -> dict:
-        url = '/'.join([SteamUrl.COMMUNITY_URL, 'inventory', partner_steam_id, game.app_id, game.context_id])
-        params = {'l': 'english',
-                  'count': count}
-        response_dict = requests.get(url, params=params, proxies=proxy).json()
-        if response_dict['success'] != 1:
-            raise ApiException('Success value should be 1.')
-        if merge:
-            return merge_items_with_descriptions_from_inventory(response_dict, game)
-        return response_dict
-
     def get_inventory_from_link_with_session(self, partner_steam_id: str, game: GameOptions, proxy=None, merge: bool = True,
                                 count: int = 5000) -> dict:
         url = '/'.join([SteamUrl.COMMUNITY_URL, 'inventory', partner_steam_id, game.app_id, game.context_id])
@@ -224,30 +210,6 @@ class SteamClient:
     def cancel_trade_offer(self, trade_offer_id: str) -> dict:
         url = 'https://steamcommunity.com/tradeoffer/' + trade_offer_id + '/cancel'
         response = self._session.post(url, data={'sessionid': self._get_session_id()}).json()
-        return response
-
-    @login_required
-    def make_offer(self, items_from_me: List[Asset], items_from_them: List[Asset], partner_steam_id: str,
-                   message: str = '') -> dict:
-        offer = self._create_offer_dict(items_from_me, items_from_them)
-        session_id = self._get_session_id()
-        url = SteamUrl.COMMUNITY_URL + '/tradeoffer/new/send'
-        server_id = 1
-        params = {
-            'sessionid': session_id,
-            'serverid': server_id,
-            'partner': partner_steam_id,
-            'tradeoffermessage': message,
-            'json_tradeoffer': json.dumps(offer),
-            'captcha': '',
-            'trade_offer_create_params': '{}'
-        }
-        partner_account_id = steam_id_to_account_id(partner_steam_id)
-        headers = {'Referer': SteamUrl.COMMUNITY_URL + '/tradeoffer/new/?partner=' + partner_account_id,
-                   'Origin': SteamUrl.COMMUNITY_URL}
-        response = self._session.post(url, data=params, headers=headers).json()
-        if response.get('needs_mobile_confirmation'):
-            response.update(self._confirm_transaction(response['tradeofferid']))
         return response
 
     def get_trade_offers_summary(self) -> dict:
@@ -490,7 +452,7 @@ class SteamClient:
         response = self._session.post('https://api.steampowered.com/IAuthenticationService/BeginAuthSessionViaCredentials/v1', data=data)
         return CAuthentication_BeginAuthSessionViaCredentials_Response.FromString(response.content)
 
-    def _fetch_rsa_params_new_pidorasi(self, message, current_number_of_repetitions: int = 0):
+    def _fetch_rsa_params(self, message, current_number_of_repetitions: int = 0):
         maximal_number_of_repetitions = 5
         try:
             key_response = self._session.get(
@@ -501,7 +463,7 @@ class SteamClient:
 
         except:
             if current_number_of_repetitions < maximal_number_of_repetitions:
-                return self._fetch_rsa_params_new_pidorasi(message, current_number_of_repetitions + 1)
+                return self._fetch_rsa_params(message, current_number_of_repetitions + 1)
             else:
                 raise ValueError('Could not obtain rsa-key')
 

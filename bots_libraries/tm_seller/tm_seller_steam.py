@@ -23,32 +23,48 @@ class TMSteam(Steam):
             return None
 
     def make_steam_offer(self, response_data_offer, send_offers, inventory_phases):
-        names = []
-        assets = []
-        assets_for_offer = []
-        msg = response_data_offer['tradeoffermessage']
-        for as_ in response_data_offer['items']:
-            asset_id = as_['assetid']
-            assets.append(asset_id)
-            my_asset = Asset(str(asset_id), GameOptions.CS)
-            assets_for_offer.append(my_asset)
-
-        partner = response_data_offer['partner']
-        token = response_data_offer['token']
-        trade_offer_url = f'https://steamcommunity.com/tradeoffer/new/?partner={partner}&token={token}'
         try:
-            steam_response = self.steamclient.make_offer_with_url(assets_for_offer, [], trade_offer_url, '')
-            time.sleep(3)
-            if 'tradeofferid' in steam_response:
-                self.handle_tm_history_doc(inventory_phases, send_offers, assets, names, msg, steam_response)
-                Logs.log(f"{self.steamclient.username}: Steam Trade Sent: {names}")
-            else:
-                Logs.log(f"{self.steamclient.username}: Steam Trade Error : {names}")
-        except Exception as e:
-            Logs.log(f'Error when sending a steam trade: {e}')
+            names = []
+            assets = []
+            assets_for_offer = []
+            msg = response_data_offer['tradeoffermessage']
+            for as_ in response_data_offer['items']:
+                asset_id = as_['assetid']
+                assets.append(asset_id)
+                my_asset = Asset(str(asset_id), GameOptions.CS)
+                assets_for_offer.append(my_asset)
 
-    def handle_tm_history_doc(self, inventory_phases, send_offers, assets_list, name_list, msg, steam_response):
+            partner = response_data_offer['partner']
+            token = response_data_offer['token']
+            trade_offer_url = f'https://steamcommunity.com/tradeoffer/new/?partner={partner}&token={token}'
+            try:
+                steam_response = self.steamclient.make_offer_with_url(assets_for_offer, [], trade_offer_url, '')
+                confirm_steam_response = self.steamclient.confirm_offer_via_tradeofferid(steam_response)
+                time.sleep(3)
+                if 'tradeofferid' in confirm_steam_response:
+                    self.handle_tm_history_doc(inventory_phases, send_offers, assets, names, msg, confirm_steam_response)
+                    Logs.log(f"{self.steamclient.username}: Steam Trade Sent: {names}")
+                else:
+                    Logs.log(f"{self.steamclient.username}: Steam Trade Error : {names}")
+            except Exception as e:
+                self.handle_tm_history_doc(inventory_phases, send_offers, assets, names, msg, None,
+                                           success=False)
+                Logs.log(f'Error when sending a steam trade: {e}')
+        except Exception as e:
+            Logs.log(f'Critical error during make steam offer: {e}')
+
+    def handle_tm_history_doc(self, inventory_phases, send_offers, assets_list, name_list, msg, steam_response,
+                              success=True):
         current_timestamp = int(time.time())
+        if success:
+            steam_status = 'sent'
+            trade_id = steam_response['tradeofferid']
+            sent_time = current_timestamp
+        else:
+            steam_status = 'error_send'
+            trade_id = None
+            sent_time = None
+
         for asset in assets_list:
             name = ''
             for item in inventory_phases.values():
@@ -57,34 +73,54 @@ class TMSteam(Steam):
                     name_list.append(name)
                     break
             name_exists = any(entry.get('site id') == msg for entry in send_offers)
+
             if name_exists:
-                self.acc_history_collection.update_one(
-                    {
-                        "$and": [
-                            {"asset id": asset},
-                            {"site id": msg}
-                        ]
-                    },
-                    {
-                        "$set": {
-                            "steam status": 'again sent',
-                            "sent time": current_timestamp,
-                            "trade id": steam_response['tradeofferid']
+                if success:
+                    steam_status = 'again_sent'
+                    self.acc_history_collection.update_one(
+                        {
+                            "$and": [
+                                {"asset id": asset},
+                                {"site id": msg}
+                            ]
+                        },
+                        {
+                            "$set": {
+                                "steam status": steam_status,
+                                "status time": current_timestamp,
+                                "sent time": sent_time,
+                                "trade id": trade_id
+                            }
                         }
-                    }
-                )
+                    )
+                else:
+                    steam_status = 'error_again_sent'
+                    self.acc_history_collection.update_one(
+                        {
+                            "$and": [
+                                {"asset id": asset},
+                                {"site id": msg}
+                            ]
+                        },
+                        {
+                            "$set": {
+                                "steam status": steam_status
+                            }
+                        }
+                    )
             else:
                 data_append = {
-                    "name": name,
-                    "price": 0,
+                    "transaction": "sale_record",
                     "site": "tm",
-                    "steam status": 'sent',
-                    "site status": 'active_deal',
                     "time": current_timestamp,
+                    "name": name,
+                    "steam status": steam_status,
+                    "site status": 'active_deal',
+                    "status time": current_timestamp,
                     "site id": msg,
                     "asset id": asset,
-                    "trade id": steam_response['tradeofferid'],
-                    "sent time": current_timestamp
+                    "trade id": trade_id,
+                    "sent time": sent_time
                 }
                 self.acc_history_collection.insert_one(data_append)
 
@@ -128,7 +164,7 @@ class TMSteam(Steam):
 
                                 if int(offer_status) not in [1, 4, 8, 10]:
                                     continue
-                            self.make_steam_offer(response_data['offers'][i],send_offers, acc_data_inventory_phases)
+                            self.make_steam_offer(response_data['offers'][i], send_offers, acc_data_inventory_phases)
                     except:
                         Logs.log('Error in tm trades')
             elif 'error' in response_data:

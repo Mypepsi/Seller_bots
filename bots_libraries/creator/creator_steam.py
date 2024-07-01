@@ -21,7 +21,6 @@ class CreatorSteam(Steam):
     def steam_login(self):
         number_of_try = 1
         while True:
-            self.create_history_docs()
             try:
                 current_timestamp = int(time.time())
                 if self.steamclient.username in self.content_acc_data_dict:
@@ -33,6 +32,7 @@ class CreatorSteam(Steam):
                         Logs.log(
                             f'{self.steamclient.username}: Steam authorization is successful')
                         self.handle_account_data_doc()
+                        self.create_history_docs()
                         time.sleep(10)
 
                 elif self.steamclient.username not in self.content_acc_data_dict:
@@ -64,8 +64,7 @@ class CreatorSteam(Steam):
 
     def handle_account_data_doc(self):
         current_timestamp = int(time.time())
-
-        if self.steamclient.proxies == {"NoProxy": 1}:
+        if self.steamclient.proxies is None:
             proxy_in_accounts_data = None
         else:
             try:
@@ -130,17 +129,20 @@ class CreatorSteam(Steam):
                     for item_id, item_info in my_items.items():
                         if item_info.get("tradable", 0) != 0:
                             market_hash_name = item_info["market_hash_name"]
-                            max_price = None
+                            max_price = 0
+                            service_launch_price = None
 
                             for price in all_prices:
                                 if market_hash_name in price:
                                     max_price = float(price[market_hash_name]["max_price"])
+                                    service_launch_price = price[market_hash_name]["service_max_price"]
                                     break
 
                             filtered_items_phases[item_id] = {
                                 "asset_id": item_id,
                                 "market_hash_name": market_hash_name,
                                 "launch_price": max_price,
+                                "service_launch_price": service_launch_price,
                                 "time": current_timestamp
                             }
 
@@ -167,6 +169,7 @@ class CreatorSteam(Steam):
                                 "asset_id": item_id,
                                 "market_hash_name": item_info["market_hash_name"],
                                 "launch_price": item_info["launch_price"],
+                                "service_launch_price": item_info["service_launch_price"],
                                 "time": current_timestamp
                             }
 
@@ -190,12 +193,10 @@ class CreatorSteam(Steam):
             steam_session = acc['steam session']
             self.take_session(steam_session)
             self.proxy_for_check.append(self.steamclient.proxies)
-
         unique_proxy_for_check = []
         for proxy in self.proxy_for_check:
             if proxy not in unique_proxy_for_check and proxy is not None:
                 unique_proxy_for_check.append(proxy)
-
         self.proxy_for_check = unique_proxy_for_check
         for proxy in self.proxy_for_check:
             try:
@@ -265,6 +266,32 @@ class CreatorSteam(Steam):
             self.create_api_key()
         time.sleep(10)
 
+    def revoke_api_key(self):
+        try:
+            url = 'https://steamcommunity.com/dev/revokekey'
+            headers = {
+                'Cookie': self.get_steam_comm_cookie(),
+                'Origin': 'https://steamcommunity.com',
+                'Referer': 'https://steamcommunity.com/dev/apikey',
+                'X-Requested-With': 'XMLHttpRequest',
+                'User-Agent': self.steamclient.user_agent
+            }
+
+            sessioon_id = self.get_steam_comm_cookie().split(';')
+            for asd in sessioon_id:
+                if 'sessionid' in asd:
+                    sessioon_id = asd.split('=')[1]
+                    break
+
+            data = {'Revoke': 'Revoke My Steam Web API Key',
+                    'sessionid': sessioon_id}
+            delete_api_key_response = self.steamclient.session.post(url, headers=headers, data=data, timeout=10)
+            if delete_api_key_response:
+                Logs.log(f'{self.steamclient.username}: Steam ApiKey removed')
+                self.create_api_key()
+        except Exception:
+            Logs.log(f'{self.steamclient.username}: error revoke_api_key')
+
     def create_api_key(self):
         try:
             headers = {
@@ -329,25 +356,6 @@ class CreatorSteam(Steam):
             Logs.log(f'{self.steamclient.username}: Steam ApiKey not created')
             pass
 
-    def get_steam_comm_cookie(self):
-        str = ''
-        for cookie in self.steamclient._session.cookies:
-            if cookie.domain == 'steamcommunity.com':
-                str += cookie.name + '=' + cookie.value + '; '
-        return str[0: len(str) - 2]
-
-    def get_api_key(self, text):
-        parsed_body = html.fromstring(text)
-        api_key = parsed_body.xpath("//div[@id='bodyContents_ex']/p")
-        if len(api_key) == 0:
-            return False
-        api_key_ = ''
-        for p in api_key:
-            if 'Key: ' in p.text:
-                api_key_ = p.text.replace('Key: ', '')
-                return api_key_
-        return api_key_
-
     def confrim_request_api_key(self, request_id: str):
         try:
             confrirmations = ConfirmationExecutor(self.steamclient.steam_guard['identity_secret'],
@@ -375,31 +383,24 @@ class CreatorSteam(Steam):
             print(traceback.format_exc())
             return False
 
-    def revoke_api_key(self):
-        try:
-            url = 'https://steamcommunity.com/dev/revokekey'
-            headers = {
-                'Cookie': self.get_steam_comm_cookie(),
-                'Origin': 'https://steamcommunity.com',
-                'Referer': 'https://steamcommunity.com/dev/apikey',
-                'X-Requested-With': 'XMLHttpRequest',
-                'User-Agent': self.steamclient.user_agent
-            }
+    def get_steam_comm_cookie(self):
+        str = ''
+        for cookie in self.steamclient._session.cookies:
+            if cookie.domain == 'steamcommunity.com':
+                str += cookie.name + '=' + cookie.value + '; '
+        return str[0: len(str) - 2]
 
-            sessioon_id = self.get_steam_comm_cookie().split(';')
-            for asd in sessioon_id:
-                if 'sessionid' in asd:
-                    sessioon_id = asd.split('=')[1]
-                    break
-
-            data = {'Revoke': 'Revoke My Steam Web API Key',
-                    'sessionid': sessioon_id}
-            delete_api_key_response = self.steamclient.session.post(url, headers=headers, data=data, timeout=10)
-            if delete_api_key_response:
-                Logs.log(f'{self.steamclient.username}: Steam ApiKey removed')
-                self.create_api_key()
-        except Exception:
-            Logs.log(f'{self.steamclient.username}: error revoke_api_key')
+    def get_api_key(self, text):
+        parsed_body = html.fromstring(text)
+        api_key = parsed_body.xpath("//div[@id='bodyContents_ex']/p")
+        if len(api_key) == 0:
+            return False
+        api_key_ = ''
+        for p in api_key:
+            if 'Key: ' in p.text:
+                api_key_ = p.text.replace('Key: ', '')
+                return api_key_
+        return api_key_
 
     # endregion
 

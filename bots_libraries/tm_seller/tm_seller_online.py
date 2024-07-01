@@ -140,7 +140,6 @@ class TMOnline(Steam):
                     balance_url = f'https://market.csgo.com/api/v2/get-money?key={tm_api_key}'
                     search_response = requests.get(balance_url, timeout=10)
                     search_response_data = search_response.json()
-                    print(search_response_data)
                     if 'error' in search_response_data and search_response_data['error'] == 'Bad KEY':
                         Logs.log(f'{username}: TM API key Error')
                         self.tm_tg_bot.send_message(self.tm_tg_id, f'TM Seller: TM API key Error: {username}')

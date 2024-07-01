@@ -24,15 +24,17 @@ class Restarter(Mongo):
 
     def schedule_restart_bots(self, restart_info_bots, global_time):
         while True:
-            command_json = "pm2 jlist > /dev/null"
+            command_json = "pm2 jlist"
             process_list = []
             try:
                 time.sleep(global_time)
-                result = subprocess.run(command_json, shell=True, check=True, capture_output=True, text=True)
+                result = subprocess.run(command_json, shell=True, check=True, stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE, text=True)
                 if result.stdout:
                     start_index = result.stdout.find("[")
                     if start_index != -1:
                         process_list = json.loads(result.stdout[start_index:])
+
             except Exception:
                 process_list = None
                 Logs.log("No output from pm2 jlist command")
@@ -66,9 +68,10 @@ class Restarter(Mongo):
 
     def restart_bot(self, bot_name):
         try:
-            command_restart = f'pm2 restart {bot_name}'
+            command_restart = f'pm2 restart {bot_name} > /dev/null'
             Logs.log(f"{bot_name} Restarted")
             os.system(command_restart)
+
             time.sleep(5)
         except Exception as e:
             Logs.log(f"Error restarting {bot_name}: {e}")

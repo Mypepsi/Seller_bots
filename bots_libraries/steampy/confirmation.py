@@ -109,7 +109,6 @@ class ConfirmationExecutor:
         response = self._session.get(self.CONF_URL + '/getlist', params=params, headers=headers).json()
         return response
 
-
     def get_steam_comm_cookie(self):
         str = ''
         for cookie in self._session.cookies:

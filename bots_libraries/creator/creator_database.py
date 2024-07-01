@@ -9,7 +9,6 @@ class DataBase(Mongo):
     def __init__(self):
         super().__init__()
 
-
     def refresh_db_thread(self):
         while True:
             current_timestamp = int(time.time())
@@ -65,7 +64,7 @@ class DataBase(Mongo):
                                                     "buff_full_price": buff_full_price,
                                                     "steam_full_price": steam_full_price,
                                                     "max_price": 0,
-                                                    "service_max_price": "No"
+                                                    "service_max_price": None
                                                 }
 
                                                 for item in db_seller_max_price_list:

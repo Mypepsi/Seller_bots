@@ -79,7 +79,6 @@ class Mongo:
         self.creator_restart_bots_global_sleep = self.get_key(self.creator_settings_restart, 'restart bots global time')
         self.creator_restart_info_bots = self.get_key(self.creator_settings_restart, 'restart bots name')  # list of dict
 
-
         # endregion
 
         # region information from tm settings collection
@@ -95,10 +94,13 @@ class Mongo:
         self.tm_history_tg_token = self.get_key(self.tm_settings_general, 'history tg token')
         if self.tm_history_tg_token:
             self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
-        self.tm_sda_global_sleep = self.get_key(self.tm_settings_general, 'sda global time')
         self.tm_add_to_sale_global_sleep = self.get_key(self.tm_settings_general, 'add to sale global time')
-
         self.tm_url = self.get_key(self.tm_settings_general, 'tm url')
+
+
+        self.tm_settings_steam = self.get_key(self.content_settings_tm, 'steam')
+        self.tm_sda_global_sleep = self.get_key(self.tm_settings_steam, 'sda global time')
+
 
         self.tm_settings_online = self.get_key(self.content_settings_tm, 'online')
         self.tm_ping = self.get_key(self.tm_settings_online, 'tm ping')
@@ -142,7 +144,6 @@ class Mongo:
         except Exception as e:
             Logs.log(f"Error during merging accounts: {e}")
             return result
-
 
     def search_in_merges_by_username(self, username):
         for sublist in self.content_merges:
@@ -200,7 +201,7 @@ class Mongo:
                 results_dict[account_name] = doc
         return results_dict
 
-    def error_alert(self, thread_name: str, error: Exception) -> None:
+    def error_alert(self, thread_name: str, error) -> None:
         global threads_alert
         if 'threads_alert' not in globals():
             threads_alert = False
@@ -212,7 +213,7 @@ class Mongo:
 
         function_name = thread_name
         modified_function_name = function_name.replace("_", " ").title()
-        Logs.log(f'{modified_function_name} has not started: {error}')
+        Logs.log(f'{modified_function_name}: has not started: {error}')
         try:
             acc_setting_first_username = self.content_acc_list[0]['username']
         except:
