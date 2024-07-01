@@ -227,21 +227,30 @@ class SteamClient:
         except:
             return False
 
-
-    def get_trade_offers(self, merge: bool = True) -> dict:
-        params = {'access_token': self.access_token,
-                  'get_sent_offers': 1,
-                  'get_received_offers': 1,
-                  'get_descriptions': 1,
-                  'language': 'english',
-                  'active_only': 1,
-                  'historical_only': 0,
-                  'time_historical_cutoff': ''}
-        response = self.api_call('GET', 'IEconService', 'GetTradeOffers', 'v1', params).json()
-        response = self._filter_non_active_offers(response)
-        if merge:
-            response = merge_items_with_descriptions_from_offers(response)
-        return response
+    def get_trade_offers(self, access_token: str,
+                         get_sent_offers: int,
+                         get_received_offers: int,
+                         get_descriptions: int,
+                         active_only: int,
+                         historical_only: int,
+                         language: str = 'english',
+                         time_historical_cutoff: str = ''):
+        url = f'https://api.steampowered.com/IEconService/GetTradeOffers/v1/'
+        params = {
+            'key': access_token,
+            'get_sent_offers': get_sent_offers,
+            'get_received_offers': get_received_offers,
+            'get_descriptions': get_descriptions,
+            'language': language,
+            'active_only': active_only,
+            'historical_only': historical_only,
+            'time_historical_cutoff': time_historical_cutoff
+        }
+        try:
+            response = self._session.get(url, params=params, timeout=10)
+            return response.json()
+        except:
+            return None
 
     def get_trade_offer(self, trade_offer_id: str, merge: bool = True) -> dict:
         params = {'key': self._api_key,

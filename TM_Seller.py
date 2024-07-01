@@ -21,16 +21,18 @@ if __name__ == '__main__':
             api_chk = TMOnline()
             add_sale = TMSteam()
             tm_trd = TMSteam()
+            chk_trd = TMSteam()
 
 
             # onl_thd.work_with_steam_create_thread(onl_thd.ping, onl_thd.tm_ping, onl_thd.tm_thread_function_sleep)
             # str_png.work_with_steam_create_thread(str_png.store_ping, str_png.tm_store_ping, onl_thd.tm_thread_function_sleep)
             # str_vsb.work_with_steam_create_thread(str_vsb.store_items_visible, str_vsb.tm_visible_store_global_sleep, str_vsb.tm_thread_function_sleep)
             # api_chk.validity_tm_apikey(api_chk.tm_api_key_checker_global_sleep)
-            #tm_trd.work_with_steam_create_thread(tm_trd.tm_trades, tm_trd.tm_sda_global_sleep, tm_trd.tm_thread_function_sleep)
+            # tm_trd.work_with_steam_create_thread(tm_trd.tm_trades, tm_trd.tm_sda_global_sleep, tm_trd.tm_thread_function_sleep)
+            # add_sale.work_with_steam_create_thread(add_sale.add_to_sale, add_sale.tm_add_to_sale_global_sleep, add_sale.tm_thread_function_sleep)
 
             print(1)
-            add_sale.work_with_steam_create_thread(add_sale.add_to_sale, add_sale.tm_add_to_sale_global_sleep, add_sale.tm_thread_function_sleep)
+            tm_trd.work_with_steam_create_thread(tm_trd.check_trades_for_cancel, tm_trd.cancel_offers_global_sleep, tm_trd.tm_thread_function_sleep)
 
             print(2)
             #tm_sda_global_sleep - global sleep for tm_trade

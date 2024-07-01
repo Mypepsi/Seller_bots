@@ -100,6 +100,8 @@ class Mongo:
 
         self.tm_settings_steam = self.get_key(self.content_settings_tm, 'steam')
         self.tm_sda_global_sleep = self.get_key(self.tm_settings_steam, 'sda global time')
+        self.cancel_offers_global_sleep = self.get_key(self.tm_settings_steam, 'steam cancel offers global time')
+        self.cancel_offers_sites_name = self.get_key(self.tm_settings_steam, 'steam cancel offers sites name')
 
 
         self.tm_settings_online = self.get_key(self.content_settings_tm, 'online')
