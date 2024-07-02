@@ -9,7 +9,6 @@ import requests
 class TMSteam(Steam):
     def __init__(self):
         super().__init__()
-        self.acc_history_collection = None
         self.commission = 0
         self.rate = 0
 
@@ -322,118 +321,6 @@ class TMSteam(Steam):
                 time.sleep(2)
             time.sleep(time_sleep)
     #endregion
-
-
-    def check_trades_for_cancel(self):
-        tm_timer = Settings.return_setting(Bot.general_settings_path, 'cancel_active_send_offers_tm', 'int')
-        while True:
-            if number_of_try > 2:
-                now = datetime.now()
-                self.logs.write_log(SDA.log_path,
-                                    f'check_active_send_offers: Не загружен список активных офферов (лагает стим апи).')
-
-                return False
-            try:
-                response = self.steam_client.get_trade_offers()
-                now = datetime.now()
-                self.logs.write_log(SDA.log_path,
-                                    f'check_active_send_offers: Загружен список активных офферов.')
-
-                break
-            except Exception:
-                number_of_try += 1
-                continue
-
-        time_to_cancel_normal = Settings.return_setting(Bot.general_settings_path, Bot.cancel_active_send_offers, 'int')
-        # обработка ответа от апи стима
-        if not ('response' in response and 'trade_offers_sent' in response['response']):
-            return
-
-        # чтение файла с трейдами от ксго500, tm, empire
-        sent_offers = Bot.file_with_lock('data/sda/cancel_active_send_offers.txt', 'r').split('\n')
-        offers_sent = {}
-        for offer in sent_offers:
-            try:
-                data = json.loads(offer)
-                offers_sent.update({data['trade_id']: {'platform': data['platform'], 'asset_id':  data['asset_id'], "text": data["text"]}})
-                if data['platform'] != 'polygon':
-                    offers_sent[data['trade_id']].update({'sent_time':  data['sent_time']})
-            except:
-                continue
-
-        # поиск минимального времени отмены для каждого трейда
-        for offer in offers_sent:
-            asset_id = offers_sent[offer]['asset_id']
-            platform = offers_sent[offer]['platform']
-            uniq_text = offers_sent[offer]['text']
-            if platform == 'polygon':
-                continue
-
-            for offer_ in sent_offers:
-                try:
-                    data = json.loads(offer_)
-                    asset_id_ = data['asset_id']
-                    platform_ = data['platform']
-                    uniq_text_ = data['text']
-                    if asset_id_ == asset_id and platform_ == platform and uniq_text == uniq_text_:
-                        offers_sent[offer]['sent_time'] = data['sent_time']
-                        break
-                except:
-                    continue
-
-        trades_to_cancel = []
-        for trade in response['response']['trade_offers_sent']:
-            trade_id = trade['tradeofferid']
-            if trade_id in offers_sent:
-                service = offers_sent[trade_id]['platform']
-                if service == 'empire':
-                    time_to_cancel = empire_timer
-                elif service == 'tm':
-                    time_to_cancel = tm_timer
-                elif service == 'csgo500':
-                    time_to_cancel = csgo500_timer
-                elif service == 'polygon':
-                    time_to_cancel = polygon_timer
-                elif service == 'waxpeer':
-                    time_to_cancel = waxpeer_timer
-                else:
-                    time_to_cancel = time_to_cancel_normal
-
-                if service == 'polygon':
-                    time_updated = trade['time_updated']
-                else:
-                    time_updated = offers_sent[trade_id]['sent_time']
-
-            else:
-                time_to_cancel = time_to_cancel_normal
-                time_updated = trade['time_updated']
-
-            if time_updated + time_to_cancel <= int(time.time()):
-                trades_to_cancel.append(trade['tradeofferid'])
-
-        for trade in trades_to_cancel:
-
-            number_of_try = 0
-            while True:
-                if number_of_try > 2:
-                    return False
-                try:
-                    response_s = self.steam_client.cancel_trade_offer(trade)
-                    if 'tradeofferid' in response_s:
-                        now = datetime.now()
-                        self.logs.write_log(SDA.log_path,
-                                            f'cancel_active_send_offers: Отмена активного оффера: {trade}')
-
-                    break
-                except Exception:
-                    number_of_try += 1
-                    print(traceback.format_exc())
-                    time.sleep(5)
-                    if self.login():
-                        number_of_try = 0
-                    else:
-                        return
-                    continue
 
 
 

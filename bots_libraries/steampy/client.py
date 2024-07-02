@@ -227,12 +227,12 @@ class SteamClient:
         except:
             return False
 
-    def get_trade_offers(self, access_token: str,
-                         get_sent_offers: int,
-                         get_received_offers: int,
-                         get_descriptions: int,
-                         active_only: int,
-                         historical_only: int,
+    def get_trade_offers(self, access_token,
+                         get_sent_offers,
+                         get_received_offers,
+                         get_descriptions,
+                         active_only,
+                         historical_only,
                          language: str = 'english',
                          time_historical_cutoff: str = ''):
         url = f'https://api.steampowered.com/IEconService/GetTradeOffers/v1/'
