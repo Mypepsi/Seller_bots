@@ -47,9 +47,9 @@ class TMSteam(Steam):
                 else:
                     Logs.log(f"{self.steamclient.username}: Steam Trade Error : {names}")
             except Exception as e:
+                self.check_created_trade(assets_for_offer, partner)
                 self.handle_tm_history_doc(inventory_phases, send_offers, assets, names, msg, None,
                                            success=False)
-                self.check_created_trade(assets_for_offer, partner)
                 Logs.log(f'Error when sending a steam trade: {e}')
         except Exception as e:
             Logs.log(f'Critical error during make steam offer: {e}')
@@ -59,19 +59,23 @@ class TMSteam(Steam):
                                                          get_received_offers=0, get_descriptions=0, active_only=0,
                                                          historical_only=0)
         if trade_offers and 'response' in trade_offers and 'trade_offers_sent' in trade_offers['response']:
-            current_time = int(time.time())
             trade_offers_sent = trade_offers['response']['trade_offers_sent']
 
             matched_trades = []
             for offer in trade_offers_sent:
                 time_created = offer['time_created']
-                if time_created > current_time - 5:
+                cursor = self.acc_history_collection.find({"trade id": offer['tradeofferid']})
+                documents = list(cursor)
+                if not documents:
+                    return None
+                latest_trade = max(documents, key=lambda doc: doc.get("time", float('-inf')))
+                time_of_latest_trade = latest_trade.get("time")
+                if time_created > time_of_latest_trade - 5:
                     if set(offer['items_to_give']) == set(assets) and offer['accountid_other'] == partner:
-                        if not self.is_trade_in_mongo(offer['tradeofferid']): #і сайт тм
+                        if not self.is_trade_in_mongo(offer['tradeofferid']):
                             matched_trades.append(offer)
-
             if matched_trades:
-                latest_trade = max(matched_trades, key=lambda t: t['time_created'])  #шукає останій трейд в latest_trade
+                latest_trade = max(matched_trades, key=lambda t: t['time_created'])  #шукає останій трейд в matched_trades
                 if latest_trade['trade_offer_state'] == 9:
                     self.steamclient.confirm_offer_via_tradeofferid({'tradeofferid': latest_trade['tradeofferid']})
 
@@ -81,6 +85,7 @@ class TMSteam(Steam):
     def handle_tm_history_doc(self, inventory_phases, send_offers, assets_list, name_list, msg, steam_response,
                               success=True):
         current_timestamp = int(time.time())
+        time.sleep(1)
         if success:
             steam_status = 'sent'
             trade_id = steam_response['tradeofferid']
@@ -112,7 +117,8 @@ class TMSteam(Steam):
                         {
                             "$set": {
                                 "steam status": steam_status,
-                                "status time": current_timestamp,
+                                "steam status time": current_timestamp,
+                                "site status time": current_timestamp,
                                 "sent time": sent_time,
                                 "trade id": trade_id
                             }
@@ -129,7 +135,8 @@ class TMSteam(Steam):
                         },
                         {
                             "$set": {
-                                "steam status": steam_status
+                                "steam status": steam_status,
+                                "steam status time": current_timestamp
                             }
                         }
                     )
@@ -140,8 +147,10 @@ class TMSteam(Steam):
                     "time": current_timestamp,
                     "name": name,
                     "steam status": steam_status,
+                    "steam status time": current_timestamp,
                     "site status": 'active_deal',
-                    "status time": current_timestamp,
+                    "site status time": current_timestamp,
+                    "site item id": None,
                     "site id": msg,
                     "asset id": asset,
                     "trade id": trade_id,
@@ -173,16 +182,20 @@ class TMSteam(Steam):
                     try:
                         msg = response_data['offers'][i]['tradeoffermessage']
                         unique_msg_in_send_offers = []
+                        trade_ready_list = []
                         for offer in send_offers:  # Trade ready:
                             try:
-                                trade_id = offer['trade_id']
                                 data_text = offer['text']
                                 if msg == data_text:
-                                    trade_ready_url = (f'https://market.csgo.com/api/v2/trade-ready?'
-                                           f'key={self.steamclient.tm_api}&tradeoffer={trade_id}')
-                                    requests.get(trade_ready_url, timeout=10)
+                                    trade_ready_list.append(offer)
                             except:
                                 pass
+                        if len(trade_ready_list) > 0:
+                            latest_offer = max(trade_ready_list, key=lambda t: t['steam status time'])
+                            trade_id = latest_offer['trade_id']
+                            trade_ready_url = (f'https://market.csgo.com/api/v2/trade-ready?'
+                                               f'key={self.steamclient.tm_api}&tradeoffer={trade_id}')
+                            requests.get(trade_ready_url, timeout=10)
 
                         for offer in send_offers:  # Resending
                             if msg in offer.values() and msg not in unique_msg_in_send_offers:
