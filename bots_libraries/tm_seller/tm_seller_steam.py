@@ -4,6 +4,8 @@ from bots_libraries.steampy.models import GameOptions
 from bots_libraries.steampy.client import Asset
 import time
 import requests
+import urllib.parse
+import itertools
 
 
 class TMSteam(Steam):
@@ -13,7 +15,7 @@ class TMSteam(Steam):
         self.rate = 0
 
     #region tm sda
-    def request_give_p2p_all(self, username):
+    def request_give_p2p_all(self):
         try:
             url = f'https://market.csgo.com/api/v2/trade-request-give-p2p-all?key={self.steamclient.tm_api}'
             response = requests.get(url, timeout=10)
@@ -161,8 +163,8 @@ class TMSteam(Steam):
     def tm_trades(self, acc_info, time_sleep):
         while True:
             self.update_account_data_info()
-            username = ''
             acc_data_inventory_phases = []
+            username = ''
             try:
                 username = acc_info['username']
                 acc_data_inventory_phases = acc_info['steam inventory phases']
@@ -175,7 +177,7 @@ class TMSteam(Steam):
                 self.acc_history_collection = self.get_collection(self.history, collection_name)
             except:
                 Logs.log(f'Collecrion {collection_name} does not exist')
-            response_data = self.request_give_p2p_all(username)
+            response_data = self.request_give_p2p_all()
             if response_data is not None and 'offers' in response_data and type(response_data['offers']) == list:
                 send_offers = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
                 for i in range(len(response_data['offers'])):
@@ -231,6 +233,25 @@ class TMSteam(Steam):
 
     #endregion
 
+    def taking_tm_information_for_pricing(self):
+        try:
+            self.commission = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_commission']
+            self.rate = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_rate']
+        except:
+            Logs.log(f'Error during taking a info from DataBaseSettings -> TM_Seller')
+        try:
+            database_setting_bots = self.content_database_settings['DataBaseSettings']['Sellers_SalePrice']['bots']
+        except:
+            database_setting_bots = {}
+            Logs.log(f'Error during taking a info from DataBaseSettings -> Sellers_SalePrice -> bots')
+
+        tm_seller_value = None
+        for key, value in database_setting_bots.items():
+            if 'tm_seller' in key:
+                tm_seller_value = value
+                break
+        return tm_seller_value
+
 
     #region add to sale
     def get_and_filtered_inventory(self, inventory_from_acc_data):
@@ -269,7 +290,7 @@ class TMSteam(Steam):
             found_key = str(keys[-1])
         return found_key
 
-    def get_my_market_price(self, asset_id_in_phases_inventory, conditions):
+    def get_my_market_price(self, asset_id_in_phases_inventory, conditions, limits_value):
         start_sale_time = asset_id_in_phases_inventory['time']
         hash_name = asset_id_in_phases_inventory['market_hash_name']
         for condition in conditions:
@@ -285,13 +306,13 @@ class TMSteam(Steam):
                                                              condition['days from'][phases_key]['prices'])
                         margin_max_price = max_price * condition['days from'][phases_key]['prices'][price_range]
                         limits_margin_max_price = (margin_max_price *
-                                                   condition['days from'][phases_key]['limits']['max'])
+                                                   condition['days from'][phases_key]['limits'][limits_value])
 
                         try:
-                            market_price = round(limits_margin_max_price * self.commission * self.rate, 2)
+                            my_market_price = round(limits_margin_max_price * self.commission * self.rate, 2)
                         except:
-                            market_price = 0
-                        return market_price
+                            my_market_price = 0
+                        return my_market_price
         return None
 
     def add_to_sale(self, acc_info, time_sleep):
@@ -300,41 +321,124 @@ class TMSteam(Steam):
             self.update_db_prices_and_setting()
             acc_data_tradable_inventory = {}
             acc_data_phases_inventory = {}
+            username = ''
             try:
                 acc_data_tradable_inventory = acc_info['steam inventory tradable']
                 acc_data_phases_inventory = acc_info['steam inventory phases']
-
+                username = acc_info['username']
                 steam_session = acc_info['steam session']
                 self.take_session(steam_session)
             except:
                 Logs.log('Error during taking a session')
             filtered_inventory = self.get_and_filtered_inventory(acc_data_tradable_inventory)
+            tm_seller_value = self.taking_tm_information_for_pricing()
 
-            try:
-                self.commission = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_commission']
-                self.rate = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_rate']
-            except:
-                Logs.log(f'Error during taking a info from DataBaseSettings -> TM_Seller')
-            try:
-                database_setting_bots = self.content_database_settings['DataBaseSettings']['Sellers_SalePrice']['bots']
-            except:
-                database_setting_bots = {}
-                Logs.log(f'Error during taking a info from DataBaseSettings -> Sellers_SalePrice -> bots')
-
-            tm_seller_value = None
-            for key, value in database_setting_bots.items():
-                if 'tm_seller' in key:
-                    tm_seller_value = value
-                    break
             for asset_id in filtered_inventory:
-                market_price = self.get_my_market_price(acc_data_phases_inventory[asset_id], tm_seller_value)
-                add_to_sale_url = (f'https://market.csgo.com/api/v2/add-to-sale?key={self.steamclient.tm_api}'
-                       f'&cur=RUB&id={asset_id}&price={market_price}')
-                #requests.get(add_to_sale_url, timeout=10)
+                try:
+                    market_price = self.get_my_market_price(acc_data_phases_inventory[asset_id], tm_seller_value, 'max')
+                    add_to_sale_url = (f'https://market.csgo.com/api/v2/add-to-sale?key={self.steamclient.tm_api}'
+                           f'&cur=RUB&id={asset_id}&price={market_price}')
+                    requests.get(add_to_sale_url, timeout=10)
+                except:
+                    Logs.log(f'{username}:{asset_id} not put up for sale')
                 time.sleep(2)
+
             time.sleep(time_sleep)
     #endregion
 
+
+    def get_store_items(self):
+        try:
+            exhibited_items_url = f'https://market.csgo.com/api/v2/items?key={self.steamclient.tm_api}'
+            response = requests.get(exhibited_items_url, timeout=10).json()
+            return response
+        except Exception:
+            Logs.log(f'{self.steamclient.username}: Change Price request error')
+            return None
+
+    def delete_item_from_sale(self, tradable_inventory, items_on_sale):
+        asset_id_to_delete = []
+        try:
+            asset_id_on_sale = [item["assetid"] for item in items_on_sale]
+            tradable_asset_id = list(tradable_inventory.keys())
+            for assetid in asset_id_on_sale:
+                if assetid not in tradable_asset_id:
+                    asset_id_to_delete.append(assetid)
+        except:
+            Logs.log(f'{self.steamclient.username}: Error in delete_item_from_sale')
+
+        ...
+        filtered_items = []
+        for item in items_on_sale:
+            if item["assetid"] not in asset_id_to_delete:
+                filtered_items.append(item)
+        return filtered_items
+
+    def change_price(self, acc_info, time_sleep):
+        while True:
+            username = ''
+            self.update_account_data_info()
+            self.update_db_prices_and_setting()
+            acc_data_tradable_inventory = {}
+            acc_data_phases_inventory = {}
+            try:
+                acc_data_tradable_inventory = acc_info['steam inventory tradable']
+                acc_data_phases_inventory = acc_info['steam inventory phases']
+                username = acc_info['username']
+                steam_session = acc_info['steam session']
+                self.take_session(steam_session)
+            except:
+                Logs.log('Error during taking a session')
+
+            store_items = self.get_store_items()
+            if 'items' in store_items and type(store_items['items']) == list:
+                new_store_items = self.delete_item_from_sale(acc_data_tradable_inventory, store_items['items'])
+                tm_apis_for_parsing = [item["tm apikey"] for item in self.content_acc_for_parsing_list]
+                unique_iterator = itertools.cycle(tm_apis_for_parsing)
+
+                for i in range(len(new_store_items)):
+                    item_status = new_store_items[i]['status']
+                    if item_status != '1':
+                        continue
+
+                    item_name = new_store_items[i]['market_hash_name']
+                    coded_item_name = urllib.parse.quote(item_name)
+                    unique_tm_api = next(unique_iterator)
+
+                    search_hash_name_url = (f'https://market.csgo.com/api/v2/search-list-items-by-hash-name-all?'
+                                            f'key={unique_tm_api}&extended=1&list_hash_name[]={coded_item_name}')
+                    try:
+                        parsed_info = requests.get(search_hash_name_url, timeout=10).json()
+                    except:
+                        continue
+                    if 'data' in parsed_info and isinstance(parsed_info['data'], list):
+                        item_prices = [item["price"] for item in parsed_info['data'][item_name]]
+                        min_price = min([int(price) for price in item_prices])
+
+                    tm_seller_value = self.taking_tm_information_for_pricing()
+
+                    max_market_price = self.get_my_market_price(
+                        acc_data_phases_inventory[new_store_items[i]["assetid"]], tm_seller_value, 'max')
+
+                    min_market_price = self.get_my_market_price(
+                        acc_data_phases_inventory[new_store_items[i]["assetid"]], tm_seller_value, 'min')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            #    Logs.log(f'{username}: Change Price function error')
+            time.sleep(time_sleep)
 
 
 

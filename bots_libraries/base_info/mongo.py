@@ -95,6 +95,7 @@ class Mongo:
         if self.tm_history_tg_token:
             self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
         self.tm_add_to_sale_global_sleep = self.get_key(self.tm_settings_general, 'add to sale global time')
+        self.tm_change_price_global_sleep = self.get_key(self.tm_settings_general, 'change price global time')
         self.tm_url = self.get_key(self.tm_settings_general, 'tm url')
 
 
