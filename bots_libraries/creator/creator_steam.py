@@ -188,6 +188,7 @@ class CreatorSteam(Steam):
             time.sleep(10)
 
     def steam_proxy(self):
+        self.update_account_data_info()
         self.proxy_for_check = []
         for acc in self.content_acc_data_list:
             steam_session = acc['steam session']

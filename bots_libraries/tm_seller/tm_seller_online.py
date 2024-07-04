@@ -1,6 +1,7 @@
 from bots_libraries.base_info.logs import Logs
 from bots_libraries.creator.creator_steam import Steam
-
+import math
+import json
 import time
 import requests
 import random
@@ -151,8 +152,40 @@ class TMOnline(Steam):
             time.sleep(time_sleep)
 
 
+    def transfer_balance(self):
+        api_to_withdraw = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_transfer_apikey']
 
-
+        for acc in self.content_acc_list:
+            try:
+                username = acc['username']
+                tm_api = acc['tm apikey']
+                current_balance_url = f'https://market.csgo.com/api/v2/get-money?key={tm_api}'
+                response = requests.get(current_balance_url, timeout=10)
+                if response.status_code == 200:
+                    data = json.loads(response.text)
+                    money_value = data["money"]
+                    balance_tm = math.floor(money_value)
+                    if balance_tm > 0:
+                        time.sleep(3)
+                        new_value = balance_tm * 100
+                        withdrawing_tm_url = (f'https://market.csgo.com/api/v2/money-send/{new_value}/{api_to_withdraw}?'
+                                              f'pay_pass=34368&key={tm_api}')
+                        response = requests.get(withdrawing_tm_url, timeout=10)
+                        if response.status_code == 200:
+                            data = json.loads(response.text)
+                            if 'amount' in data:
+                                withdraw_money = data["amount"] / 100
+                                Logs.log(f'{username}: {withdraw_money}: RUB transferred')
+                            if 'error' in data and data['error'] == "wrong_payment_password":
+                                set_pay_password_url = (f'https://market.csgo.com/api/v2/set-pay-password?'
+                                                        f'new_password=34368&key={tm_api}')
+                                response = requests.get(set_pay_password_url)
+                                if response.status_code == 200:
+                                    data = json.loads(response.text)
+                                    if 'success' in data and data["success"]:
+                                        Logs.log(f'{username}: payment password has been successfully set')
+            except:
+                pass
 
 
 

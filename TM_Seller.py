@@ -23,6 +23,7 @@ if __name__ == '__main__':
             tm_trd = TMSteam()
             chk_trd = TMSteam()
             chg_prc = TMSteam()
+            blc_trf = TMOnline()
 
 
             # onl_thd.work_with_steam_create_thread(onl_thd.ping, onl_thd.tm_ping, onl_thd.tm_thread_function_sleep)
@@ -32,9 +33,10 @@ if __name__ == '__main__':
             # tm_trd.work_with_steam_create_thread(tm_trd.tm_trades, tm_trd.tm_sda_global_sleep, tm_trd.tm_thread_function_sleep)
             # add_sale.work_with_steam_create_thread(add_sale.add_to_sale, add_sale.tm_add_to_sale_global_sleep, add_sale.tm_thread_function_sleep)
             # tm_trd.work_with_steam_create_thread(tm_trd.check_trades_for_cancel, tm_trd.tm_cancel_offers_global_sleep, tm_trd.tm_thread_function_sleep)
+            # chg_prc.work_with_steam_create_thread(chg_prc.change_price, chg_prc.tm_change_price_global_sleep, chg_prc.tm_thread_function_sleep)
 
             print(1)
-            chg_prc.work_with_steam_create_thread(chg_prc.change_price, chg_prc.tm_change_price_global_sleep, chg_prc.tm_thread_function_sleep)
+            blc_trf.work_with_steam_loop(blc_trf.transfer_balance, blc_trf.tm_transfer_global_sleep)
 
             print(2)
             #tm_sda_global_sleep - global sleep for tm_trade

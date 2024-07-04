@@ -83,7 +83,6 @@ class Steam(Mongo):
 
     def work_with_steam_loop(self, function, time_sleep):
         while True:
-            self.update_account_data_info()
             function()
             time.sleep(time_sleep)
 
