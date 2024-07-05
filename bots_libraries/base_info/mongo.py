@@ -98,6 +98,7 @@ class Mongo:
         self.tm_change_price_global_sleep = self.get_key(self.tm_settings_general, 'change price global time')
         self.tm_url = self.get_key(self.tm_settings_general, 'tm url')
         self.tm_transfer_global_sleep = self.get_key(self.tm_settings_general, 'balance transfer global time')
+        self.tm_history_global_sleep = self.get_key(self.tm_settings_general, 'history global time')
 
 
         self.tm_settings_steam = self.get_key(self.content_settings_tm, 'steam')

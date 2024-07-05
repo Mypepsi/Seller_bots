@@ -12,11 +12,13 @@ class TMOnline(Steam):
     def __init__(self):
         super().__init__()
         self.ping_alert = False
+        self.history_steam_steam_status_alert = False
+        self.history_steam_asset_id_alert = False
 
     def request_to_ping(self):
-        url = f"https://market.csgo.com/api/v2/ping-new?key=" + self.steamclient.tm_api
+        url = f'https://market.csgo.com/api/v2/ping-new?key=' + self.steamclient.tm_api
         json_data = {
-            'access_token': f"{self.steamclient.access_token}"
+            'access_token': f'{self.steamclient.access_token}'
         }
         if 'http' in self.steamclient.proxies:
             json_data['proxy'] = self.steamclient.proxies['http']
@@ -44,7 +46,7 @@ class TMOnline(Steam):
                 self.take_session(steam_session)
                 self.request_to_ping()
             except:
-                Logs.log(f"Error during take session in ping for {username}")
+                Logs.log(f'Error during take session in ping for {username}')
             time.sleep(time_sleep)
 
     def store_ping(self, acc_info, time_sleep):
@@ -61,7 +63,7 @@ class TMOnline(Steam):
                 if response_data['success'] is not True:
                     Logs.log(f'Restart Store Error')
             except:
-                Logs.log(f"Error in store_ping for {username}")
+                Logs.log(f'Error in store_ping for {username}')
             time.sleep(2)
             self.request_to_ping()
             time.sleep(time_sleep)
@@ -131,7 +133,6 @@ class TMOnline(Steam):
             time.sleep(30)
         Logs.log(f'{username}: Thread store_items_visible was terminated')
 
-
     def validity_tm_apikey(self, time_sleep):
         while True:
             for acc_info in self.content_acc_list:
@@ -151,7 +152,6 @@ class TMOnline(Steam):
             Logs.log(f'TM API key: All TM API key checked ({len(self.content_acc_list)} accounts in MongoDB)')
             time.sleep(time_sleep)
 
-
     def transfer_balance(self):
         api_to_withdraw = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_transfer_apikey']
 
@@ -163,7 +163,7 @@ class TMOnline(Steam):
                 response = requests.get(current_balance_url, timeout=10)
                 if response.status_code == 200:
                     data = json.loads(response.text)
-                    money_value = data["money"]
+                    money_value = data['money']
                     balance_tm = math.floor(money_value)
                     if balance_tm > 0:
                         time.sleep(3)
@@ -174,18 +174,120 @@ class TMOnline(Steam):
                         if response.status_code == 200:
                             data = json.loads(response.text)
                             if 'amount' in data:
-                                withdraw_money = data["amount"] / 100
+                                withdraw_money = data['amount'] / 100
                                 Logs.log(f'{username}: {withdraw_money}: RUB transferred')
-                            if 'error' in data and data['error'] == "wrong_payment_password":
+                            if 'error' in data and data['error'] == 'wrong_payment_password':
                                 set_pay_password_url = (f'https://market.csgo.com/api/v2/set-pay-password?'
                                                         f'new_password=34368&key={tm_api}')
                                 response = requests.get(set_pay_password_url)
                                 if response.status_code == 200:
                                     data = json.loads(response.text)
-                                    if 'success' in data and data["success"]:
+                                    if 'success' in data and data['success']:
                                         Logs.log(f'{username}: payment password has been successfully set')
             except:
                 pass
 
+    def main_history(self, acc_info, time_sleep):
+
+        while True:
+            self.update_account_data_info()
+            username = ''
+            try:
+                username = acc_info['username']
+                steam_session = acc_info['steam session']
+                self.take_session(steam_session)
+            except:
+                Logs.log('Error during taking a session')
+            collection_name = f'history_{username}'
+            collection_info = None
+            try:
+                self.acc_history_collection = self.get_collection(self.history, collection_name)
+                collection_info = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
+            except:
+                Logs.log(f'Collecrion {collection_name} does not exist')
+            if collection_info:
+                self.steam_history(collection_info)
+
+            time.sleep(time_sleep)
 
 
+
+    def steam_history(self, collection_info):
+        need_to_work = False
+        for doc in collection_info:
+            if 'steam status' in doc and doc['steam status'] in ['sent', 'again_sent', 'error_again_send']:
+                need_to_work = True
+                break
+
+        if need_to_work:
+            try:
+                response = self.steamclient.get_trade_offers(self.steamclient.access_token, get_sent_offers=1,
+                                                             get_received_offers=0, get_descriptions=0, active_only=0,
+                                                             historical_only=0)
+                trade_offers = response['response']['trade_offers_sent']
+            except:
+                trade_offers = []
+
+            for doc in collection_info:
+                if 'steam status' in doc and doc['steam status'] in ['sent', 'again_sent', 'error_again_send']:
+                    found_in_trade_offers = False
+                    for offer in trade_offers:
+                        if 'tradeofferid' in offer and 'trade id' in doc and offer['tradeofferid'] == doc['trade id']:
+                            found_in_trade_offers = True
+                            break
+                    if not found_in_trade_offers:
+                        if not self.history_steam_steam_status_alert:
+                            self.history_steam_steam_status_alert = True
+                            Logs.log(f'{self.steamclient.username}: Trade  History Steam Bug: '
+                                     f'steam_status not in steam request')
+                            self.tm_tg_bot.send_message(self.tm_tg_id, f'TM Seller: '
+                                                                       f'Trade  History Steam Bug: '
+                                                                       f'{self.steamclient.username}: '
+                                                                       f'steam_status not in steam request')
+
+            for doc in collection_info:
+                for offer in trade_offers:
+
+                    if ('site' in doc and doc['site'] == 'tm'
+                            and 'transaction' in doc and doc['transaction'] == 'sale_record'
+                            and 'steam status' in doc and doc['steam status'] in ['sent', 'again_sent',
+                                                                                  'error_again_send']
+                            and 'tradeofferid' in offer and 'trade id' in doc
+                        and 'steam status' in doc and 'steam status time' in doc
+                            and offer['tradeofferid'] == doc['trade id']):
+
+                        if ('asset id' in doc and 'items_to_give' in offer
+                                and any(doc['asset id'] in item.values() for item in offer['items_to_give'])):
+                            if 'trade_offer_state' in offer:
+                                current_timestamp = int(time.time())
+                                if offer['trade_offer_state'] in [2, 9]:
+                                    continue
+                                elif offer['trade_offer_state'] == 3:
+                                    doc['steam status'] = 'accepted'
+                                    doc['steam status time'] = current_timestamp
+                                elif offer['trade_offer_state'] == 6:
+                                    doc['steam status'] = 'canceled'
+                                    doc['steam status time'] = current_timestamp
+                                elif offer['trade_offer_state'] == 7:
+                                    doc['steam status'] = 'declined'
+                                    doc['steam status time'] = current_timestamp
+                                else:
+                                    doc['steam status'] = 'unavailable'
+                                    doc['steam status time'] = current_timestamp
+                                self.acc_history_collection.update_one({'_id': doc['_id']}, {
+                                    '$set': {'steam status': doc['steam status'], 'steam status time': doc['steam status time']}})
+                        else:
+                            if not self.history_steam_asset_id_alert:
+                                self.history_steam_asset_id_alert = True
+                                Logs.log(f'{self.steamclient.username}: Trade  History Steam Bug: '
+                                         f'asset_id not in steam request')
+                                self.tm_tg_bot.send_message(self.tm_tg_id, f'TM Seller: '
+                                                                           f'Trade  History Steam Bug: '
+                                                                           f'{self.steamclient.username}: '
+                                                                           f'asset_id not in steam request')
+
+    def tm_item_history(self):
+        pass
+
+    def tm_money_history(self):
+        pass
