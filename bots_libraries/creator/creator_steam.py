@@ -205,7 +205,7 @@ class CreatorSteam(Steam):
             except:
                 proxy_ip = proxy
             try:
-                response = requests.get(self.creator_proxy_check_url, proxies=proxy, timeout=10)
+                response = requests.get(self.creator_proxy_check_url, proxies=proxy, timeout=20)
                 if response.status_code == 200:
                     try:
                         del self.questionable_proxies[proxy_ip]
@@ -227,7 +227,7 @@ class CreatorSteam(Steam):
         if self.steamclient.username in self.content_acc_data_dict:
             try:
                 url = 'https://steamcommunity.com/pointssummary/ajaxgetasyncconfig'
-                response = self.steamclient._session.get(url, timeout=10)
+                response = self.steamclient._session.get(url, timeout=20)
                 reply = json.loads(response.text)
                 if str(self.steamclient.access_token) != reply['data']['webapi_token']:
                     self.acc_data_collection.update_one({"username": self.steamclient.username},
@@ -245,7 +245,7 @@ class CreatorSteam(Steam):
         api_key_ = 0
         if self.steamclient.username in self.content_acc_data_dict:
             try:
-                response = self.steamclient._session.get('https://steamcommunity.com/dev/apikey', timeout=10)
+                response = self.steamclient._session.get('https://steamcommunity.com/dev/apikey', timeout=20)
                 if response.status_code == 200:
                     api_key_ = self.get_api_key(response.text)
                     if isinstance(api_key_, bool):
@@ -286,7 +286,7 @@ class CreatorSteam(Steam):
 
             data = {'Revoke': 'Revoke My Steam Web API Key',
                     'sessionid': sessioon_id}
-            delete_api_key_response = self.steamclient.session.post(url, headers=headers, data=data, timeout=10)
+            delete_api_key_response = self.steamclient.session.post(url, headers=headers, data=data, timeout=20)
             if delete_api_key_response:
                 Logs.log(f'{self.steamclient.username}: Steam ApiKey removed')
                 self.create_api_key()
@@ -316,7 +316,7 @@ class CreatorSteam(Steam):
             }
 
             response = self.steamclient.session.post('https://steamcommunity.com/dev/requestkey', headers=headers,
-                                                      data=json_data, timeout=10)
+                                                      data=json_data, timeout=20)
 
             if response.status_code == 200 and 'requires_confirmation' in response.json():
                 request_id = response.json()['request_id']
@@ -343,7 +343,7 @@ class CreatorSteam(Steam):
                     }
 
                     response_second = self.steamclient.session.post('https://steamcommunity.com/dev/requestkey',
-                                                                    headers=headers, timeout=10,
+                                                                    headers=headers, timeout=20,
                                                                     data=json_data).json()
 
                     if 'api_key' in response_second and isinstance(response_second['api_key'], str):

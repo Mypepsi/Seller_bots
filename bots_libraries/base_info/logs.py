@@ -6,3 +6,7 @@ class Logs:
     def log(text):
         now = datetime.now()
         print(f'[{now.strftime("%d-%m-%Y %H:%M:%S")}]: {text}')
+
+
+class ExitException(Exception):
+    pass

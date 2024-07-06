@@ -27,13 +27,13 @@ class DataBase(Mongo):
                 difference_to_update = current_timestamp - last_update_time
                 if difference_to_update > self.creator_db_price_sleep_time:
                     try:
-                        db_rs = requests.get(self.creator_db_prices_url, timeout=10)
+                        db_rs = requests.get(self.creator_db_prices_url, timeout=20)
                         if db_rs.status_code == 200:
                             db = db_rs.json()
                             if db:
                                 Logs.log("DataBasePrices: Database is uploaded")
                                 try:
-                                    currency_data = requests.get(self.creator_db_settings_url, timeout=10)
+                                    currency_data = requests.get(self.creator_db_settings_url, timeout=20)
                                     if currency_data.status_code == 200:
                                         currency_rs = currency_data.json()
                                         if currency_rs:
@@ -142,13 +142,13 @@ class DataBase(Mongo):
                                             Logs.log("Error in keys refresh_db_thread-1")
                                     else:
                                         Logs.log("Error in status code refresh_db_thread-2")
-                                except requests.exceptions.RequestException:
+                                except:
                                     Logs.log(f"Error in refresh_db_thread-3")
                         else:
                             Logs.log("Error in status code refresh_db_thread-4")
-                    except requests.exceptions.RequestException:
+                    except:
                         Logs.log(f"Error in refresh_db_thread-5")
-            except ServerSelectionTimeoutError:
+            except:
                 Logs.log(f"Error in refresh_db_thread-6")
             time.sleep(self.creator_db_prices_global_time)
 
@@ -170,7 +170,7 @@ class DataBase(Mongo):
                 difference_to_update = current_timestamp - last_update_time
                 if difference_to_update > self.creator_db_settings_sleep_time:
                     try:
-                        currency_data = requests.get(self.creator_db_settings_url, timeout=10)
+                        currency_data = requests.get(self.creator_db_settings_url, timeout=20)
                         if currency_data.status_code == 200:
                             currency_rs = currency_data.json()
                             if currency_rs:

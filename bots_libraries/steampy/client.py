@@ -247,7 +247,7 @@ class SteamClient:
             'time_historical_cutoff': time_historical_cutoff
         }
         try:
-            response = self._session.get(url, params=params, timeout=10)
+            response = self._session.get(url, params=params, timeout=20)
             return response.json()
         except:
             return None

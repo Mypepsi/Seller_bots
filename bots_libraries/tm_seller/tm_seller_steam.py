@@ -18,7 +18,7 @@ class TMSteam(Steam):
     def request_give_p2p_all(self):
         try:
             url = f'https://market.csgo.com/api/v2/trade-request-give-p2p-all?key={self.steamclient.tm_api}'
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, timeout=20)
             response_data = response.json()
             return response_data
         except Exception:
@@ -197,7 +197,7 @@ class TMSteam(Steam):
                             trade_id = latest_offer['trade_id']
                             trade_ready_url = (f'https://market.csgo.com/api/v2/trade-ready?'
                                                f'key={self.steamclient.tm_api}&tradeoffer={trade_id}')
-                            requests.get(trade_ready_url, timeout=10)
+                            requests.get(trade_ready_url, timeout=20)
 
                         for offer in send_offers:  # Resending
                             if msg in offer.values() and msg not in unique_msg_in_send_offers:
@@ -296,10 +296,10 @@ class TMSteam(Steam):
     def get_and_filtered_inventory(self, inventory_from_acc_data):
         try:
             update_inventory_url = f'https://market.csgo.com/api/v2/update-inventory/?key={self.steamclient.tm_api}'
-            requests.get(update_inventory_url, timeout=10)
+            requests.get(update_inventory_url, timeout=20)
             time.sleep(3)
             my_inventory_url = f'https://market.csgo.com/api/v2/my-inventory/?key={self.steamclient.tm_api}'
-            my_inventory = requests.get(my_inventory_url, timeout=10)
+            my_inventory = requests.get(my_inventory_url, timeout=20)
             my_inventory = my_inventory.json()
             my_inventory_list = []
             if my_inventory['success']:
@@ -340,7 +340,7 @@ class TMSteam(Steam):
                     market_price = self.get_my_market_price(acc_data_phases_inventory[asset_id], tm_seller_value, 'max')
                     add_to_sale_url = (f'https://market.csgo.com/api/v2/add-to-sale?key={self.steamclient.tm_api}'
                            f'&cur=RUB&id={asset_id}&price={market_price}')
-                    requests.get(add_to_sale_url, timeout=10)
+                    requests.get(add_to_sale_url, timeout=20)
                 except:
                     Logs.log(f'{username}:{asset_id} not put up for sale')
                 time.sleep(2)
@@ -352,7 +352,7 @@ class TMSteam(Steam):
     def get_store_items(self):
         try:
             exhibited_items_url = f'https://market.csgo.com/api/v2/items?key={self.steamclient.tm_api}'
-            response = requests.get(exhibited_items_url, timeout=10).json()
+            response = requests.get(exhibited_items_url, timeout=20).json()
             return response
         except Exception:
             Logs.log(f'{self.steamclient.username}: Change Price request error')
@@ -384,7 +384,7 @@ class TMSteam(Steam):
                 coded_item_name = urllib.parse.quote(hash_name)
                 search_hash_name_url = (f'https://market.csgo.com/api/v2/search-list-items-by-hash-name-all?'
                                         f'key={api_key}&extended=1&list_hash_name[]={coded_item_name}')
-                parsed_info = requests.get(search_hash_name_url, timeout=10).json()
+                parsed_info = requests.get(search_hash_name_url, timeout=20).json()
                 with results_lock:
                     results.append(parsed_info)
                 hash_queue.task_done()
@@ -439,9 +439,9 @@ class TMSteam(Steam):
             if 'items' in store_items and type(store_items['items']) == list:
                 new_store_items = self.delete_item_from_sale(acc_data_tradable_inventory, store_items['items'])
                 try:
-                    tm_apis_for_parsing = [item["tm apikey"] for item in self.content_acc_for_parsing_list]
+                    another_tm_apis_list = self.search_in_merges_by_username(self.steamclient.username)['tm apikey']
                     items_asset_ids = [item["item_id"] for item in new_store_items]
-                    parsed_info = self.threads_to_parsing(new_store_items, tm_apis_for_parsing)
+                    parsed_info = self.threads_to_parsing(new_store_items, another_tm_apis_list)
                     my_prices = {}
                     for i in range(len(new_store_items)):
                         try:
@@ -487,7 +487,7 @@ class TMSteam(Steam):
 
                     for key, value in my_prices:
                         change_price_url = f'{value}/{key}'
-                        requests.get(change_price_url, timeout=10)
+                        requests.get(change_price_url, timeout=20)
 
                 except Exception as e:
                     Logs.log(f'{username}: Fatal error in change_price: {e}')

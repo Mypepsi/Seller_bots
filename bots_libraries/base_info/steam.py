@@ -16,6 +16,8 @@ class Steam(Mongo):
         self.questionable_proxies = {}
         self.ua = UserAgent()
 
+
+
     def take_session(self, steam_session):
         i = steam_session
         steam_cookie_file = io.BytesIO(i)
@@ -90,6 +92,7 @@ class Steam(Mongo):
         self.update_account_data_info()
         counter = 0
         for acc in self.content_acc_data_list:
+
             thread = threading.Thread(target=function, args=(acc, function_time_sleep))
             thread.start()
             counter += 1
