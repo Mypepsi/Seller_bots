@@ -88,7 +88,8 @@ class Steam(Mongo):
             function()
             time.sleep(time_sleep)
 
-    def create_threads(self, name_func, class_obj, func, thread_function_sleep, global_sleep):
+    def create_threads(self, name_func, class_obj, func, global_sleep, thread_function_sleep):
+        self.update_account_data_info()
         counter = 0
         func_to_call = ''
         for i in self.content_acc_data_list:

@@ -108,8 +108,8 @@ class Mongo:
 
 
         self.tm_settings_online = self.get_key(self.content_settings_tm, 'online')
-        self.tm_ping = self.get_key(self.tm_settings_online, 'tm ping')
-        self.tm_store_ping = self.get_key(self.tm_settings_online, 'tm store ping')
+        self.tm_ping_global_sleep = self.get_key(self.tm_settings_online, 'tm ping global time')
+        self.tm_store_ping_global_sleep = self.get_key(self.tm_settings_online, 'tm store ping global time')
         self.tm_visible_store_num_of_items = self.get_key(self.tm_settings_online, 'visible store number of inv items')
         self.tm_visible_store_global_sleep = self.get_key(self.tm_settings_online, 'visible store global time')
         self.tm_api_key_checker_global_sleep = self.get_key(self.tm_settings_online, 'tm api key checker global time')

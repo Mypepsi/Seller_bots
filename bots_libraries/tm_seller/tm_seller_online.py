@@ -294,11 +294,11 @@ class TMOnline(Steam):
         except Exception as e:
             Logs.log(f"{self.steamclient.username}: Site History Bug: {e}")
             response = None
+
         if (response and 'success' in response and response['success'] is True
                 and 'data' in response and isinstance(response['data'], list)):
-
-            list_of_matches = []
             for item_transfer in response['data']:
+                list_of_matches = []
                 if all(key in item_transfer for key in ['item_id', 'market_hash_name', 'time']):
                     match = False
                     for doc in collection_info:
@@ -310,32 +310,89 @@ class TMOnline(Steam):
                             if doc['site item id'] is None:
                                 if doc['name'] == item_transfer['market_hash_name']:
                                     list_of_matches.append(item_transfer)
-            closest_item_transfer = None
-            closest_time_diff = float('inf')
-            for entry in list_of_matches:
-                entry_time = int(entry['time'])
-                if entry_time <= current_timestamp:
-                    time_diff = current_timestamp - entry_time
-                    if time_diff < closest_time_diff:
-                        closest_time_diff = time_diff
-                        closest_item_transfer = entry
+                        closest_item_transfer = None
+                        closest_time_diff = float('inf')
+                        for entry in list_of_matches:
+                            entry_time = int(entry['time'])
+                            if entry_time <= current_timestamp:
+                                time_diff = current_timestamp - entry_time
+                                if time_diff < closest_time_diff:
+                                    closest_time_diff = time_diff
+                                    closest_item_transfer = entry
+                        for doc in collection_info:
+                            if doc['site item id'] is None:
+                                if doc['name'] == closest_item_transfer['market_hash_name']:
+                                    doc['site item id'] = closest_item_transfer['item_id']
+                                    if doc['site status'] == 'active deal' and closest_item_transfer['stage'] == '1':
+                                        time_difference = current_timestamp - closest_item_transfer['time']
+                                        if int(time_difference) >= 86400:
+                                            self.tm_tg_bot.send_message(self.tm_tg_id,
+                                                                        f'TM Seller: Site History Bug: '
+                                                                        f'Too much difference between the record in '
+                                                                        f'history and in Mongo:'
+                                                                        f'{self.steamclient.username}')
+                                            Logs.log(f'{self.steamclient.username}: Site History Bug: '
+                                                     f'Too much difference between the record in history and in Mongo')
+                                    elif doc['site status'] == 'active deal' and closest_item_transfer['stage'] == '2':
+                                        doc['site status'] = 'canceled'
+                                        doc['site status time'] = current_timestamp
+                                    elif doc['site status'] == 'active deal' and closest_item_transfer['stage'] == '5':
+                                        doc['site status'] = 'accepted'
+                                        doc['site status time'] = current_timestamp
+                                    else:
+                                        self.tm_tg_bot.send_message(self.tm_tg_id,
+                                                                    f'TM Seller: Site History Bug: Unknown status: '
+                                                                    f'{self.steamclient.username}')
+                                        Logs.log(f'{self.steamclient.username}: Site History Bug: Unknown status')
 
+                                    self.acc_history_collection.update_one({'_id': doc['_id']}, {'$set': doc})
+                    match_for_alert = False
+                    if ('stage' in item_transfer and item_transfer['stage'] == '1'
+                        and (current_timestamp - item_transfer['time']) >= 86400):
+                        for doc in collection_info:
+                            if doc['site item id'] == item_transfer['item_id']:
+                                match_for_alert = True
+                    if not match_for_alert:
+                        status = None
+                        if 'stage' in item_transfer and item_transfer['stage'] == '1':
+                            status = 'active deal'
+                        elif 'stage' in item_transfer and item_transfer['stage'] == '2':
+                            status = 'canceled'
+                        elif 'stage' in item_transfer and item_transfer['stage'] == '5':
+                            status = 'accepted'
+                            data_append = {
+                                "transaction": "sale_record",
+                                "site": "tm",
+                                "time": current_timestamp,
+                                "name": item_transfer['market_hash_name'],
+                                "steam status": None,
+                                "steam status time": None,
+                                "site status": status,
+                                "site status time": item_transfer['time'],
+                                "site item id": None,
+                                "site id": None,
+                                "asset id": None,
+                                "trade id": None,
+                                "sent time": None
+                            }
+                            self.acc_history_collection.insert_one(data_append)
 
-
-
-
-                        data_append = {
-                            'transaction': 'money_record',
-                            'site': 'tm',
-                            'time': current_timestamp,
-                            'money status': 'accepted',
-                            'money': item_transfer['amount_from'],
-                            'currency': item_transfer['currency_from'],
-                            'money id': item_transfer['id']
-
-                        }
-
-
+        for doc in collection_info:
+            if (response and 'success' in response and response['success'] is True
+                    and 'data' in response and isinstance(response['data'], list) and
+                    doc['site status'] == 'active_deal'):
+                match = False
+                for item_transfer_ in response['data']:
+                    if doc['site item id'] == item_transfer_['item_id']:
+                        match = True
+                        break
+                if not match:
+                    self.tm_tg_bot.send_message(self.tm_tg_id,
+                                                f'TM Seller: Site History Bug: '
+                                                f'Absence of a document from Mongo in history: '
+                                                f'{self.steamclient.username}')
+                    Logs.log(f'{self.steamclient.username}: Site History Bug: '
+                             f'Absence of a document from Mongo in history')
 
     def tm_money_history(self, collection_info):
         money_history_url = f'https://market.csgo.com/api/v2/money-send-history/0?key={self.steamclient.tm_api}'

@@ -24,8 +24,9 @@ class Test(Mongo):
         print(collection_info)
 
 
-test = Test()
-test.test()
+# test = Test()
+# test.test()
+print(globals())
 
 
 
