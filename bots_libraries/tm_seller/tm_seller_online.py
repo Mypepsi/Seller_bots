@@ -57,6 +57,7 @@ class TMOnline(Steam):
                 steam_session = acc_info['steam session']
                 self.take_session(steam_session)
                 url = f'https://market.csgo.com/api/v2/go-offline?key={self.steamclient.tm_api}'
+
                 try:
                     response = requests.get(url, timeout=20).json()
                 except:
@@ -205,10 +206,10 @@ class TMOnline(Steam):
                 Logs.log(f'Collecrion {collection_name} does not exist')
             if collection_info:
                 self.steam_history(collection_info)
+                self.tm_item_history(collection_info)
+                self.tm_money_history(collection_info)
 
             time.sleep(time_sleep)
-
-
 
     def steam_history(self, collection_info):
         need_to_work = False
@@ -284,8 +285,87 @@ class TMOnline(Steam):
                                                                            f'{self.steamclient.username}: '
                                                                            f'asset_id not in steam request')
 
-    def tm_item_history(self):
-        pass
+    def tm_item_history(self, collection_info):
+        current_timestamp = int(time.time())
+        item_history_url = (f'https://market.csgo.com/api/v2/history?key={self.steamclient.tm_api}'
+                            f'&date_end={current_timestamp}')
+        try:
+            response = requests.get(item_history_url, timeout=20).json()
+        except Exception as e:
+            Logs.log(f"{self.steamclient.username}: Site History Bug: {e}")
+            response = None
+        if (response and 'success' in response and response['success'] is True
+                and 'data' in response and isinstance(response['data'], list)):
 
-    def tm_money_history(self):
-        pass
+            list_of_matches = []
+            for item_transfer in response['data']:
+                if all(key in item_transfer for key in ['item_id', 'market_hash_name', 'time']):
+                    match = False
+                    for doc in collection_info:
+                        if doc['site item id'] == item_transfer['item_id']:
+                            match = True
+                            break
+                    if not match:
+                        for doc in collection_info:
+                            if doc['site item id'] is None:
+                                if doc['name'] == item_transfer['market_hash_name']:
+                                    list_of_matches.append(item_transfer)
+            closest_item_transfer = None
+            closest_time_diff = float('inf')
+            for entry in list_of_matches:
+                entry_time = int(entry['time'])
+                if entry_time <= current_timestamp:
+                    time_diff = current_timestamp - entry_time
+                    if time_diff < closest_time_diff:
+                        closest_time_diff = time_diff
+                        closest_item_transfer = entry
+
+
+
+
+
+                        data_append = {
+                            'transaction': 'money_record',
+                            'site': 'tm',
+                            'time': current_timestamp,
+                            'money status': 'accepted',
+                            'money': item_transfer['amount_from'],
+                            'currency': item_transfer['currency_from'],
+                            'money id': item_transfer['id']
+
+                        }
+
+
+
+    def tm_money_history(self, collection_info):
+        money_history_url = f'https://market.csgo.com/api/v2/money-send-history/0?key={self.steamclient.tm_api}'
+        try:
+            response = requests.get(money_history_url, timeout=20).json()
+        except Exception as e:
+            Logs.log(f"{self.steamclient.username}: Money History Bug: {e}")
+            response = None
+        if (response and 'success' in response and response['success'] is True
+                and 'data' in response and isinstance(response['data'], list)):
+            current_timestamp = int(time.time())
+            for money_transfer in response['data']:
+                if all(key in money_transfer for key in ['id', 'amount_from', 'currency_from']):
+                    match = False
+                    for doc in collection_info:
+                        if doc['money id'] == money_transfer['id']:
+                            match = True
+                            break
+                    if not match:
+                        data_append = {
+                            'transaction': 'money_record',
+                            'site': 'tm',
+                            'time': current_timestamp,
+                            'money status': 'accepted',
+                            'money': money_transfer['amount_from'],
+                            'currency': money_transfer['currency_from'],
+                            'money id': money_transfer['id']
+
+                        }
+                        self.acc_history_collection.insert_one(data_append)
+
+
+

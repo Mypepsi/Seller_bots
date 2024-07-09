@@ -184,7 +184,7 @@ class DataBase(Mongo):
                                 Logs.log("Error in keys refresh_settings_thread-1")
                         else:
                             Logs.log("Error in status code refresh_settings_thread-2")
-                    except requests.exceptions.RequestException:
+                    except:
                         Logs.log(f"Error in refresh_settings_thread-3")
             except ServerSelectionTimeoutError:
                 Logs.log(f"Error in refresh_settings_thread-4")

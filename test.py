@@ -1,5 +1,6 @@
 import threading
 import time
+from bots_libraries.base_info.mongo import Mongo
 from queue import Queue, Empty
 
 # Список API ключів
@@ -16,47 +17,65 @@ hash_names = [
 ]
 
 # Список API ключів
-class Test:
-    def parsing_prices(self, api_key, hash_queue, results, results_lock):
-        while True:
-            try:
-                time.sleep(1.5)
-
-                hash_name = hash_queue.get_nowait()
-                pr = f"{hash_name}  {api_key}"
-                print(pr)
-                with results_lock:
-                    results.append(pr)
-                hash_queue.task_done()
-            except Empty:
-                break
-            except Exception as e:
-                if 'hash_name' in locals():
-                    hash_queue.task_done()
-
-    def threads_to_parsing(self, items, api_keys):
-        threads = []
-        results = []
-        results_lock = threading.Lock()
-        hash_queue = Queue()
-
-        for hash_name in items:
-            hash_queue.put(hash_name)
-
-        for api_key in api_keys:
-            time.sleep(1)
-            thread = threading.Thread(target=self.parsing_prices,
-                                      args=(api_key, hash_queue, results, results_lock))
-            thread.start()
-            threads.append(thread)
-
-        for thread in threads:
-            thread.join()
-        print(results)
+class Test(Mongo):
+    def test(self):
+        self.acc_history_collection = self.get_collection(self.accs, 'account_data')
+        collection_info = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
+        print(collection_info)
 
 
 test = Test()
-test.threads_to_parsing(hash_names, api_keys)
+test.test()
+
+
+
+
+
+
+
+
+
+
+#     def parsing_prices(self, api_key, hash_queue, results, results_lock):
+#         while True:
+#             try:
+#                 time.sleep(1.5)
+#
+#                 hash_name = hash_queue.get_nowait()
+#                 pr = f"{hash_name}  {api_key}"
+#                 print(pr)
+#                 with results_lock:
+#                     results.append(pr)
+#                 hash_queue.task_done()
+#             except Empty:
+#                 break
+#             except Exception as e:
+#                 if 'hash_name' in locals():
+#                     hash_queue.task_done()
+#
+#     def threads_to_parsing(self, items, api_keys):
+#         threads = []
+#         results = []
+#         results_lock = threading.Lock()
+#         hash_queue = Queue()
+#
+#         for hash_name in items:
+#             hash_queue.put(hash_name)
+#
+#         for api_key in api_keys:
+#             time.sleep(1)
+#             thread = threading.Thread(target=self.parsing_prices,
+#                                       args=(api_key, hash_queue, results, results_lock))
+#             thread.start()
+#             threads.append(thread)
+#
+#         for thread in threads:
+#             thread.join()
+#         print(results)
+#
+#
+# test = Test()
+# test.threads_to_parsing(hash_names, api_keys)
 
 
 

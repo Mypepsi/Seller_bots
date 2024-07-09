@@ -88,18 +88,36 @@ class Steam(Mongo):
             function()
             time.sleep(time_sleep)
 
-    def work_with_steam_create_thread(self, function, function_time_sleep, thread_time_sleep):
-        self.update_account_data_info()
+    def create_threads(self, name_func, class_obj, func, thread_function_sleep, global_sleep):
         counter = 0
-        for acc in self.content_acc_data_list:
-
-            thread = threading.Thread(target=function, args=(acc, function_time_sleep))
+        func_to_call = ''
+        for i in self.content_acc_data_list:
+            username = str(i['username'])
+            name = username + name_func
+            class_object = globals()[class_obj]()
+            globals()[name] = class_object
+            func_to_call = getattr(class_object, func)
+            thread = threading.Thread(target=func_to_call, args=(i, getattr(class_object, global_sleep)))
             thread.start()
             counter += 1
-            time.sleep(thread_time_sleep)
-        modified_function_name = function.__name__.replace("_", " ").title()
+            time.sleep(getattr(class_object, thread_function_sleep))
+        modified_function_name = func_to_call.__name__.replace("_", " ").title()
         Logs.log(f'{modified_function_name}: {counter} threads are running '
                  f'({len(self.content_acc_data_list)} accounts in MongoDB)')
+
+
+    # def work_with_steam_create_thread(self, function, function_time_sleep, thread_time_sleep):
+    #     self.update_account_data_info()
+    #     counter = 0
+    #     for acc in self.content_acc_data_list:
+    #
+    #         thread = threading.Thread(target=function, args=(acc, function_time_sleep))
+    #         thread.start()
+    #         counter += 1
+    #         time.sleep(thread_time_sleep)
+    #     modified_function_name = function.__name__.replace("_", " ").title()
+    #     Logs.log(f'{modified_function_name}: {counter} threads are running '
+    #              f'({len(self.content_acc_data_list)} accounts in MongoDB)')
 
     def check_trades_for_cancel(self, acc_info, cancel_offers_sites_name, time_sleep):
         while True:
