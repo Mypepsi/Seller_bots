@@ -27,13 +27,13 @@ class DataBase(Mongo):
                 difference_to_update = current_timestamp - last_update_time
                 if difference_to_update > self.creator_db_price_sleep_time:
                     try:
-                        db_rs = requests.get(self.creator_db_prices_url, timeout=20)
+                        db_rs = requests.get(self.creator_db_prices_url, timeout=30)
                         if db_rs.status_code == 200:
                             db = db_rs.json()
                             if db:
                                 Logs.log("DataBasePrices: Database is uploaded")
                                 try:
-                                    currency_data = requests.get(self.creator_db_settings_url, timeout=20)
+                                    currency_data = requests.get(self.creator_db_settings_url, timeout=30)
                                     if currency_data.status_code == 200:
                                         currency_rs = currency_data.json()
                                         if currency_rs:
@@ -170,7 +170,7 @@ class DataBase(Mongo):
                 difference_to_update = current_timestamp - last_update_time
                 if difference_to_update > self.creator_db_settings_sleep_time:
                     try:
-                        currency_data = requests.get(self.creator_db_settings_url, timeout=20)
+                        currency_data = requests.get(self.creator_db_settings_url, timeout=30)
                         if currency_data.status_code == 200:
                             currency_rs = currency_data.json()
                             if currency_rs:

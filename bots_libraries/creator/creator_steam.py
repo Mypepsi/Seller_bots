@@ -1,5 +1,5 @@
 from bots_libraries.base_info.logs import Logs
-from bots_libraries.base_info.steam import Steam
+from bots_libraries.base_info.thread_manager import ThreadManager
 from bots_libraries.steampy.confirmation import ConfirmationExecutor
 from bots_libraries.steampy.confirmation import Confirmation
 from bots_libraries.steampy.models import GameOptions
@@ -13,7 +13,8 @@ import time
 import traceback
 import requests
 
-class CreatorSteam(Steam):
+
+class CreatorSteam(ThreadManager):
     def __init__(self):
         super().__init__()
 
@@ -286,7 +287,7 @@ class CreatorSteam(Steam):
 
             data = {'Revoke': 'Revoke My Steam Web API Key',
                     'sessionid': sessioon_id}
-            delete_api_key_response = self.steamclient.session.post(url, headers=headers, data=data, timeout=20)
+            delete_api_key_response = self.steamclient.session.post(url, headers=headers, data=data, timeout=15)
             if delete_api_key_response:
                 Logs.log(f'{self.steamclient.username}: Steam ApiKey removed')
                 self.create_api_key()
@@ -316,7 +317,7 @@ class CreatorSteam(Steam):
             }
 
             response = self.steamclient.session.post('https://steamcommunity.com/dev/requestkey', headers=headers,
-                                                      data=json_data, timeout=20)
+                                                      data=json_data, timeout=15)
 
             if response.status_code == 200 and 'requires_confirmation' in response.json():
                 request_id = response.json()['request_id']
@@ -343,7 +344,7 @@ class CreatorSteam(Steam):
                     }
 
                     response_second = self.steamclient.session.post('https://steamcommunity.com/dev/requestkey',
-                                                                    headers=headers, timeout=20,
+                                                                    headers=headers, timeout=15,
                                                                     data=json_data).json()
 
                     if 'api_key' in response_second and isinstance(response_second['api_key'], str):

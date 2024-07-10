@@ -43,7 +43,7 @@ class Mongo:
         self.content_acc_for_parsing_list = self.get_all_docs_from_mongo_collection(self.acc_for_parsing_collection)
 
         self.content_merges = self.create_merge_acc_for_parsing_and_acc_sittings()
-        # endregion
+        # endregion`
 
         # region information from creator settings collection
         self.creator_settings_general = self.get_key(self.content_settings_creator, 'general')
@@ -68,10 +68,11 @@ class Mongo:
         self.creator_steam_inventory_global_sleep = self.get_key(self.creator_settings_steam, 'steam inventory global time')
         self.creator_authorization_global_sleep = self.get_key(self.creator_settings_steam, 'steam session global time')
         self.creator_hashname_difference_time = self.get_key(self.creator_settings_steam, 'steam inventory hashname validity time')
-        self.creator_proxy_check_url = self.get_key(self.creator_settings_steam, 'proxy url')
-        self.creator_proxy_global_sleep = self.get_key(self.creator_settings_steam, 'proxy global time')
         self.creator_access_token_global_sleep = self.get_key(self.creator_settings_steam, 'steam access token global time')
-        self.creator_access_token_start_sleep = self.get_key(self.creator_settings_steam, 'steam access token waiting start time')
+
+        self.creator_settings_proxy = self.get_key(self.content_settings_creator, 'proxy')
+        self.creator_proxy_check_url = self.get_key(self.creator_settings_proxy, 'proxy url')
+        self.creator_proxy_global_sleep = self.get_key(self.creator_settings_proxy, 'proxy global time')
 
         self.creator_settings_restart = self.get_key(self.content_settings_creator, 'restart')
         self.creator_restart_time_sleep = self.get_key(self.creator_settings_restart, 'restart server validity time')
@@ -90,29 +91,14 @@ class Mongo:
         self.tm_tg_token = self.get_key(self.tm_settings_general, 'tg token')
         if self.tm_tg_token:
             self.tm_tg_bot = telebot.TeleBot(self.tm_tg_token)
-        self.tm_history_tg_id = self.get_key(self.tm_settings_general, 'history tg id')
-        self.tm_history_tg_token = self.get_key(self.tm_settings_general, 'history tg token')
-        if self.tm_history_tg_token:
-            self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
-        self.tm_add_to_sale_global_sleep = self.get_key(self.tm_settings_general, 'add to sale global time')
-        self.tm_change_price_global_sleep = self.get_key(self.tm_settings_general, 'change price global time')
-        self.tm_url = self.get_key(self.tm_settings_general, 'tm url')
-        self.tm_transfer_global_sleep = self.get_key(self.tm_settings_general, 'balance transfer global time')
-        self.tm_history_global_sleep = self.get_key(self.tm_settings_general, 'history global time')
-
-
-        self.tm_settings_steam = self.get_key(self.content_settings_tm, 'steam')
-        self.tm_sda_global_sleep = self.get_key(self.tm_settings_steam, 'sda global time')
-        self.tm_cancel_offers_global_sleep = self.get_key(self.tm_settings_steam, 'steam cancel offers global time')
-        self.tm_cancel_offers_sites_name = self.get_key(self.tm_settings_steam, 'steam cancel offers sites name')
-
+        self.tm_url = self.get_key(self.tm_settings_general, 'site url')
+        self.tm_transfer_global_sleep = self.get_key(self.tm_settings_general, 'money transfer global time')
+        self.tm_api_key_checker_global_sleep = self.get_key(self.tm_settings_general, 'site apikey global time')
 
         self.tm_settings_online = self.get_key(self.content_settings_tm, 'online')
-        self.tm_ping_global_sleep = self.get_key(self.tm_settings_online, 'tm ping global time')
-        self.tm_store_ping_global_sleep = self.get_key(self.tm_settings_online, 'tm store ping global time')
-        self.tm_visible_store_num_of_items = self.get_key(self.tm_settings_online, 'visible store number of inv items')
+        self.tm_ping_global_sleep = self.get_key(self.tm_settings_online, 'online ping global time')
+        self.tm_visible_store_num_of_items = self.get_key(self.tm_settings_online, 'visible store max number of inv items')
         self.tm_visible_store_global_sleep = self.get_key(self.tm_settings_online, 'visible store global time')
-        self.tm_api_key_checker_global_sleep = self.get_key(self.tm_settings_online, 'tm api key checker global time')
 
 
         self.tm_settings_restart = self.get_key(self.content_settings_tm, 'restart')
@@ -120,6 +106,28 @@ class Mongo:
         self.tm_restart_server_global_sleep = self.get_key(self.tm_settings_restart, 'restart server global time')
         self.tm_restart_bots_global_sleep = self.get_key(self.tm_settings_restart, 'restart bots global time')
         self.tm_restart_info_bots = self.get_key(self.tm_settings_restart, 'restart bots name')  # list of dict
+        self.tm_restart_store_global_sleep = self.get_key(self.tm_settings_restart, 'restart site store global time')
+
+        self.tm_settings_steam = self.get_key(self.content_settings_tm, 'steam')
+        self.tm_sda_global_sleep = self.get_key(self.tm_settings_steam, 'steam send offers global time')
+        self.tm_cancel_offers_global_sleep = self.get_key(self.tm_settings_steam, 'steam cancel offers global time')
+        self.tm_cancel_offers_sites_name = self.get_key(self.tm_settings_steam, 'steam cancel offers sites name')
+
+        self.tm_settings_history = self.get_key(self.content_settings_tm, 'history')
+        self.tm_history_tg_id = self.get_key(self.tm_settings_history, 'history tg id')
+        self.tm_history_tg_token = self.get_key(self.tm_settings_history, 'history tg token')
+        if self.tm_history_tg_token:
+            self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
+        self.tm_history_global_sleep = self.get_key(self.tm_settings_history, 'history global time')
+
+        self.tm_settings_items = self.get_key(self.content_settings_tm, 'items')
+        self.tm_add_to_sale_global_sleep = self.get_key(self.tm_settings_items, 'add to sale global time')
+        self.tm_change_price_global_sleep = self.get_key(self.tm_settings_items, 'change price global time')
+
+
+
+
+
         # endregion
 
     def update_account_data_info(self):

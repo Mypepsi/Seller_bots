@@ -26,17 +26,12 @@ class Test(Mongo):
 
 # test = Test()
 # test.test()
-print(globals())
+print(3)
+items = [1, 4, 4, 5.2, 19.1, 19.1, 'fdfd', 'wewef', 'qweqweqwe', 'qweqweqwe', '213123']
 
 
-
-
-
-
-
-
-
-
+items = list(set(items))
+print(items)
 #     def parsing_prices(self, api_key, hash_queue, results, results_lock):
 #         while True:
 #             try:
