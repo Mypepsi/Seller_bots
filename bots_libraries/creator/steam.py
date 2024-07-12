@@ -206,7 +206,7 @@ class CreatorSteam(ThreadManager):
             except:
                 proxy_ip = proxy
             try:
-                response = requests.get(self.creator_proxy_check_url, proxies=proxy, timeout=20)
+                response = requests.get(self.creator_proxy_check_url, proxies=proxy, timeout=15)
                 if response.status_code == 200:
                     try:
                         del self.questionable_proxies[proxy_ip]
@@ -222,19 +222,19 @@ class CreatorSteam(ThreadManager):
                 Logs.log(f'Proxy Error: {proxy_ip}')
             time.sleep(10)
         Logs.log(
-            f'Steam Proxy: All proxies checked ({len(self.proxy_for_check)} proxies in MongoDB)')
+            f'Steam Proxy: All proxies checked ({len(self.proxy_for_check)} proxies)')
 
     def steam_access_token(self):
         if self.steamclient.username in self.content_acc_data_dict:
             try:
                 url = 'https://steamcommunity.com/pointssummary/ajaxgetasyncconfig'
-                response = self.steamclient._session.get(url, timeout=20)
+                response = self.steamclient._session.get(url, timeout=15)
                 reply = json.loads(response.text)
                 if str(self.steamclient.access_token) != reply['data']['webapi_token']:
                     self.acc_data_collection.update_one({"username": self.steamclient.username},
-                                                           {"$set": {"time steam session": 0}})
+                                                        {"$set": {"time steam session": 0}})
                     self.creator_tg_bot.send_message(self.creator_tg_id,
-                                                     (f'Creator: Access Token Error: {self.steamclient.username}'))
+                                                     f'Creator: Access Token Error: {self.steamclient.username}')
                     Logs.log(f'{self.steamclient.username}: Access Token Error')
             except Exception:
                 Logs.log(f'{self.steamclient.username}: Access Token Response Error')
@@ -246,7 +246,7 @@ class CreatorSteam(ThreadManager):
         api_key_ = 0
         if self.steamclient.username in self.content_acc_data_dict:
             try:
-                response = self.steamclient._session.get('https://steamcommunity.com/dev/apikey', timeout=20)
+                response = self.steamclient._session.get('https://steamcommunity.com/dev/apikey', timeout=15)
                 if response.status_code == 200:
                     api_key_ = self.get_api_key(response.text)
                     if isinstance(api_key_, bool):

@@ -1,7 +1,5 @@
 from bots_libraries.base_info.logs import Logs, ExitException
 from bots_libraries.base_info.thread_manager import ThreadManager
-import math
-import json
 import time
 import requests
 import random
@@ -17,13 +15,13 @@ class TMOnline(ThreadManager):
 
     def request_to_ping(self):
         try:
-            url = f'https://market.csgo.com/api/v2/ping-new?key={self.steamclient.tm_api}'
+            url_to_ping = f'https://market.csgo.com/api/v2/ping-new?key={self.steamclient.tm_api}'
             json_data = {
                 'access_token': self.steamclient.access_token
             }
             if self.steamclient.proxies and 'http' in self.steamclient.proxies:
                 json_data['proxy'] = self.steamclient.proxies['http']
-            response = requests.post(url, json=json_data, timeout=30).json()
+            response = requests.post(url_to_ping, json=json_data, timeout=30).json()
             return response
         except:
             return None

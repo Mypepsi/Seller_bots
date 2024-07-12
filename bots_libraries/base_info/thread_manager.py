@@ -4,6 +4,8 @@ from bots_libraries.steampy.client import SteamClient
 import time
 import requests
 import threading
+import inspect
+import os
 
 
 class ThreadManager(Steam):
@@ -16,30 +18,30 @@ class ThreadManager(Steam):
                 thread.start()
                 time.sleep(sleep_between_threads)
             except Exception as e:
-                desired_key = ''
+                modified_desired_key = ''
                 for key, value in globals().items():
                     if hasattr(value, 'name') and value.name == thread.name:
                         desired_key = key
+                        modified_desired_key = desired_key.replace("_", " ").title()
                         break
-                self.error_alert(desired_key, e)
-        Logs.log('All bot functions are running')
+                self.error_alert(modified_desired_key, e)
 
     def create_threads(self, name_func, class_obj, func, global_sleep, thread_function_sleep):
         self.update_account_data_info()
         counter = 0
-        func_to_call = ''
+        modified_function_name = func.replace("_", " ").title()
         for i in self.content_acc_data_list:
             username = str(i['username'])
-            name = username + name_func
-            globals()[name] = class_obj
-            func_to_call = getattr(class_obj, func)
-            thread = threading.Thread(target=func_to_call, args=(i, getattr(class_obj, global_sleep)))
-            thread.start()
-            counter += 1
-            time.sleep(getattr(class_obj, thread_function_sleep))
-        modified_function_name = func_to_call.__name__.replace("_", " ").title()
-        Logs.log(f'{modified_function_name}: {counter} threads are running '
-                 f'({len(self.content_acc_data_list)} accounts in MongoDB)')
+            try:
+                name = username + name_func
+                globals()[name] = class_obj
+                func_to_call = getattr(class_obj, func)
+                thread = threading.Thread(target=func_to_call, args=(i, getattr(class_obj, global_sleep)))
+                thread.start()
+                counter += 1
+                time.sleep(getattr(class_obj, thread_function_sleep))
+            except:
+                Logs.log(f'{modified_function_name}: Error during start: {username}')
 
     def create_threads_with_acc_settings(self, function, time_sleep):
         while True:
@@ -81,25 +83,24 @@ class ThreadManager(Steam):
                                   'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
 
                     requests.proxies = self.steamclient.proxies
-
                 function()
             modified_function_name = function.__name__.replace("_", " ").title()
             Logs.log(
-                f'{modified_function_name}: All accounts authorized ({len(self.content_acc_list)} accounts in MongoDB)')
+                f'{modified_function_name}: All accounts authorized')
             time.sleep(time_sleep)
 
     def create_threads_with_acc_data(self, function, time_sleep, sleep_in_the_end=True):
         while True:
-            self.update_account_data_info()
             if not sleep_in_the_end:
                 time.sleep(time_sleep)
+            self.update_account_data_info()
             for acc in self.content_acc_data_list:
                 steam_session = acc['steam session']
                 self.take_session(steam_session)
                 self.steamclient.username = acc['username']
                 function()
             modified_function_name = function.__name__.replace("_", " ").title()
-            Logs.log(f'{modified_function_name}: All accounts parsed ({len(self.content_acc_data_list)} accounts in MongoDB)')
+            Logs.log(f'{modified_function_name}: All accounts parsed')
             if sleep_in_the_end:
                 time.sleep(time_sleep)
 
@@ -108,3 +109,26 @@ class ThreadManager(Steam):
         while True:
             function()
             time.sleep(time_sleep)
+
+    def error_alert(self, thread_name: str, error) -> None:
+        global threads_alert
+        if 'threads_alert' not in globals():
+            threads_alert = False
+
+        current_frame = inspect.currentframe()
+        caller_frame = inspect.getouterframes(current_frame, 2)[1]
+        file_path = caller_frame.filename
+        document_name = os.path.splitext(os.path.basename(file_path))[0]
+
+        function_name = thread_name
+        modified_function_name = function_name.replace("_", " ").title()
+        Logs.log(f'{modified_function_name}: has not started: {error}')
+        try:
+            acc_setting_first_username = self.content_acc_list[0]['username']
+        except:
+            acc_setting_first_username = ''
+        if not threads_alert:
+            self.creator_tg_bot.send_message(self.creator_tg_id,
+                                              f'{document_name}: Fatal Error: '
+                                              f'threads not running: {acc_setting_first_username}')
+            threads_alert = True

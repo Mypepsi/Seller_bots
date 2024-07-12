@@ -52,11 +52,11 @@ class DataBase(Mongo):
                                                 buff_currency_rate = currency_rs['Creator_DataBaseRate']['DataBaseRate_buff']
 
                                                 try:
-                                                    buff_full_price = round(db[hashname]['buff']['price'] / buff_currency_rate, 2)
+                                                    buff_full_price = round(db[hashname]['buff']['price'] / buff_currency_rate, 3)
                                                 except KeyError:
                                                     buff_full_price = 0
                                                 try:
-                                                    steam_full_price = round(db[hashname]['steam']['price'], 2)
+                                                    steam_full_price = round(db[hashname]['steam']['price'], 3)
                                                 except KeyError:
                                                     steam_full_price = 0
 
@@ -116,7 +116,7 @@ class DataBase(Mongo):
                                                             else:
                                                                 currency_price_with_commission = 0
 
-                                                            round_currency_price = round(currency_price_with_commission, 2)
+                                                            round_currency_price = round(currency_price_with_commission, 3)
 
                                                             if round_currency_price > key_value:
                                                                 data_dict[hashname].update({key_name: round_currency_price})

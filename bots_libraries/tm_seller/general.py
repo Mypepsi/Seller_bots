@@ -29,7 +29,7 @@ class TMGeneral(ThreadManager):
                     pass
                 time.sleep(10)
 
-            Logs.log(f'TM API key: All TM API key checked ({len(self.content_acc_list)} accounts in MongoDB)')
+            Logs.log(f'TM API key: All TM API key checked')
             time.sleep(time_sleep)
 
     def transfer_balance(self):

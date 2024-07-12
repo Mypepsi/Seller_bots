@@ -5,6 +5,7 @@ from bots_libraries.creator.steam import CreatorSteam
 from bots_libraries.creator.database import DataBase
 from bots_libraries.base_info.restart import Restarter
 import threading
+import time
 
 
 def add_threads():
@@ -67,7 +68,8 @@ if __name__ == '__main__':
 
         threads = add_threads()
 
-        Logs.log(f'Creator STARTED')
+        Logs.log(f'Creator STARTED ({len(manager.content_acc_data_list)} in Account Data '
+                 f'and {len(manager.content_acc_list)} in Account Settings)')
         #time.sleep(manager.creator_sleep_before_start)
         manager.start_of_work(threads, manager.creator_sleep_between_threads)
 

@@ -1,8 +1,6 @@
 from pymongo import MongoClient
 from bots_libraries.base_info.logs import Logs
 import telebot
-import inspect
-import os
 import itertools
 
 
@@ -111,11 +109,11 @@ class Mongo:
         self.tm_settings_steam = self.get_key(self.content_settings_tm, 'steam')
         self.tm_sda_global_sleep = self.get_key(self.tm_settings_steam, 'steam send offers global time')
         self.tm_cancel_offers_global_sleep = self.get_key(self.tm_settings_steam, 'steam cancel offers global time')
-        self.tm_cancel_offers_sites_name = self.get_key(self.tm_settings_steam, 'steam cancel offers sites name')
+        self.tm_cancel_offers_sites_name = self.get_key(self.tm_settings_steam, 'steam cancel offers sites name')  # list of dict
 
         self.tm_settings_history = self.get_key(self.content_settings_tm, 'history')
-        self.tm_history_tg_id = self.get_key(self.tm_settings_history, 'history tg id')
-        self.tm_history_tg_token = self.get_key(self.tm_settings_history, 'history tg token')
+        self.tm_history_tg_id = self.get_key(self.tm_settings_history, 'history items sold tg id')
+        self.tm_history_tg_token = self.get_key(self.tm_settings_history, 'history items sold tg token')
         if self.tm_history_tg_token:
             self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
         self.tm_history_global_sleep = self.get_key(self.tm_settings_history, 'history global time')
@@ -187,7 +185,8 @@ class Mongo:
             if key in dictionary:
                 dictionary = dictionary[key]
             else:
-                Logs.log(f"Key '{key}' not found in {dictionary}")
+                if dictionary != {}:
+                    Logs.log(f"Key '{key}' not found in {dictionary}")
             return dictionary
         except:
             return None
@@ -214,25 +213,3 @@ class Mongo:
                 results_dict[account_name] = doc
         return results_dict
 
-    def error_alert(self, thread_name: str, error) -> None:
-        global threads_alert
-        if 'threads_alert' not in globals():
-            threads_alert = False
-
-        current_frame = inspect.currentframe()
-        caller_frame = inspect.getouterframes(current_frame, 2)[1]
-        file_path = caller_frame.filename
-        document_name = os.path.splitext(os.path.basename(file_path))[0]
-
-        function_name = thread_name
-        modified_function_name = function_name.replace("_", " ").title()
-        Logs.log(f'{modified_function_name}: has not started: {error}')
-        try:
-            acc_setting_first_username = self.content_acc_list[0]['username']
-        except:
-            acc_setting_first_username = ''
-        if not threads_alert:
-            self.creator_tg_bot.send_message(self.creator_tg_id,
-                                              f'{document_name}: Fatal Error: '
-                                              f'threads not running: {acc_setting_first_username}')
-            threads_alert = True
