@@ -1,8 +1,8 @@
 from pymongo.errors import ServerSelectionTimeoutError
 from bots_libraries.base_info.logs import Logs
 from bots_libraries.base_info.thread_manager import ThreadManager
-from bots_libraries.creator.creator_steam import CreatorSteam
-from bots_libraries.creator.creator_database import DataBase
+from bots_libraries.creator.steam import CreatorSteam
+from bots_libraries.creator.database import DataBase
 from bots_libraries.base_info.restart import Restarter
 import threading
 
