@@ -2,6 +2,8 @@ import threading
 import time
 from bots_libraries.base_info.mongo import Mongo
 from queue import Queue, Empty
+import urllib.parse
+
 
 # Список API ключів
 api_keys = ["api_key_1", "api_key_2", "api_key_3", "api_key_4"]
@@ -26,14 +28,8 @@ class Test(Mongo):
 
 # test = Test()
 # test.test()
-print(3)
-items = [1, 4, 4, 5.2, 19.1, 19.1, 'fdfd', 'wewef', 'qweqweqwe', 'qweqweqwe', '213123']
-
-my_inventory = None
-if 'success' in my_inventory and my_inventory['success']:
-    print(1)
-else:
-    print(2)
+coded_item_name = urllib.parse.quote('Music Kit | The Verkkars & n0thing, Flashbang Dance')
+print(coded_item_name)
 #     def parsing_prices(self, api_key, hash_queue, results, results_lock):
 #         while True:
 #             try:

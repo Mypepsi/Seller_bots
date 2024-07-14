@@ -42,6 +42,7 @@ class ThreadManager(Steam):
                 time.sleep(getattr(class_obj, thread_function_sleep))
             except:
                 Logs.log(f'{modified_function_name}: Error during start: {username}')
+        Logs.log(f'{modified_function_name}: {counter} threads are running')
 
     def create_threads_with_acc_settings(self, function, time_sleep):
         while True:

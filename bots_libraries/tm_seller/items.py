@@ -39,7 +39,9 @@ class TMItems(ThreadManager):
         keys = sorted([float(k) for k in dictionary.keys()])
         found_key = None
         for i in range(len(keys) - 1):
-            if keys[i] <= wanted < keys[i + 1]:
+            if wanted >= keys[i]:
+                found_key = str(int(keys[i])) if keys[i].is_integer() else str(keys[i])
+            elif keys[i] <= wanted < keys[i + 1]:
                 if keys[i].is_integer():
                     found_key = str(int(keys[i]))
                 else:
@@ -81,7 +83,6 @@ class TMItems(ThreadManager):
             update_inventory_url = f'https://market.csgo.com/api/v2/update-inventory/?key={self.steamclient.tm_api}'
             try:
                 requests.get(update_inventory_url, timeout=30)
-                Logs.log('update-inventory')
             except:
                 pass
             time.sleep(5)
@@ -147,8 +148,7 @@ class TMItems(ThreadManager):
 
     def delete_item_from_sale(self, tradable_inventory, items_on_sale):
         asset_id_to_delete = []
-        item_id_to_delete = []
-
+        item_id_to_delete = {}
         try:
             asset_id_on_sale = [item["assetid"] for item in items_on_sale]
             tradable_asset_id = list(tradable_inventory.keys())
@@ -157,85 +157,91 @@ class TMItems(ThreadManager):
                     asset_id_to_delete.append(assetid)
                     for item in items_on_sale:
                         if assetid == item["assetid"]:
-                            item_id_to_delete.append(item["item_id"])
+                            item_id_to_delete[item["item_id"]] = 0
         except:
             Logs.log(f'{self.steamclient.username}: Error in delete_item_from_sale')
-        url_to_delete = 'https://market.csgo.com/api/MassSetPriceById/'
-        chunk_size = 1
-        for i in range(0, len(item_id_to_delete), chunk_size):
-            sublist = item_id_to_delete[i:i + chunk_size]
-            items = {ui_id: 0 for ui_id in sublist}
-            params = {'key': self.steamclient.tm_api}
-            data = {f'list[{ui_id}]': price for ui_id, price in items.items()}
-            try:
-                print(data)
-                r = requests.post(url_to_delete, params=params, data=data, timeout=30)
-                r = r.json()
-                print(r)
-                time.sleep(5)
-            except Exception as e:
-                print(e)
-
+        self.request_mass_change_price(item_id_to_delete)
         filtered_items = []
         for item in items_on_sale:
-            if item["assetid"] not in asset_id_to_delete:
+            if 'assetid' in item and item["assetid"] not in asset_id_to_delete:
                 filtered_items.append(item)
         return filtered_items
 
+    def request_mass_change_price(self, item_id_to_delete):
+        url_to_delete = 'https://market.csgo.com/api/MassSetPriceById/'
+        item_to_remove = 100
+        for i in range(0, len(item_id_to_delete), item_to_remove):
+            sublist_keys = list(item_id_to_delete.keys())[i:i + item_to_remove]
+            sublist = {k: item_id_to_delete[k] for k in sublist_keys}
+            items = {ui_id: item_id_to_delete[ui_id] for ui_id in sublist}
+            params = {'key': self.steamclient.tm_api}
+            data = {f'list[{ui_id}]': price for ui_id, price in items.items()}
+            try:
+                r = requests.post(url_to_delete, params=params, data=data, timeout=30).json()
+                print(f"otvet ot change price {len(r['items'])} {r}")
+            except:
+                pass
+            time.sleep(60)
+
     # region parsing info
-    def parsing_prices(self, api_key, hash_names, results, results_lock):
+    def parsing_prices(self, api_key, hash_names, results, results_lock, threads):
         try:
             list_hash_names = '&list_hash_name[]=' + '&list_hash_name[]='.join(hash_names)
             search_hash_name_url = (f'https://market.csgo.com/api/v2/search-list-items-by-hash-name-all?'
-                                    f'key={api_key}&extended=1{list_hash_names}')
+                                    f'key={api_key}{list_hash_names}')
             parsed_info = requests.get(search_hash_name_url, timeout=30).json()
-            with results_lock:
-                results.append(parsed_info)
+            if parsed_info['success'] and parsed_info['currency'] == 'RUB':
+                info_to_write = parsed_info['data']
+                with results_lock:
+                    results.update(info_to_write)
         except:
             pass
+        time.sleep(1)
+        del threads[api_key]
 
     def threads_to_parsing(self, items, api_keys):
-        threads = []
-        results = []
+        threads = {}
+        results = {}
         try:
             results_lock = threading.Lock()
             hash_queue = Queue()
-
-            items = list(set(items))
-
-            for hash_name in items:
-                coded_item_name = urllib.parse.quote(hash_name)
+            unique_items = []
+            seen = set()
+            for item in items:
+                item_id = item['market_hash_name']
+                if item_id not in seen:
+                    unique_items.append(item)
+                    seen.add(item_id)
+            for hash_name in unique_items:
+                coded_item_name = urllib.parse.quote(hash_name['market_hash_name'])
                 hash_queue.put(coded_item_name)
-
             while not hash_queue.empty():
-                hash_names = []
-                for _ in range(min(50, hash_queue.qsize())):
-                    try:
-                        hash_names.append(hash_queue.get_nowait())
-                    except Empty:
-                        break
-
                 for api_key in api_keys:
-                    time.sleep(1)
-                    thread = threading.Thread(target=self.parsing_prices,
-                                              args=(api_key, hash_names, results, results_lock))
-                    thread.start()
-                    threads.append(thread)
-
-                for thread in threads:
-                    thread.join()
-
-                threads = []
-
+                    if api_key not in threads and not hash_queue.empty():
+                        hash_names = []
+                        item_to_parce = 50
+                        for _ in range(min(item_to_parce, hash_queue.qsize())):
+                            try:
+                                hash_names.append(hash_queue.get_nowait())
+                            except Empty:
+                                break
+                        thread = threading.Thread(target=self.parsing_prices,
+                                                  args=(api_key, hash_names, results, results_lock, threads))
+                        thread.start()
+                        threads[api_key] = thread
+                time.sleep(0.5)
+            while True:
+                if len(threads) == 0:
+                    break
+                time.sleep(1)
             return results
-
         except:
             return results
     # endregion
 
     def change_price(self, acc_info, time_sleep):
+        username = ''
         while True:
-            username = ''
             self.update_account_data_info()
             self.update_db_prices_and_setting()
             acc_data_tradable_inventory = {}
@@ -257,60 +263,62 @@ class TMItems(ThreadManager):
                     if item_status == '1':
                         item_to_delete.append(item)
                 new_store_items = self.delete_item_from_sale(acc_data_tradable_inventory, item_to_delete)
-                time.sleep(100000000)
-                try:
-                    another_tm_apis_list = self.search_in_merges_by_username(self.steamclient.username)['tm apikey']
-                    items_asset_ids = [item["item_id"] for item in new_store_items]
-                    parsed_info = self.threads_to_parsing(new_store_items, another_tm_apis_list)
-                    my_prices = {}
-                    for i in range(len(new_store_items)):
-                        try:
-                            item_name = new_store_items[i]['market_hash_name']
-                            for el in parsed_info:
-                                if ('data' in el and isinstance(el['data'], list)
-                                        and 'currency' in el and el['currency'] == 'RUB'):
-                                    filtered_dict = {
-                                        key: value for key, value in el['data'].items()
-                                        if value["id"] not in items_asset_ids
-                                    }
-                                    if filtered_dict:
-                                        item_prices = [item["price"] for item in filtered_dict[item_name]]
-                                        tm_seller_value = self.taking_tm_information_for_pricing()
+                max_items_count = 100
+                for i in range(0, len(new_store_items), max_items_count):
+                    sublist = new_store_items[i:i + max_items_count]
+                    try:
+                        another_tm_apis_list = self.search_in_merges_by_username(self.steamclient.username)['tm apikey']
+                        items_item_ids = [item["item_id"] for item in sublist]
+                        parsed_info = self.threads_to_parsing(sublist, another_tm_apis_list)
+                        my_prices = {}
+                        for item in range(len(sublist)):
+                            try:
+                                item_name = sublist[item]['market_hash_name']
+                                item_id = sublist[item]['item_id']
+                                for el in parsed_info.keys():
+                                    if el == item_name:
+                                        filtered_dict = {
+                                            item["id"]: item for item in parsed_info[el]
+                                            if str(item["id"]) not in str(items_item_ids)
+                                        }
+                                        if filtered_dict:
+                                            item_prices_with_my = [item["price"] for item in parsed_info[el]]
+                                            item_prices = [item["price"] for item in filtered_dict.values()]
+                                            tm_seller_value = self.taking_tm_information_for_pricing()
 
-                                        max_market_price = self.get_my_market_price(
-                                            acc_data_phases_inventory[new_store_items[i]["assetid"]], tm_seller_value, 'max')
+                                            max_market_price = self.get_my_market_price(
+                                                acc_data_phases_inventory[sublist[item]["assetid"]], tm_seller_value, 'max')
 
-                                        min_market_price = self.get_my_market_price(
-                                            acc_data_phases_inventory[new_store_items[i]["assetid"]], tm_seller_value, 'min')
+                                            min_market_price = self.get_my_market_price(
+                                                acc_data_phases_inventory[sublist[item]["assetid"]], tm_seller_value, 'min')
 
-                                        if len(item_prices) > 0:
-                                            min_price_raw = min([int(price) for price in item_prices])
-                                            min_price = (min_price_raw - 1) / 100
+                                            if len(item_prices) > 0:
+                                                min_price_raw = min([int(price) for price in item_prices])
+                                                min_price_opponent = (min_price_raw - 1)
 
-                                            if min_market_price <= min_price <= max_market_price:
-                                                my_market_price = min_price
-                                            elif min_price - 1 < min_market_price:
-                                                my_market_price = min_market_price
-                                            else:
+                                                if min_market_price <= min_price_opponent <= max_market_price:
+                                                    my_market_price = min_price_opponent
+                                                elif min_price_opponent < min_market_price:
+                                                    my_market_price = min_market_price
+                                                else:
+                                                    my_market_price = max_market_price
+                                            elif len(item_prices) == 0 and len(item_prices_with_my) > 0:
                                                 my_market_price = max_market_price
-                                        else:
-                                            my_market_price = max_market_price
+                                            else:
+                                                continue
+                                            for item_ in store_items['items']:
+                                                if (item_['item_id'] == item_id and my_market_price != 0 and
+                                                        item_['price'] != my_market_price / 100):
+                                                    my_prices[sublist[item]["item_id"]] = my_market_price
 
-                                        coded_item_name = urllib.parse.quote(item_name)
-                                        my_prices[coded_item_name] = my_market_price
+                            except Exception as e:
+                                Logs.log(f'{username}: Error in change_price: {e}')
 
-                        except Exception as e:
-                            Logs.log(f'{username}: Error in change_price: {e}')
+                        if len(my_prices) > 0:
+                            self.request_mass_change_price(my_prices)
 
-                    for key, value in my_prices:
-                        change_price_url = f'{value}/{key}'
-                        try:
-                            requests.get(change_price_url, timeout=30)
-                        except:
-                            pass
-
-                except Exception as e:
-                    Logs.log(f'{username}: Fatal error in change_price: {e}')
+                    except Exception as e:
+                        Logs.log(f'{username}: Fatal error in change_price: {e}')
             elif store_items is not None:
                 Logs.log('Error during receiving inventory')
 
