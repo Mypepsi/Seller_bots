@@ -177,8 +177,7 @@ class TMItems(ThreadManager):
             params = {'key': self.steamclient.tm_api}
             data = {f'list[{ui_id}]': price for ui_id, price in items.items()}
             try:
-                r = requests.post(url_to_delete, params=params, data=data, timeout=30).json()
-                print(f"otvet ot change price {len(r['items'])} {r}")
+                requests.post(url_to_delete, params=params, data=data, timeout=30)
             except:
                 pass
             time.sleep(60)
