@@ -10,68 +10,68 @@ class TMGeneral(ThreadManager):
     def __init__(self):
         super().__init__()
 
-    def validity_tm_apikey(self, time_sleep):
-        while True:
-            for acc_info in self.content_acc_list:
+    def validity_tm_apikey(self):
+        for acc_info in self.content_acc_list:
+            time.sleep(10)
+            try:
+                username = acc_info['username']
+                tm_api_key = acc_info['tm apikey']
+                balance_url = f'https://market.csgo.com/api/v2/get-money?key={tm_api_key}'
                 try:
-                    username = acc_info['username']
-                    tm_api_key = acc_info['tm apikey']
-                    balance_url = f'https://market.csgo.com/api/v2/get-money?key={tm_api_key}'
-                    try:
-                        search_response = requests.get(balance_url, timeout=30).json()
-                    except:
-                        search_response = None
-                    if (search_response is not None
-                            and 'error' in search_response and search_response['error'] == 'Bad KEY'):
-                        Logs.log(f'{username}: TM API key Error')
-                        self.tm_tg_bot.send_message(self.tm_tg_id, f'TM Seller: TM API key Error: {username}')
+                    search_response = requests.get(balance_url, timeout=30).json()
                 except:
-                    pass
-                time.sleep(10)
-
+                    continue
+                if 'error' in search_response and search_response['error'] == 'Bad KEY':
+                    Logs.log(f'{username}: TM API key Error')
+                    self.tm_tg_bot.send_message(self.tm_tg_id, f'TM Seller: TM API key Error: {username}')
+            except:
+                pass
             Logs.log(f'TM API key: All TM API key checked')
-            time.sleep(time_sleep)
 
     def transfer_balance(self):
         api_to_withdraw = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_transfer_apikey']
-
         for acc in self.content_acc_list:
+            time.sleep(10)
             try:
                 username = acc['username']
                 tm_api = acc['tm apikey']
                 current_balance_url = f'https://market.csgo.com/api/v2/get-money?key={tm_api}'
                 try:
-                    response = requests.get(current_balance_url, timeout=30)
+                    response = requests.get(current_balance_url, timeout=30).json()
                 except:
-                    raise
-                if response.status_code == 200:
-                    data = json.loads(response.text)
-                    money_value = data['money']
-                    balance_tm = math.floor(money_value)
-                    if balance_tm > 0:
-                        time.sleep(3)
-                        new_value = balance_tm * 100
-                        withdrawing_tm_url = (f'https://market.csgo.com/api/v2/money-send/{new_value}/{api_to_withdraw}?'
-                                              f'pay_pass=34368&key={tm_api}')
+                    continue
+                balance_tm = response['money']
+                if balance_tm > 1:
+                    time.sleep(3)
+                    new_value = round(balance_tm * 100)
+                    withdrawing_tm_url = (f'https://market.csgo.com/api/v2/money-send/{new_value}/{api_to_withdraw}?'
+                                          f'pay_pass=34368&key={tm_api}')
+                    try:
+                        data = requests.get(withdrawing_tm_url, timeout=30).json()
+                    except:
+                        continue
+                    if 'amount' in data:
+                        withdraw_money = data['amount'] / 100
+                        Logs.log(f'{username}: {withdraw_money}₽ transferred')
+                    if 'error' in data and data['error'] == 'need_payment_password':
+                        set_pay_password_url = (f'https://market.csgo.com/api/v2/set-pay-password?'
+                                                f'new_password=34368&key={tm_api}')
                         try:
-                            response = requests.get(withdrawing_tm_url, timeout=30)
+                            data_ = requests.get(set_pay_password_url, timeout=30).json()
                         except:
-                            raise
-                        if response.status_code == 200:
-                            data = json.loads(response.text)
-                            if 'amount' in data:
-                                withdraw_money = data['amount'] / 100
-                                Logs.log(f'{username}: {withdraw_money}: RUB transferred')
-                            if 'error' in data and data['error'] == 'wrong_payment_password':
-                                set_pay_password_url = (f'https://market.csgo.com/api/v2/set-pay-password?'
-                                                        f'new_password=34368&key={tm_api}')
-                                try:
-                                    response = requests.get(set_pay_password_url, timeout=30)
-                                except:
-                                    raise
-                                if response.status_code == 200:
-                                    data = json.loads(response.text)
-                                    if 'success' in data and data['success']:
-                                        Logs.log(f'{username}: payment password has been successfully set')
+                            continue
+                        if 'success' in data_ and data_['success']:
+                            Logs.log(f'{username}: payment password has been successfully set')
+                        else:
+                            Logs.log(f'{username}: Error to set payment password')
+                            self.tm_tg_bot.send_message(self.tm_tg_id,
+                                                        f'TM Seller: Money Transfer: '
+                                                        f'Error to set payment password: {username}')
+                    else:
+                        Logs.log(f'{username}: Wrong payment password')
+                        self.tm_tg_bot.send_message(self.tm_tg_id,
+                                                    f'TM Seller: Money Transfer: '
+                                                    f'Wrong payment password: {username}')
             except:
                 pass
+        Logs.log(f'Money Transfer: Balance from all accounts transferred')

@@ -29,8 +29,9 @@ def add_threads():
     #                                                    'tm_restart_store_global_sleep', 'tm_thread_function_sleep'))
     # thread_list.append(restart_site_store_thread)
     #
-    # validity_apikey_thread = threading.Thread(target=api_chk.validity_tm_apikey,
-    #                                           args=api_chk.tm_api_key_checker_global_sleep)
+    # validity_apikey_thread = threading.Thread(target=api_chk.create_threads_with_loop,
+    #                                           args=(api_chk.validity_tm_apikey,
+    #                                                 api_chk.tm_api_key_checker_global_sleep))
     # thread_list.append(validity_apikey_thread)
     #
     # online_thread = threading.Thread(target=manager.create_threads,
@@ -54,10 +55,10 @@ def add_threads():
     #                                             'tm_thread_function_sleep'))
     # thread_list.append(add_to_sale_thread)
     #
-    change_price_thread = threading.Thread(target=manager.create_threads,
-                                           args=('_chg_prc', TMItems(), 'change_price',
-                                                 'tm_change_price_global_sleep', 'tm_thread_function_sleep'))
-    thread_list.append(change_price_thread)
+    # change_price_thread = threading.Thread(target=manager.create_threads,
+    #                                        args=('_chg_prc', TMItems(), 'change_price',
+    #                                              'tm_change_price_global_sleep', 'tm_thread_function_sleep'))
+    # thread_list.append(change_price_thread)
     #
     # transfer_balance_thread = threading.Thread(target=blc_trf.create_threads_with_loop,
     #                                            args=(blc_trf.transfer_balance, blc_trf.tm_transfer_global_sleep))
