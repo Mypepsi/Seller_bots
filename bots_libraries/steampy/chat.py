@@ -10,7 +10,7 @@ class SteamChat:
         self._chat_params = {}
 
     def _get_access_token(self):
-        response = self._session.get(SteamUrl.COMMUNITY_URL + "/chat")
+        response = self._session.get(SteamUrl.COMMUNITY_URL + "/chat", timeout=15)
         response.raise_for_status()
         response_soup = bs4.BeautifulSoup(response.text, "html.parser")
         elems = response_soup.select("body > div > div > div > script[type]")

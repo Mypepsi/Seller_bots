@@ -1,35 +1,53 @@
-import threading
-import time
+# import threading
+# import time
 from bots_libraries.base_info.mongo import Mongo
-from queue import Queue, Empty
-import urllib.parse
+# from queue import Queue, Empty
+# import urllib.parse
+from bots_libraries.base_info.logs import Logs
 
 
-# Список API ключів
-api_keys = ["api_key_1", "api_key_2", "api_key_3", "api_key_4"]
-
-# Список хешнеймів
-hash_names = [
-    "hashname1", "hashname2", "hashname3", "hashname4", "hashname5",
-    "hashname6", "hashname7", "hashname8", "hashname9", "hashname10",
-    "hashname11", "hashname12", "hashname13", "hashname14", "hashname15",
-    "hashname16", "hashname17", "hashname18", "hashname19", "hashname20",
-    "hashname21", "hashname22", "hashname23", "hashname24", "hashname25",
-    "hashname26", "hashname27", "hashname28", "hashname29", "hashname30"
-]
 
 # Список API ключів
-class Test(Mongo):
-    def test(self):
-        self.acc_history_collection = self.get_collection(self.accs, 'account_data')
-        collection_info = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
-        print(collection_info)
+# Приклад списку словників
+# my_list = [
+#     {'_id': 1, 'name': 'John', 'age': 30},
+#     {'_id': 2, 'name': 'Jane', 'age': 25},
+#     {'_id': 3, 'name': 'Doe', 'age': 22},
+# ]
+#
+# # Значення для ідентифікації елемента та нові дані для оновлення
+# identifier_key = '_id'
+# identifier_value = 1
+# new_data = {'name': 'John Doe', 'age': 31}
+#
+# # Оновлення елемента в списку
+# for index, element in enumerate(my_list):
+#     if element.get(identifier_key) == identifier_value:
+#         my_list[index] = {**element, **new_data}
+#         break
+#
+# # Вивід оновленого списку
+# print(my_list)
+# Приклад словника
+try:
+    1 / 0
+except:
+    Logs.get_usual_info()
 
-
+# class Test(Mongo):
+#     def __init__(self):
+#         super().__init__()
+#
+#         collection_name = f'history_ezra84rbgt'
+#         self.acc_history_collection = self.get_collection(self.history, collection_name)
+#         self.collection_info = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
+#         print(self.collection_info)
+#
+#
 # test = Test()
-# test.test()
-coded_item_name = urllib.parse.quote('Music Kit | The Verkkars & n0thing, Flashbang Dance')
-print(coded_item_name)
+# for doc in test.collection_info:
+#     print(doc.get('transaction'))
+
 #     def parsing_prices(self, api_key, hash_queue, results, results_lock):
 #         while True:
 #             try:
@@ -70,6 +88,5 @@ print(coded_item_name)
 #
 # test = Test()
 # test.threads_to_parsing(hash_names, api_keys)
-
 
 

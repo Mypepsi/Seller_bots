@@ -67,11 +67,10 @@ if __name__ == '__main__':
         steam_acs = CreatorSteam()
 
         threads = add_threads()
-
         Logs.log(f'Creator STARTED ({len(manager.content_acc_data_list)} in Account Data '
                  f'and {len(manager.content_acc_list)} in Account Settings)')
         #time.sleep(manager.creator_sleep_before_start)
-        manager.start_of_work(threads, manager.creator_sleep_between_threads)
+        manager.start_of_work(manager.creator_tg_info, threads, manager.creator_sleep_between_threads)
 
 
     except ServerSelectionTimeoutError:

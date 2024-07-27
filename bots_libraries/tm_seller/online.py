@@ -10,12 +10,10 @@ class TMOnline(ThreadManager):
     def __init__(self):
         super().__init__()
         self.ping_alert = False
-        self.history_steam_steam_status_alert = False
-        self.history_steam_asset_id_alert = False
 
     def request_to_ping(self):
         try:
-            url_to_ping = f'https://market.csgo.com/api/v2/ping-new?key={self.steamclient.tm_api}'
+            url_to_ping = f'https://{self.tm_url}/api/v2/ping-new?key={self.steamclient.tm_api}'
             json_data = {
                 'access_token': self.steamclient.access_token
             }
@@ -39,8 +37,7 @@ class TMOnline(ThreadManager):
                         and 'message' in response and response['message'] != 'too early for ping'):
                     Logs.log(f"{self.steamclient.username}: Ping Error: {response['message']}")
                     if not self.ping_alert:
-                        self.tm_tg_bot.send_message(self.tm_tg_id,
-                                                    f'TM Seller: Ping Error: {self.steamclient.username}')
+                        Logs.send_msg_in_tg(self.tm_tg_info, 'Ping Error', self.steamclient.username)
                         self.ping_alert = True
             except:
                 Logs.log(f'Error during take session in ping for {username}')
@@ -54,13 +51,13 @@ class TMOnline(ThreadManager):
                 username = acc_info['username']
                 steam_session = acc_info['steam session']
                 self.take_session(steam_session)
-                url = f'https://market.csgo.com/api/v2/go-offline?key={self.steamclient.tm_api}'
+                url = f'https://{self.tm_url}/api/v2/go-offline?key={self.steamclient.tm_api}'
 
                 try:
                     response = requests.get(url, timeout=30).json()
                 except:
                     response = None
-                if response is not None and 'success' in response and response['success'] is not True:
+                if response and 'success' in response and response['success'] is not True:
                     Logs.log(f'{username}: Offline Store Error')
             except:
                 Logs.log(f'Error in restart_site_store for {username}')
@@ -79,7 +76,7 @@ class TMOnline(ThreadManager):
                 steam_session = acc_info['steam session']
                 self.take_session(steam_session)
                 try:
-                    my_inventory_url = f'https://market.csgo.com/api/v2/my-inventory/?key={self.steamclient.tm_api}'
+                    my_inventory_url = f'https://{self.tm_url}/api/v2/my-inventory/?key={self.steamclient.tm_api}'
                     my_inventory_response = requests.get(my_inventory_url, timeout=30).json()
                     my_inventory = my_inventory_response['items']
                 except:
@@ -89,18 +86,16 @@ class TMOnline(ThreadManager):
                     if 'tradable' in item and item['tradable'] == 1:
                         tradable_inventory.append(item)
                 if len(tradable_inventory) > self.tm_visible_store_num_of_items:
-                    Logs.log(f'{username}: Not all items listed in Store')
-                    self.tm_tg_bot.send_message(self.tm_tg_id,
-                                                f'TM Seller: Not all items listed in Store: {username}')
+                    Logs.log_and_send_msg_in_tg(self.tm_tg_info, 'Not all items listed in Store', username)
                     raise ExitException
 
-                items_url = f'https://market.csgo.com/api/v2/items?key={self.steamclient.tm_api}'
+                items_url = f'https://{self.tm_url}/api/v2/items?key={self.steamclient.tm_api}'
                 try:
                     response = requests.get(items_url, timeout=30).json()
                     items_on_sale = response['items']
                 except:
                     items_on_sale = None
-                if items_on_sale is not None and len(items_on_sale) != 0:
+                if items_on_sale and len(items_on_sale) != 0:
                     for _ in range(len(items_on_sale)):
                         random_item = random.choice(items_on_sale)
                         if random_item['status'] == '1':
@@ -110,7 +105,7 @@ class TMOnline(ThreadManager):
                             another_tm_apis_list = self.search_in_merges_by_username(
                                 self.steamclient.username)['tm apikey']
                             another_tm_api = random.choice(another_tm_apis_list)
-                            search_url = (f'https://market.csgo.com/api/v2/search-list-items-by-hash-name-all?'
+                            search_url = (f'https://{self.tm_url}/api/v2/search-list-items-by-hash-name-all?'
                                           f'key={another_tm_api}&extended=1&list_hash_name[]={coded_hash_name}')
                             try:
                                 search_response = requests.get(search_url, timeout=30).json()
@@ -120,9 +115,7 @@ class TMOnline(ThreadManager):
                                         search_result = True
                                         break
                                 if not search_result:
-                                    Logs.log(f'{username}: Store Visible Error')
-                                    self.tm_tg_bot.send_message(self.tm_tg_id,
-                                                                f'TM Seller: Store Visible Error: {username}')
+                                    Logs.log_and_send_msg_in_tg(self.tm_tg_info, 'Store Visible Error', username)
                                     raise ExitException
                             except ExitException:
                                 raise ExitException

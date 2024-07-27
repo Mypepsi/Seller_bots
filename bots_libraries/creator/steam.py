@@ -51,8 +51,7 @@ class CreatorSteam(ThreadManager):
                     time.sleep(30)
                 elif number_of_try == 2:
                     Logs.log(f'{self.steamclient.username}: Not authorized on steam')
-                    self.creator_tg_bot.send_message(self.creator_tg_id,
-                                                     (f'Creator: Steam Authorization Error: {self.steamclient.username}'))
+                    Logs.send_msg_in_tg(self.creator_tg_info, 'Steam Authorization Error', self.steamclient.username)
                     break
 
     def create_history_docs(self):
@@ -216,13 +215,12 @@ class CreatorSteam(ThreadManager):
                 if proxy_ip in self.questionable_proxies:
                     self.questionable_proxies[proxy_ip] += 1
                     if self.questionable_proxies[proxy_ip] == 3:
-                        self.creator_tg_bot.send_message(self.creator_tg_id, (f'Creator: Proxy Error: {proxy_ip}'))
+                        Logs.send_msg_in_tg(self.creator_tg_info, 'Proxy Error', proxy_ip)
                 else:
                     self.questionable_proxies[proxy_ip] = 1
                 Logs.log(f'Proxy Error: {proxy_ip}')
             time.sleep(10)
-        Logs.log(
-            f'Steam Proxy: All proxies checked ({len(self.proxy_for_check)} proxies)')
+        Logs.log(f'Steam Proxy: All proxies checked ({len(self.proxy_for_check)} proxies)')
 
     def steam_access_token(self):
         if self.steamclient.username in self.content_acc_data_dict:
@@ -233,10 +231,8 @@ class CreatorSteam(ThreadManager):
                 if str(self.steamclient.access_token) != reply['data']['webapi_token']:
                     self.acc_data_collection.update_one({"username": self.steamclient.username},
                                                         {"$set": {"time steam session": 0}})
-                    self.creator_tg_bot.send_message(self.creator_tg_id,
-                                                     f'Creator: Access Token Error: {self.steamclient.username}')
-                    Logs.log(f'{self.steamclient.username}: Access Token Error')
-            except Exception:
+                    Logs.log_and_send_msg_in_tg(self.creator_tg_info, 'Access Token Error', self.steamclient.username)
+            except:
                 Logs.log(f'{self.steamclient.username}: Access Token Response Error')
 
             time.sleep(10)

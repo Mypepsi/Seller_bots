@@ -40,15 +40,16 @@ def add_threads():
     # thread_list.append(online_thread)
     #
     # trades_thread = threading.Thread(target=manager.create_threads,
-    #                                  args=('_tm_trd', TMSteam(), 'tm_trades', 'tm_sda_global_sleep',
+    #                                  args=('_tm_trd', TMSteam(), 'steam_send_offers', 'tm_sda_global_sleep',
     #                                        'tm_thread_function_sleep'))
     # thread_list.append(trades_thread)
     #
-    # check_trades_for_cancel_thread = threading.Thread(target=manager.create_threads,
-    #                                                   args=('_chk_trd', TMSteam(), 'check_trades_for_cancel',
-    #                                                         'tm_cancel_offers_global_sleep',
-    #                                                         'tm_thread_function_sleep'))
-    # thread_list.append(check_trades_for_cancel_thread)
+    steam_cancel_offers_thread = threading.Thread(target=manager.create_threads,
+                                                      args=('_chk_trd', TMSteam(), 'steam_cancel_offers',
+                                                            'tm_cancel_offers_global_sleep',
+                                                            'tm_thread_function_sleep', 'tm_cancel_offers_sites_name'))
+    thread_list.append(steam_cancel_offers_thread)
+
     #
     # add_to_sale_thread = threading.Thread(target=manager.create_threads,
     #                                       args=('_add_sale', TMItems(), 'add_to_sale', 'tm_add_to_sale_global_sleep',
@@ -65,7 +66,7 @@ def add_threads():
     # thread_list.append(transfer_balance_thread)
     #
     # history_thread = threading.Thread(target=manager.create_threads,
-    #                                   args=('_hstr_thd', TMHistory(), 'main_history', 'tm_history_global_sleep',
+    #                                   args=('_hstr_thd', TMHistory(), 'history_check', 'tm_history_global_sleep',
     #                                         'tm_thread_function_sleep'))
     # thread_list.append(history_thread)
     #
@@ -90,7 +91,7 @@ if __name__ == '__main__':
             Logs.log(f'TM Seller STARTED ({len(manager.content_acc_data_list)} in Account Data '
                      f'and {len(manager.content_acc_list)} in Account Settings)')
             #time.sleep(manager.tm_sleep_before_start)
-            manager.start_of_work(threads, manager.tm_sleep_between_threads)
+            manager.start_of_work(manager.tm_tg_info, threads, manager.tm_sleep_between_threads)
 
         except ServerSelectionTimeoutError:
            Logs.log("Connecting to MongoDB ERROR")

@@ -11,46 +11,15 @@ import urllib.parse
 class TMItems(ThreadManager):
     def __init__(self):
         super().__init__()
-
-
-    # region functions for add to sale and change price
-
-    def taking_tm_information_for_pricing(self):
         try:
             self.commission = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_commission']
             self.rate = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_rate']
         except:
+            self.commission = 0
+            self.rate = 0
             Logs.log(f'Error during taking a info from DataBaseSettings -> TM_Seller')
-        try:
-            database_setting_bots = self.content_database_settings['DataBaseSettings']['Sellers_SalePrice']['bots']
-        except:
-            database_setting_bots = {}
-            Logs.log(f'Error during taking a info from DataBaseSettings -> Sellers_SalePrice -> bots')
 
-        tm_seller_value = None
-        for key, value in database_setting_bots.items():
-            if 'tm_seller' in key:
-                tm_seller_value = value
-                break
-        return tm_seller_value
-
-    @staticmethod
-    def find_matching_key(wanted, dictionary):
-        keys = sorted([float(k) for k in dictionary.keys()])
-        found_key = None
-        for i in range(len(keys) - 1):
-            if wanted >= keys[i]:
-                found_key = str(int(keys[i])) if keys[i].is_integer() else str(keys[i])
-            elif keys[i] <= wanted < keys[i + 1]:
-                if keys[i].is_integer():
-                    found_key = str(int(keys[i]))
-                else:
-                    found_key = str(keys[i])
-                break
-        if found_key is None and wanted >= keys[-1]:
-            found_key = str(keys[-1])
-        return found_key
-
+    # region functions for add to sale and change price
     def get_my_market_price(self, asset_id_in_phases_inventory, conditions, limits_value):
         start_sale_time = asset_id_in_phases_inventory['time']
         hash_name = asset_id_in_phases_inventory['market_hash_name']
@@ -80,19 +49,19 @@ class TMItems(ThreadManager):
     #region add to sale
     def get_and_filtered_inventory(self, inventory_from_acc_data):
         try:
-            update_inventory_url = f'https://market.csgo.com/api/v2/update-inventory/?key={self.steamclient.tm_api}'
+            update_inventory_url = f'https://{self.tm_url}/api/v2/update-inventory/?key={self.steamclient.tm_api}'
             try:
-                requests.get(update_inventory_url, timeout=30)
+                requests.get(update_inventory_url, timeout=5)
             except:
                 pass
             time.sleep(5)
-            my_inventory_url = f'https://market.csgo.com/api/v2/my-inventory/?key={self.steamclient.tm_api}'
+            my_inventory_url = f'https://{self.tm_url}/api/v2/my-inventory/?key={self.steamclient.tm_api}'
             try:
                 my_inventory = requests.get(my_inventory_url, timeout=30).json()
             except:
                 my_inventory = None
             my_inventory_list = []
-            if my_inventory is not None and 'success' in my_inventory and my_inventory['success']:
+            if my_inventory and 'success' in my_inventory and my_inventory['success']:
                 try:
                     my_inventory_items = my_inventory['items']
                     my_inventory_list = [item['id'] for item in my_inventory_items]
@@ -121,15 +90,15 @@ class TMItems(ThreadManager):
             except:
                 Logs.log('Error during taking a session')
             filtered_inventory = self.get_and_filtered_inventory(acc_data_tradable_inventory)
-            tm_seller_value = self.taking_tm_information_for_pricing()
+            tm_seller_value = self.taking_tm_information_for_pricing('tm_seller')
 
             for asset_id in filtered_inventory:
                 try:
                     market_price = self.get_my_market_price(acc_data_phases_inventory[asset_id], tm_seller_value, 'max')
                     if market_price is not None and market_price != 0:
-                        add_to_sale_url = (f'https://market.csgo.com/api/v2/add-to-sale?key={self.steamclient.tm_api}'
+                        add_to_sale_url = (f'https://{self.tm_url}/api/v2/add-to-sale?key={self.steamclient.tm_api}'
                                            f'&cur=RUB&id={asset_id}&price={market_price}')
-                        requests.get(add_to_sale_url, timeout=30)
+                        requests.get(add_to_sale_url, timeout=5)
                 except:
                     pass
                 time.sleep(2)
@@ -140,7 +109,7 @@ class TMItems(ThreadManager):
     # region change price
     def get_store_items(self):
         try:
-            exhibited_items_url = f'https://market.csgo.com/api/v2/items?key={self.steamclient.tm_api}'
+            exhibited_items_url = f'https://{self.tm_url}/api/v2/items?key={self.steamclient.tm_api}'
             response = requests.get(exhibited_items_url, timeout=30).json()
             return response
         except:
@@ -168,7 +137,7 @@ class TMItems(ThreadManager):
         return filtered_items
 
     def request_mass_change_price(self, item_id_to_delete):
-        url_to_delete = 'https://market.csgo.com/api/MassSetPriceById/'
+        url_change_price = f'https://{self.tm_url}/api/MassSetPriceById/'
         item_to_remove = 100
         for i in range(0, len(item_id_to_delete), item_to_remove):
             sublist_keys = list(item_id_to_delete.keys())[i:i + item_to_remove]
@@ -177,7 +146,7 @@ class TMItems(ThreadManager):
             params = {'key': self.steamclient.tm_api}
             data = {f'list[{ui_id}]': price for ui_id, price in items.items()}
             try:
-                requests.post(url_to_delete, params=params, data=data, timeout=30)
+                requests.post(url_change_price, params=params, data=data, timeout=5)
             except:
                 pass
             time.sleep(60)
@@ -186,7 +155,7 @@ class TMItems(ThreadManager):
     def parsing_prices(self, api_key, hash_names, results, results_lock, threads):
         try:
             list_hash_names = '&list_hash_name[]=' + '&list_hash_name[]='.join(hash_names)
-            search_hash_name_url = (f'https://market.csgo.com/api/v2/search-list-items-by-hash-name-all?'
+            search_hash_name_url = (f'https://{self.tm_url}/api/v2/search-list-items-by-hash-name-all?'
                                     f'key={api_key}{list_hash_names}')
             parsed_info = requests.get(search_hash_name_url, timeout=30).json()
             if parsed_info['success'] and parsed_info['currency'] == 'RUB':
@@ -283,7 +252,7 @@ class TMItems(ThreadManager):
                                         if filtered_dict:
                                             item_prices_with_my = [item["price"] for item in parsed_info[el]]
                                             item_prices = [item["price"] for item in filtered_dict.values()]
-                                            tm_seller_value = self.taking_tm_information_for_pricing()
+                                            tm_seller_value = self.taking_tm_information_for_pricing('tm_seller')
 
                                             max_market_price = self.get_my_market_price(
                                                 acc_data_phases_inventory[sublist[item]["assetid"]], tm_seller_value, 'max')

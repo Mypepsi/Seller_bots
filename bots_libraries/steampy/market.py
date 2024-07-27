@@ -38,7 +38,7 @@ class SteamMarket:
                   'currency': currency.value,
                   'appid': game.app_id,
                   'market_hash_name': item_hash_name}
-        response = self._session.get(url, params=params)
+        response = self._session.get(url, params=params, timeout=15)
         if response.status_code == 429:
             raise TooManyRequests("You can fetch maximum 20 prices in 60s period")
         return response.json()
@@ -49,14 +49,14 @@ class SteamMarket:
         params = {'country': 'PL',
                   'appid': game.app_id,
                   'market_hash_name': item_hash_name}
-        response = self._session.get(url, params=params)
+        response = self._session.get(url, params=params, timeout=15)
         if response.status_code == 429:
             raise TooManyRequests("You can fetch maximum 20 prices in 60s period")
         return response.json()
 
     @login_required
     def get_my_market_listings(self) -> dict:
-        response = self._session.get("%s/market" % SteamUrl.COMMUNITY_URL)
+        response = self._session.get("%s/market" % SteamUrl.COMMUNITY_URL, timeout=15)
         if response.status_code != 200:
             raise ApiException("There was a problem getting the listings. http code: %s" % response.status_code)
         assets_descriptions = json.loads(text_between(response.text, "var g_rgAssets = ", ";\r\n"))
@@ -69,7 +69,7 @@ class SteamMarket:
             n_total = int(text_between(response.text, '<span id="tabContentsMyActiveMarketListings_total">', '</span>').replace(',',''))
             if n_showing < n_total < 1000:
                 url = "%s/market/mylistings/render/?query=&start=%s&count=%s" % (SteamUrl.COMMUNITY_URL, n_showing, -1)
-                response = self._session.get(url)
+                response = self._session.get(url, timeout=15)
                 if response.status_code != 200:
                     raise ApiException("There was a problem getting the listings. http code: %s" % response.status_code)
                 jresp = response.json()
@@ -81,7 +81,7 @@ class SteamMarket:
             else:
                 for i in range(0, n_total, 100):
                     url = "%s/market/mylistings/?query=&start=%s&count=%s" % (SteamUrl.COMMUNITY_URL, n_showing + i, 100)
-                    response = self._session.get(url)
+                    response = self._session.get(url, timeout=15)
                     if response.status_code != 200:
                         raise ApiException("There was a problem getting the listings. http code: %s" % response.status_code)
                     jresp = response.json()

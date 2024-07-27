@@ -49,8 +49,6 @@ class Mongo:
         self.creator_tg_id = self.get_key(self.creator_settings_general, 'tg id')
         self.creator_sleep_before_start = self.get_key(self.creator_settings_general, 'waiting start time')
         self.creator_sleep_between_threads = self.get_key(self.creator_settings_general, 'thread start time')
-        if self.creator_tg_token:
-            self.creator_tg_bot = telebot.TeleBot(self.creator_tg_token)
 
         self.creator_settings_database = self.get_key(self.content_settings_creator, 'database')
         self.creator_db_prices_url = self.get_key(self.creator_settings_database, 'db prices url')
@@ -87,8 +85,6 @@ class Mongo:
         self.tm_thread_function_sleep = self.get_key(self.tm_settings_general, 'thread function time')
         self.tm_tg_id = self.get_key(self.tm_settings_general, 'tg id')
         self.tm_tg_token = self.get_key(self.tm_settings_general, 'tg token')
-        if self.tm_tg_token:
-            self.tm_tg_bot = telebot.TeleBot(self.tm_tg_token)
         self.tm_url = self.get_key(self.tm_settings_general, 'site url')
         self.tm_transfer_global_sleep = self.get_key(self.tm_settings_general, 'money transfer global time')
         self.tm_api_key_checker_global_sleep = self.get_key(self.tm_settings_general, 'site apikey global time')
@@ -114,8 +110,6 @@ class Mongo:
         self.tm_settings_history = self.get_key(self.content_settings_tm, 'history')
         self.tm_history_tg_id = self.get_key(self.tm_settings_history, 'history items sold tg id')
         self.tm_history_tg_token = self.get_key(self.tm_settings_history, 'history items sold tg token')
-        if self.tm_history_tg_token:
-            self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
         self.tm_history_global_sleep = self.get_key(self.tm_settings_history, 'history global time')
 
         self.tm_settings_items = self.get_key(self.content_settings_tm, 'items')
@@ -127,6 +121,38 @@ class Mongo:
 
 
         # endregion
+
+
+        # region telegram bots dictionary
+        if self.creator_tg_token:
+            self.creator_tg_bot = telebot.TeleBot(self.creator_tg_token)
+        self.creator_tg_info = {
+            'tg id': self.creator_tg_id,
+            'tg bot': self.creator_tg_bot,
+            'bot name': 'Creator'
+        }
+
+        if self.tm_tg_token:
+            self.tm_tg_bot = telebot.TeleBot(self.tm_tg_token)
+        self.tm_tg_info = {
+            'tg id': self.tm_tg_id,
+            'tg bot': self.tm_tg_bot,
+            'bot name': 'TM Seller'
+        }
+
+        if self.tm_history_tg_token:
+            self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
+        self.tm_history_tg_info = {
+            'tg id': self.tm_history_tg_id,
+            'tg bot': self.tm_history_tg_bot,
+            'bot name': 'TM Seller'
+        }
+
+
+
+        # endregion
+
+
 
     def update_account_data_info(self):
         try:
@@ -161,6 +187,36 @@ class Mongo:
             if sublist[0]['username'] == username:
                 return sublist[1]
         return None
+
+    @staticmethod
+    def find_matching_key(wanted, dictionary):
+        keys = sorted([float(k) for k in dictionary.keys()])
+        found_key = None
+        for i in range(len(keys) - 1):
+            if wanted >= keys[i]:
+                found_key = str(int(keys[i])) if keys[i].is_integer() else str(keys[i])
+            elif keys[i] <= wanted < keys[i + 1]:
+                if keys[i].is_integer():
+                    found_key = str(int(keys[i]))
+                else:
+                    found_key = str(keys[i])
+                break
+        if found_key is None and wanted >= keys[-1]:
+            found_key = str(keys[-1])
+        return found_key
+
+    def taking_tm_information_for_pricing(self, name_of_seller):
+        try:
+            database_setting_bots = self.content_database_settings['DataBaseSettings']['Sellers_SalePrice']['bots']
+        except:
+            database_setting_bots = {}
+            Logs.log(f'Error during taking a info from DataBaseSettings -> Sellers_SalePrice -> bots')
+        tm_seller_value = None
+        for key, value in database_setting_bots.items():
+            if name_of_seller in key:
+                tm_seller_value = value
+                break
+        return tm_seller_value
 
     def get_database(self, db_name):
         try:
@@ -212,4 +268,6 @@ class Mongo:
             if account_name:
                 results_dict[account_name] = doc
         return results_dict
+
+
 

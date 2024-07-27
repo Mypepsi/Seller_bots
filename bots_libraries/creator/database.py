@@ -49,7 +49,8 @@ class DataBase(Mongo):
 
                                                 service_max_price = None
 
-                                                buff_currency_rate = currency_rs['Creator_DataBaseRate']['DataBaseRate_buff']
+                                                buff_currency_rate = currency_rs['Creator_DataBaseRate'][
+                                                    'DataBaseRate_buff']
 
                                                 try:
                                                     buff_full_price = round(db[hashname]['buff']['price'] / buff_currency_rate, 3)

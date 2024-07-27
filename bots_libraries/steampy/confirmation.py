@@ -54,7 +54,7 @@ class ConfirmationExecutor:
         params['cid'] = confirmation.data_confid
         params['ck'] = confirmation.data_key
         headers = {'X-Requested-With': 'XMLHttpRequest'}
-        return self._session.get(self.CONF_URL + '/ajaxop', params=params, headers=headers).json()
+        return self._session.get(self.CONF_URL + '/ajaxop', params=params, headers=headers, timeout=15).json()
 
     def _send_confirmation_api_key(self, confirmation: Confirmation) -> dict:
         tag = Tag.ALLOW
@@ -66,7 +66,7 @@ class ConfirmationExecutor:
             'Cookie': self.get_steam_comm_cookie(),
             'X-Requested-With': 'XMLHttpRequest'
         }
-        return self._session.get(self.CONF_URL + '/ajaxop', params=params, headers=headers).json()
+        return self._session.get(self.CONF_URL + '/ajaxop', params=params, headers=headers, timeout=15).json()
 
     def get_cookies(self):
 
@@ -106,7 +106,7 @@ class ConfirmationExecutor:
         params = self._create_confirmation_params(tag)
         headers = {#"Cookie": self.get_cookies(),
                    'X-Requested-With': 'com.valvesoftware.android.steam.community'}
-        response = self._session.get(self.CONF_URL + '/getlist', params=params, headers=headers).json()
+        response = self._session.get(self.CONF_URL + '/getlist', params=params, headers=headers, timeout=15).json()
         return response
 
     def get_steam_comm_cookie(self):
@@ -124,13 +124,13 @@ class ConfirmationExecutor:
             "Cookie": self.get_steam_comm_cookie(),
             'X-Requested-With': 'com.valvesoftware.android.steam.community'
         }
-        response = self._session.get(self.CONF_URL + '/getlist', params=params, headers=headers).json()
+        response = self._session.get(self.CONF_URL + '/getlist', params=params, headers=headers, timeout=15).json()
         return response
 
     def _fetch_confirmation_details_page(self, confirmation: Confirmation) -> str:
         tag = 'details' + id
         params = self._create_confirmation_params(tag)
-        response = self._session.get(self.CONF_URL + '/details/' + id, params=params)
+        response = self._session.get(self.CONF_URL + '/details/' + id, params=params, timeout=15)
         return response.json()['html']
 
     def _create_confirmation_params(self, tag_string: str) -> dict:
