@@ -1,11 +1,9 @@
-from bots_libraries.base_info.logs import Logs
-from bots_libraries.base_info.steam import Steam
-from bots_libraries.steampy.client import SteamClient
 import time
 import requests
 import threading
-import inspect
-import os
+from bots_libraries.sellpy.logs import Logs
+from bots_libraries.sellpy.steam import Steam
+from bots_libraries.steampy.client import SteamClient
 
 
 class ThreadManager(Steam):
@@ -18,17 +16,19 @@ class ThreadManager(Steam):
                 thread.start()
                 time.sleep(sleep_between_threads)
             except Exception as e:
-                modified_desired_key = ''
-                for key, value in globals().items():
-                    if hasattr(value, 'name') and value.name == thread.name:
-                        desired_key = key
-                        modified_desired_key = desired_key.replace("_", " ").title()
-                        break
-                self.error_alert(tg_info, modified_desired_key, e)
+                try:
+                    for key, value in globals().items():
+                        if hasattr(value, 'name') and value.name == thread.name:
+                            desired_key = key
+                            modified_desired_key = desired_key.replace("_", " ").title()
+                            break
+                except:
+                    modified_desired_key = 'Failed to get name'
+                Logs.notify_except(tg_info, f'{modified_desired_key}: Thread has not started: {e}',
+                                   self.steamclient.username)
 
     def create_threads(self, name_func, class_obj, func, global_sleep, thread_function_sleep,
                        cancel_offers_sites_name=None):
-        self.update_account_data_info()
         counter = 0
         modified_function_name = func.replace("_", " ").title()
         for i in self.content_acc_data_list:
@@ -54,10 +54,10 @@ class ThreadManager(Steam):
         while True:
             self.update_account_data_info()
             for acc in self.content_acc_list:
+                username = acc['username']
+                session = self.content_acc_data_dict[username]['steam session']
+                self.take_session(session)
                 try:
-                    username = acc['username']
-                    session = self.content_acc_data_dict[username]['steam session']
-                    self.take_session(session)
                     self.user_agent = self.steamclient.user_agent
                 except:
                     self.user_agent = self.ua.random

@@ -1,5 +1,5 @@
-from bots_libraries.base_info.logs import Logs
-from bots_libraries.base_info.thread_manager import ThreadManager
+from bots_libraries.sellpy.logs import Logs
+from bots_libraries.sellpy.thread_manager import ThreadManager
 from queue import Queue, Empty
 import urllib.parse
 import threading
@@ -30,18 +30,20 @@ class TMItems(ThreadManager):
                 phases_key = str(self.find_matching_key(phases_difference, condition['days from']))
                 all_prices = self.content_database_prices['DataBasePrices']
                 for price in all_prices:
-                    if hash_name in price:
+                    if hash_name in price and phases_key:
+                        my_market_price = 0
                         try:
                             max_price = float(price[hash_name]["max_price"])
                             price_range = self.find_matching_key(max_price,
                                                                  condition['days from'][phases_key]['prices'])
-                            margin_max_price = max_price * condition['days from'][phases_key]['prices'][price_range]
-                            limits_margin_max_price = (margin_max_price *
-                                                       condition['days from'][phases_key]['limits'][limits_value])
+                            if price_range:
+                                margin_max_price = max_price * condition['days from'][phases_key]['prices'][price_range]
+                                limits_margin_max_price = (margin_max_price *
+                                                           condition['days from'][phases_key]['limits'][limits_value])
 
-                            my_market_price = round(limits_margin_max_price * 100 * self.rate / self.commission)
+                                my_market_price = round(limits_margin_max_price * 100 * self.rate / self.commission)
                         except:
-                            my_market_price = 0
+                            pass
                         return my_market_price
         return None
     # endregion
@@ -80,28 +82,23 @@ class TMItems(ThreadManager):
         while True:
             self.update_account_data_info()
             self.update_db_prices_and_setting()
-            acc_data_tradable_inventory = {}
-            acc_data_phases_inventory = {}
-            try:
-                acc_data_tradable_inventory = acc_info['steam inventory tradable']
-                acc_data_phases_inventory = acc_info['steam inventory phases']
-                steam_session = acc_info['steam session']
-                self.take_session(steam_session)
-            except:
-                Logs.log('Error during taking a session')
+            acc_data_tradable_inventory = acc_info['steam inventory tradable']
+            acc_data_phases_inventory = acc_info['steam inventory phases']
+            steam_session = acc_info['steam session']
+            self.take_session(steam_session)
             filtered_inventory = self.get_and_filtered_inventory(acc_data_tradable_inventory)
-            tm_seller_value = self.taking_tm_information_for_pricing('tm_seller')
-
-            for asset_id in filtered_inventory:
-                try:
-                    market_price = self.get_my_market_price(acc_data_phases_inventory[asset_id], tm_seller_value, 'max')
-                    if market_price is not None and market_price != 0:
-                        add_to_sale_url = (f'https://{self.tm_url}/api/v2/add-to-sale?key={self.steamclient.tm_api}'
-                                           f'&cur=RUB&id={asset_id}&price={market_price}')
-                        requests.get(add_to_sale_url, timeout=5)
-                except:
-                    pass
-                time.sleep(2)
+            tm_seller_value = self.taking_information_for_price('tm_seller')
+            if tm_seller_value:
+                for asset_id in filtered_inventory:
+                    try:
+                        market_price = self.get_my_market_price(acc_data_phases_inventory[asset_id], tm_seller_value, 'max')
+                        if market_price is not None and market_price != 0:
+                            add_to_sale_url = (f'https://{self.tm_url}/api/v2/add-to-sale?key={self.steamclient.tm_api}'
+                                               f'&cur=RUB&id={asset_id}&price={market_price}')
+                            requests.get(add_to_sale_url, timeout=5)
+                    except:
+                        pass
+                    time.sleep(2)
 
             time.sleep(time_sleep)
     #endregion
@@ -212,17 +209,11 @@ class TMItems(ThreadManager):
         while True:
             self.update_account_data_info()
             self.update_db_prices_and_setting()
-            acc_data_tradable_inventory = {}
-            acc_data_phases_inventory = {}
-            try:
-                acc_data_tradable_inventory = acc_info['steam inventory tradable']
-                acc_data_phases_inventory = acc_info['steam inventory phases']
-                username = acc_info['username']
-                steam_session = acc_info['steam session']
-                self.take_session(steam_session)
-            except:
-                Logs.log('Error during taking a session')
-
+            acc_data_tradable_inventory = acc_info['steam inventory tradable']
+            acc_data_phases_inventory = acc_info['steam inventory phases']
+            username = acc_info['username']
+            steam_session = acc_info['steam session']
+            self.take_session(steam_session)
             store_items = self.get_store_items()
             if store_items is not None and 'items' in store_items and type(store_items['items']) == list:
                 item_to_delete = []
@@ -252,32 +243,32 @@ class TMItems(ThreadManager):
                                         if filtered_dict:
                                             item_prices_with_my = [item["price"] for item in parsed_info[el]]
                                             item_prices = [item["price"] for item in filtered_dict.values()]
-                                            tm_seller_value = self.taking_tm_information_for_pricing('tm_seller')
+                                            tm_seller_value = self.taking_information_for_price('tm_seller')
+                                            if tm_seller_value:
+                                                max_market_price = self.get_my_market_price(
+                                                    acc_data_phases_inventory[sublist[item]["assetid"]], tm_seller_value, 'max')
 
-                                            max_market_price = self.get_my_market_price(
-                                                acc_data_phases_inventory[sublist[item]["assetid"]], tm_seller_value, 'max')
+                                                min_market_price = self.get_my_market_price(
+                                                    acc_data_phases_inventory[sublist[item]["assetid"]], tm_seller_value, 'min')
 
-                                            min_market_price = self.get_my_market_price(
-                                                acc_data_phases_inventory[sublist[item]["assetid"]], tm_seller_value, 'min')
+                                                if len(item_prices) > 0:
+                                                    min_price_raw = min([int(price) for price in item_prices])
+                                                    min_price_opponent = (min_price_raw - 1)
 
-                                            if len(item_prices) > 0:
-                                                min_price_raw = min([int(price) for price in item_prices])
-                                                min_price_opponent = (min_price_raw - 1)
-
-                                                if min_market_price <= min_price_opponent <= max_market_price:
-                                                    my_market_price = min_price_opponent
-                                                elif min_price_opponent < min_market_price:
-                                                    my_market_price = min_market_price
-                                                else:
+                                                    if min_market_price <= min_price_opponent <= max_market_price:
+                                                        my_market_price = min_price_opponent
+                                                    elif min_price_opponent < min_market_price:
+                                                        my_market_price = min_market_price
+                                                    else:
+                                                        my_market_price = max_market_price
+                                                elif len(item_prices) == 0 and len(item_prices_with_my) > 0:
                                                     my_market_price = max_market_price
-                                            elif len(item_prices) == 0 and len(item_prices_with_my) > 0:
-                                                my_market_price = max_market_price
-                                            else:
-                                                continue
-                                            for item_ in store_items['items']:
-                                                if (item_['item_id'] == item_id and my_market_price != 0 and
-                                                        item_['price'] != my_market_price / 100):
-                                                    my_prices[sublist[item]["item_id"]] = my_market_price
+                                                else:
+                                                    continue
+                                                for item_ in store_items['items']:
+                                                    if (item_['item_id'] == item_id and my_market_price != 0 and
+                                                            item_['price'] != my_market_price / 100):
+                                                        my_prices[sublist[item]["item_id"]] = my_market_price
 
                             except Exception as e:
                                 Logs.log(f'{username}: Error in change_price: {e}')

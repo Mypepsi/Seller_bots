@@ -6,19 +6,19 @@ from typing import List, Union
 import json
 import requests
 import rsa
-from bots_libraries.steam_auth.auth.schemas import FinalizeLoginStatus
-from bots_libraries.steam_auth.pb2.enums_pb2 import ESessionPersistence
+from bots_libraries.steampy.steam_auth.auth.schemas import FinalizeLoginStatus
+from bots_libraries.steampy.steam_auth.pb2.enums_pb2 import ESessionPersistence
 from bots_libraries.steampy import guard
 from bots_libraries.steampy.chat import SteamChat
 from bots_libraries.steampy.confirmation import ConfirmationExecutor
 from bots_libraries.steampy.exceptions import SevenDaysHoldException, LoginRequired, ApiException
-from bots_libraries.steampy.login import LoginExecutor, InvalidCredentials
+from bots_libraries.steampy.login import InvalidCredentials
 from bots_libraries.steampy.market import SteamMarket
 from bots_libraries.steampy.models import Asset, TradeOfferState, SteamUrl, GameOptions
 from bots_libraries.steampy.utils import text_between, texts_between, merge_items_with_descriptions_from_inventory, \
-    steam_id_to_account_id, merge_items_with_descriptions_from_offers, get_description_key, \
+    get_description_key, \
     merge_items_with_descriptions_from_offer, account_id_to_steam_id, get_key_value_from_url, parse_price
-from bots_libraries.steam_auth.pb2.steammessages_auth.steamclient_pb2 import (
+from bots_libraries.steampy.steam_auth.pb2.steammessages_auth.steamclient_pb2 import (
     CAuthentication_AllowedConfirmation,
     CAuthentication_BeginAuthSessionViaCredentials_Request,
     CAuthentication_BeginAuthSessionViaCredentials_Response,

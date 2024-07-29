@@ -1,9 +1,9 @@
 # import threading
 # import time
-from bots_libraries.base_info.mongo import Mongo
+from bots_libraries.sellpy.mongo import Mongo
 # from queue import Queue, Empty
 # import urllib.parse
-from bots_libraries.base_info.logs import Logs
+from bots_libraries.sellpy.logs import Logs
 
 
 
@@ -29,10 +29,15 @@ from bots_libraries.base_info.logs import Logs
 # # Вивід оновленого списку
 # print(my_list)
 # Приклад словника
+mango = Mongo()
 try:
     1 / 0
 except:
-    Logs.get_usual_info()
+    Logs.notify_except(mango.creator_tg_info, 'test error', 'ууу')
+
+tm_seller_value = None
+for condition in tm_seller_value:
+    print(1)
 
 # class Test(Mongo):
 #     def __init__(self):

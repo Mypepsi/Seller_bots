@@ -1,9 +1,9 @@
-from bots_libraries.base_info.logs import Logs
-from bots_libraries.base_info.thread_manager import ThreadManager
-from bots_libraries.steampy.models import GameOptions
-from bots_libraries.steampy.client import Asset
 import time
 import requests
+from bots_libraries.sellpy.logs import Logs
+from bots_libraries.steampy.client import Asset
+from bots_libraries.steampy.models import GameOptions
+from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
 
@@ -198,15 +198,10 @@ class TMSteam(ThreadManager):
     def steam_send_offers(self, acc_info, time_sleep):
         while True:
             self.update_account_data_info()
-            acc_data_inventory_phases = []
-            username = ''
-            try:
-                username = acc_info['username']
-                acc_data_inventory_phases = acc_info['steam inventory phases']
-                steam_session = acc_info['steam session']
-                self.take_session(steam_session)
-            except:
-                Logs.log('Error during taking a session')
+            username = acc_info['username']
+            acc_data_inventory_phases = acc_info['steam inventory phases']
+            steam_session = acc_info['steam session']
+            self.take_session(steam_session)
             collection_name = f'history_{username}'
             self.acc_history_collection = self.get_collection(self.history, collection_name)
 

@@ -1,22 +1,24 @@
-from bots_libraries.base_info.logs import Logs
-from bots_libraries.base_info.thread_manager import ThreadManager
-from bots_libraries.steampy.confirmation import ConfirmationExecutor
-from bots_libraries.steampy.confirmation import Confirmation
-from bots_libraries.steampy.models import GameOptions
 from lxml import html
-import string
+from bots_libraries.sellpy.logs import Logs
+from bots_libraries.steampy.models import GameOptions
+from bots_libraries.steampy.confirmation import Confirmation
+from bots_libraries.sellpy.thread_manager import ThreadManager
+from bots_libraries.steampy.confirmation import ConfirmationExecutor
 import re
-import pickle
 import json
-import random
 import time
-import traceback
+import pickle
+import string
+import random
 import requests
+import traceback
 
 
 class CreatorSteam(ThreadManager):
     def __init__(self):
         super().__init__()
+        self.questionable_proxies = {}
+
 
     #region login in steam and create history collections and accounts data docs
     def steam_login(self):

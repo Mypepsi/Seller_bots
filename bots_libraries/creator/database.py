@@ -1,6 +1,6 @@
+from bots_libraries.sellpy.logs import Logs
+from bots_libraries.sellpy.mongo import Mongo
 from pymongo.errors import ServerSelectionTimeoutError
-from bots_libraries.base_info.logs import Logs
-from bots_libraries.base_info.mongo import Mongo
 import time
 import requests
 

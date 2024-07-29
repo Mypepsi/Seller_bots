@@ -16,16 +16,16 @@ from aiohttp import FormData
 from bitstring import BitArray
 from urllib3.util import parse_url
 
-from bots_libraries.steam_auth.abstract import (
+from bots_libraries.steampy.steam_auth.abstract import (
     CookieStorageAbstract,
     RequestStrategyAbstract,
 )
-from bots_libraries.steam_auth.base import (
+from bots_libraries.steampy.steam_auth.base import (
     BaseCookieStorage,
     BaseRequestStrategy,
 )
-from bots_libraries.steam_auth.pb2.enums_pb2 import ESessionPersistence
-from bots_libraries.steam_auth.pb2.steammessages_auth.steamclient_pb2 import (
+from bots_libraries.steampy.steam_auth import ESessionPersistence
+from bots_libraries.steampy.steam_auth import (
     CAuthentication_AllowedConfirmation,
     CAuthentication_BeginAuthSessionViaCredentials_Request,
     CAuthentication_BeginAuthSessionViaCredentials_Response,

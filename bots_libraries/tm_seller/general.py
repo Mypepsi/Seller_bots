@@ -1,5 +1,5 @@
-from bots_libraries.base_info.logs import Logs, ExitException
-from bots_libraries.base_info.thread_manager import ThreadManager
+from bots_libraries.sellpy.logs import Logs, ExitException
+from bots_libraries.sellpy.thread_manager import ThreadManager
 import math
 import json
 import time

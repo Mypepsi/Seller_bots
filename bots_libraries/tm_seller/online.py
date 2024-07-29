@@ -1,5 +1,5 @@
-from bots_libraries.base_info.logs import Logs, ExitException
-from bots_libraries.base_info.thread_manager import ThreadManager
+from bots_libraries.sellpy.logs import Logs, ExitException
+from bots_libraries.sellpy.thread_manager import ThreadManager
 import time
 import requests
 import random
@@ -47,20 +47,17 @@ class TMOnline(ThreadManager):
         username = ''
         while True:
             self.update_account_data_info()
-            try:
-                username = acc_info['username']
-                steam_session = acc_info['steam session']
-                self.take_session(steam_session)
-                url = f'https://{self.tm_url}/api/v2/go-offline?key={self.steamclient.tm_api}'
+            username = acc_info['username']
+            steam_session = acc_info['steam session']
+            self.take_session(steam_session)
+            url = f'https://{self.tm_url}/api/v2/go-offline?key={self.steamclient.tm_api}'
 
-                try:
-                    response = requests.get(url, timeout=30).json()
-                except:
-                    response = None
-                if response and 'success' in response and response['success'] is not True:
-                    Logs.log(f'{username}: Offline Store Error')
+            try:
+                response = requests.get(url, timeout=30).json()
             except:
-                Logs.log(f'Error in restart_site_store for {username}')
+                response = None
+            if response and 'success' in response and response['success'] is not True:
+                Logs.log(f'{username}: Offline Store Error')
             time.sleep(2)
             self.request_to_ping()
             time.sleep(time_sleep)

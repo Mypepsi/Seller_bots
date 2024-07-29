@@ -1,5 +1,5 @@
-from bots_libraries.base_info.logs import Logs
-from bots_libraries.base_info.thread_manager import ThreadManager
+from bots_libraries.sellpy.logs import Logs
+from bots_libraries.sellpy.thread_manager import ThreadManager
 import time
 import requests
 
@@ -13,15 +13,10 @@ class TMHistory(ThreadManager):
             time.sleep(time_sleep)
             self.update_account_data_info()
             self.update_db_prices_and_setting()
-            username = ''
-            acc_data_phases_inventory = {}
-            try:
-                username = acc_info['username']
-                acc_data_phases_inventory = acc_info['steam inventory phases']
-                steam_session = acc_info['steam session']
-                self.take_session(steam_session)
-            except:
-                Logs.log('Error during taking a session')
+            username = acc_info['username']
+            acc_data_phases_inventory = acc_info['steam inventory phases']
+            steam_session = acc_info['steam session']
+            self.take_session(steam_session)
             collection_name = f'history_{username}'
             self.acc_history_collection = self.get_collection(self.history, collection_name)
             collection_info = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
@@ -137,12 +132,21 @@ class TMHistory(ThreadManager):
                                     doc["site status"] = 'accepted'
                                     doc['site status time'] = current_timestamp
                                     hash_name = item_transfer['market_hash_name']
+                                    try:
+                                        self.commission = self.content_database_settings['DataBaseSettings']['TM_Seller'][
+                                            'TM_Seller_commission']
+                                        self.rate = self.content_database_settings['DataBaseSettings']['TM_Seller'][
+                                            'TM_Seller_rate']
+                                    except:
+                                        pass
                                     site_price = round((int(item_transfer['received']) / 0.95 / 100), 2)
+                                    sold_price = round((site_price / self.rate * self.commission), 3)
+
                                     currency = item_transfer["currency"]
 
-                                    self.send_sold_item_info_in_tg('tm_seller', hash_name, site_price,
+                                    self.send_sold_item_info('tm_seller', hash_name, site_price, sold_price,
                                                                    acc_data_phases_inventory, currency, '₽', doc,
-                                                                   self.tm_history_tg_bot, self.tm_history_tg_id)
+                                                                   self.tm_history_tg_info)
 
                                 else:
                                     doc["site status"] = 'unavailable'

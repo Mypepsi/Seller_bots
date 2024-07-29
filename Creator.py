@@ -1,26 +1,26 @@
-from pymongo.errors import ServerSelectionTimeoutError
-from bots_libraries.base_info.logs import Logs
-from bots_libraries.base_info.thread_manager import ThreadManager
-from bots_libraries.creator.steam import CreatorSteam
-from bots_libraries.creator.database import DataBase
-from bots_libraries.base_info.restart import Restarter
-import threading
 import time
+import threading
+from bots_libraries.sellpy.logs import Logs
+from bots_libraries.sellpy.restart import Restarter
+from bots_libraries.creator.database import DataBase
+from bots_libraries.creator.steam import CreatorSteam
+from pymongo.errors import ServerSelectionTimeoutError
+from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
 def add_threads():
     thread_list = []
 
-    restart_server_schedule_thread = threading.Thread(target=restarter.schedule_restart_server,
+    restart_server_thread = threading.Thread(target=restarter.restart_server,
                                                       args=(restarter.creator_restart_time_sleep,
                                                             restarter.creator_restart_server_global_sleep))
-    thread_list.append(restart_server_schedule_thread)
+    thread_list.append(restart_server_thread)
 
     if len(manager.creator_restart_info_bots) != 0:
-        restart_bots_schedule_thread = threading.Thread(target=restarter.schedule_restart_bots,
+        restart_bots_thread = threading.Thread(target=restarter.restart_bots,
                                                         args=(restarter.creator_restart_info_bots,
                                                               restarter.creator_restart_bots_global_sleep))
-        thread_list.append(restart_bots_schedule_thread)
+        thread_list.append(restart_bots_thread)
 
     refresh_db_thread = threading.Thread(target=database.refresh_db_thread)
     thread_list.append(refresh_db_thread)
