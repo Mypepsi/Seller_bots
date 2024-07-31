@@ -13,11 +13,9 @@ class TMHistory(ThreadManager):
             time.sleep(time_sleep)
             self.update_account_data_info()
             self.update_db_prices_and_setting()
-            username = acc_info['username']
             acc_data_phases_inventory = acc_info['steam inventory phases']
-            steam_session = acc_info['steam session']
-            self.take_session(steam_session)
-            collection_name = f'history_{username}'
+            self.take_session(acc_info)
+            collection_name = f'history_{self.steamclient.username}'
             self.acc_history_collection = self.get_collection(self.history, collection_name)
             collection_info = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
             if collection_info:
@@ -87,6 +85,7 @@ class TMHistory(ThreadManager):
                                     '$set': {'steam status': doc['steam status'], 'steam status time': doc[
                                         'steam status time']}})
                                 time.sleep(1)
+                                break
 
                         if not tradeofferid_alert:
                             Logs.log_and_send_msg_in_tg(self.tm_tg_info, f'Steam Trade History Bug: '
@@ -117,12 +116,12 @@ class TMHistory(ThreadManager):
 
                         for item_transfer in response_info:
                             if (all(key in item_transfer for key in ['item_id', 'stage', 'time'])
-                                    and doc['site item id'] == item_transfer['item_id']):
+                                    and str(doc['site item id']) == str(item_transfer['item_id'])):
                                 stage = item_transfer['stage']
                                 match_for_alert = True
 
                                 if stage == '1':
-                                    if (current_timestamp - item_transfer['time']) >= 86400:
+                                    if (current_timestamp - int(item_transfer['time'])) >= 86400:
                                         Logs.log_and_send_msg_in_tg()
                                     continue
                                 elif stage == '2':
@@ -164,9 +163,9 @@ class TMHistory(ThreadManager):
             for item_transfer in response_info:
                 if all(key in item_transfer for key in ['item_id', 'stage', 'time', 'market_hash_name']):
                     for doc in collection_info_with_new_id:
-                        if item_transfer['item_id'] == doc.get('site item id'):
+                        if str(item_transfer['item_id']) == str(doc.get('site item id')):
                             current_timestamp_unique += 1
-                            stage = item_transfer.get('stage')
+                            stage = str(item_transfer['stage'])
                             data_append = {
                                 "transaction": "sale_record",
                                 "site": "tm",
@@ -181,7 +180,7 @@ class TMHistory(ThreadManager):
                                 "asset id": None,
                                 "trade id": None,
                                 "sent time": None,
-                                "site item id": item_transfer['item_id']
+                                "site item id": int(item_transfer['item_id'])
                             }
                             if stage == '1':
                                 if (current_timestamp - item_transfer['time']) <= 86400:
@@ -207,7 +206,7 @@ class TMHistory(ThreadManager):
                         keys_present = all(key in item_transfer for key in ['item_id', 'time', 'market_hash_name'])
                         if keys_present:
                             id_not_present = not any(
-                                inner_doc['site item id'] == item_transfer['item_id'] for inner_doc in
+                                str(inner_doc['site item id']) == str(item_transfer['item_id']) for inner_doc in
                                 collection_info_sorted_by_time)
                             if id_not_present:
                                 match = True
@@ -216,7 +215,7 @@ class TMHistory(ThreadManager):
                     if match:
                         list_of_matches = [
                             item_transfer for item_transfer in item_history_response_info
-                            if 'item_id' in item_transfer and doc.get('name') == item_transfer['market_hash_name']
+                            if doc['name'] == item_transfer['market_hash_name']
                         ]
                         closest_item_transfer = min(
                             (entry for entry in list_of_matches if int(entry['time']) <= current_timestamp),
@@ -224,7 +223,7 @@ class TMHistory(ThreadManager):
                             default=None
                         )
                         if closest_item_transfer:
-                            doc['site item id'] = closest_item_transfer['item_id']
+                            doc['site item id'] = int(closest_item_transfer['item_id'])
                             self.acc_history_collection.update_one({'_id': doc['_id']},
                                                                    {'$set': {'site item id': closest_item_transfer[
                                                                        'item_id']}})

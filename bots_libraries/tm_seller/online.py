@@ -29,9 +29,7 @@ class TMOnline(ThreadManager):
         while True:
             self.update_account_data_info()
             try:
-                username = acc_info['username']
-                steam_session = acc_info['steam session']
-                self.take_session(steam_session)
+                self.take_session(acc_info)
                 response = self.request_to_ping()
                 if (response is not None and 'success' in response and response['success'] is False
                         and 'message' in response and response['message'] != 'too early for ping'):
@@ -47,9 +45,7 @@ class TMOnline(ThreadManager):
         username = ''
         while True:
             self.update_account_data_info()
-            username = acc_info['username']
-            steam_session = acc_info['steam session']
-            self.take_session(steam_session)
+            self.take_session(acc_info)
             url = f'https://{self.tm_url}/api/v2/go-offline?key={self.steamclient.tm_api}'
 
             try:
@@ -69,9 +65,7 @@ class TMOnline(ThreadManager):
             search_result = False
             self.update_account_data_info()
             try:
-                username = acc_info['username']
-                steam_session = acc_info['steam session']
-                self.take_session(steam_session)
+                self.take_session(acc_info)
                 try:
                     my_inventory_url = f'https://{self.tm_url}/api/v2/my-inventory/?key={self.steamclient.tm_api}'
                     my_inventory_response = requests.get(my_inventory_url, timeout=30).json()

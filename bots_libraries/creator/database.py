@@ -2,7 +2,9 @@ from bots_libraries.sellpy.logs import Logs
 from bots_libraries.sellpy.mongo import Mongo
 from pymongo.errors import ServerSelectionTimeoutError
 import time
+import socket
 import requests
+
 
 
 class DataBase(Mongo):
@@ -167,7 +169,6 @@ class DataBase(Mongo):
                     }
                     self.database_settings_collection.insert_one(settings_doc)
                     last_update_time = settings_doc["Time"]
-
                 difference_to_update = current_timestamp - last_update_time
                 if difference_to_update > self.creator_db_settings_sleep_time:
                     try:
@@ -187,6 +188,33 @@ class DataBase(Mongo):
                             Logs.log("Error in status code refresh_settings_thread-2")
                     except:
                         Logs.log(f"Error in refresh_settings_thread-3")
+
+                database_ip = self.database_ip_collection.find_one()
+                if not database_ip:
+                    ip = DataBase.get_server_ip()
+                    ip_doc = {"ip_address": ip}
+                    self.database_ip_collection.insert_one(ip_doc)
+                elif database_ip and not database_ip.get('ip_address'):
+                    ip = DataBase.get_server_ip()
+                    self.database_ip_collection.update_one(
+                        {"_id": database_ip["_id"]},
+                        {"$set": {"ip_address": ip}}
+                    )
             except ServerSelectionTimeoutError:
                 Logs.log(f"Error in refresh_settings_thread-4")
+
             time.sleep(self.creator_db_settings_global_time)
+
+    @staticmethod
+    def get_server_ip():
+        s = None
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(0)
+            s.connect(('8.8.8.8', 1))
+            ip_address = s.getsockname()[0]
+        except:
+            ip_address = None
+        finally:
+            s.close()
+        return ip_address

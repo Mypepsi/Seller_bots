@@ -1,165 +1,138 @@
-from datetime import datetime
 import os
 import sys
-import socket
 import inspect
+import time
 import traceback
+from datetime import datetime
+from pymongo import MongoClient
+
 
 class Logs:
-    #region main
+    # region Send Info
     @staticmethod
-    def log(text, user_name):
+    def log(text, username):
         try:
-            r = Logs.get_usual_info()
-            if user_name == '':
-                log_message = f"[{r['time stamp']}] [{r['directory name']}] [{r['file name']}:{r['line number']}]: {text}"
-            else:
-                log_message = (
-                    f"[{r['time stamp']}] [{r['directory name']}] [{r['file name']}:{r['line number']}]: "
-                    f"{user_name}]: {text}")
+            now = datetime.now()
+            date = now.strftime("%d.%m.%Y %H:%M:%S")
+            log_message = f'[{date}]'
+            if username:
+                log_message += f' [{username}]'
+            log_message += f': {text}'
             print(log_message)
         except:
             pass
 
     @staticmethod
-    def log_except(text, user_name):
+    def notify(tg_bot_dict, text, username):
         try:
-            r = Logs.get_except_info()
-            log_message = f"[{r['time stamp']}] [{r['directory name']}] [{r['file name']}:{r['line number']}]:"
-
-            if user_name:
-                log_message += f" {user_name}:"
-
-            log_message += f" {text}"
-            print(log_message)
-        except:
-            pass
-
-    @staticmethod
-    def notify(tg_bot_dict, text, user_name):
-        Logs.log_and_send_tg_msg(tg_bot_dict, text, user_name, False)
-
-    @staticmethod
-    def notify_except(tg_bot_dict, text, user_name):
-        Logs.log_and_send_tg_msg(tg_bot_dict, text, user_name, True)
-    #endregion
-
-    #region secondary
-    @staticmethod
-    def log_and_send_tg_msg(tg_bot_dict, text, user_name, exception: bool):
-        tg_id = tg_bot_dict['tg id']
-        tg_bot = tg_bot_dict['tg bot']
-        sellers_name = tg_bot_dict['bot name']
-        if exception:
-            r = Logs.get_except_info()
-        else:
-            r = Logs.get_usual_info()
-        if user_name == '':
-            ip = Logs.get_ip_address()
+            tg_id = tg_bot_dict['tg id']
+            tg_bot = tg_bot_dict['tg bot']
+            sellers_name = tg_bot_dict['bot name']
+            Logs.log(text, username)
+            r = Logs.get_logs_info(False, username)
+            tg_message = f"[{r['date']}]"
             if sellers_name:
-                log_message = (f"[{r['time stamp']}] [{sellers_name}] [{r['file name']}:{r['line number']}]:"
-                               f" {text}")
-                tg_message = (f"[{r['time stamp']}] [{sellers_name}] [{r['file name']}:{r['line number']}]: [{ip}]:"
-                              f"\n{text}")
+                tg_message += f' [{sellers_name}]'
+            tg_message += f" [{r['file name']}: {r['line number']}]"
+            if username:
+                tg_message += f' [{username}]'
             else:
-                log_message = (f"[{r['time stamp']}] [{r['file name']}:{r['line number']}]:"
-                               f" {text}")
-                tg_message = (f"[{r['time stamp']}] [{r['file name']}:{r['line number']}]: [{ip}]:"
-                              f"\n{text}")
-        else:
-            if sellers_name:
-                log_message = (
-                    f"[{r['time stamp']}] [{sellers_name}] [{r['file name']}:{r['line number']}]: "
-                    f"[{user_name}]: {text}")
-                tg_message = (f"[{r['time stamp']}] [{sellers_name}] [{r['file name']}:{r['line number']}]: "
-                              f"[{user_name}]:\n{text}")
-            else:
-                log_message = (f"[{r['time stamp']}] [{r['file name']}:{r['line number']}]:"
-                               f" {text}")
-                tg_message = (f"[{r['time stamp']}] [{r['file name']}:{r['line number']}]: [{user_name}]:"
-                              f"\n{text}")
-
-        print(log_message)
-        try:
+                tg_message += f" [{r['ip address']}]"
+            tg_message += f':\n{text}'
             tg_bot.send_message(tg_id, tg_message, timeout=5)
         except:
             pass
+        time.sleep(3)
 
     @staticmethod
-    def get_usual_info():
+    def log_except(text, username, info=None):
+        try:
+            if not info:
+                r = Logs.get_logs_info(True, True)
+            else:
+                r = info
+            log_message = f"[{r['date']}] [traceback: {r['file name']}: {r['line number']}]"
+            if username:
+                log_message += f' [{username}]'
+            log_message += f':\n{text}'
+            print(log_message)
+        except:
+            pass
+
+    @staticmethod
+    def notify_except(tg_bot_dict, text, username):
+        try:
+            tg_id = tg_bot_dict['tg id']
+            tg_bot = tg_bot_dict['tg bot']
+            sellers_name = tg_bot_dict['bot name']
+            r = Logs.get_logs_info(True, username)
+            Logs.log_except(text, username, info=r)
+            tg_message = f"[{r['date']}]"
+            if sellers_name:
+                tg_message += f' [{sellers_name}]'
+            tg_message += f" [traceback: {r['file name']}: {r['line number']}]"
+            if username:
+                tg_message += f' [{username}]'
+            else:
+                tg_message += f" [{r['ip address']}]"
+            tg_message += f':\n{text}'
+            tg_bot.send_message(tg_id, tg_message, timeout=5)
+        except:
+            pass
+        time.sleep(3)
+    #endregion
+
+    # region Get Info
+    @staticmethod
+    def get_logs_info(except_bool: bool, username):
         try:
             now = datetime.now()
-            time_stamp = now.strftime("%d-%m-%Y %H:%M:%S")
+            date = now.strftime("%d.%m.%Y %H:%M:%S")
         except:
-            time_stamp = None
+            date = 'Time not found'
+
+        file_name = 'File not found'
+        ip_address = 'IP not found'
+        line_number = 0
+
         try:
-            stack = inspect.stack()
-            frame = stack[1]
-            file_path = frame.filename
-            file_name = os.path.basename(file_path)
+            if except_bool:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                last_frame = traceback.extract_tb(exc_traceback)[-1]
+                file_name = os.path.basename(last_frame.filename)
+                line_number = last_frame.lineno
+            else:
+                stack = inspect.stack()
+                frame = stack[2]
+                file_path = frame.filename
+                file_name = os.path.basename(file_path)
+                line_number = frame.lineno
         except:
-            frame = None
-            file_path = None
-            file_name = None
+            pass
+        print(1)
+
         try:
-            directory_name = os.path.basename(os.path.dirname(file_path))
+            if not username:
+                print(2)
+                client = MongoClient("mongodb://127.0.0.1:27017")
+                db_client = client['Seller_DataBases']
+                collection_name = db_client['server_ip_address']
+                doc_ip_address = collection_name.find_one()
+                ip_address = doc_ip_address['ip_address']
+                client.close()
         except:
-            directory_name = None
-        try:
-            line_number = frame.lineno
-        except:
-            line_number = None
-        result = {'time stamp': time_stamp,
+            pass
+
+        result = {'date': date,
                   'file name': file_name,
-                  'directory name': directory_name,
-                  'line number': line_number}
+                  'line number': line_number,
+                  'ip address': ip_address}
+        print(result)
         return result
-
-    @staticmethod
-    def get_except_info():
-        try:
-            now = datetime.now()
-            time_stamp = now.strftime("%d-%m-%Y %H:%M:%S")
-        except:
-            time_stamp = None
-        try:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            last_frame = traceback.extract_tb(exc_traceback)[-1]
-        except:
-            last_frame = None
-        try:
-            file_name = os.path.basename(last_frame.filename)
-        except:
-            file_name = None
-        try:
-            directory_name = os.path.basename(os.path.dirname(last_frame.filename))
-        except:
-            directory_name = None
-        try:
-            line_number = last_frame.lineno
-        except:
-            line_number = None
-        result = {'time stamp': time_stamp,
-                  'file name': f'traсeback: {file_name}',
-                  'directory name': directory_name,
-                  'line number': line_number}
-        return result
-
-    @staticmethod
-    def get_ip_address():
-        s = None
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.settimeout(0)
-            s.connect(('8.8.8.8', 1))
-            ip_address = s.getsockname()[0]
-        except:
-            ip_address = 'IP not found'
-        finally:
-            s.close()
-        return ip_address
     #endregion
 
 
 class ExitException(Exception):
     pass
+
+

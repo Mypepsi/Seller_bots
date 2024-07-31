@@ -1,6 +1,7 @@
 import time
 import threading
 from bots_libraries.sellpy.logs import Logs
+from bots_libraries.sellpy.steam import Steam
 from bots_libraries.tm_seller.items import TMItems
 from bots_libraries.tm_seller.steam import TMSteam
 from bots_libraries.sellpy.restart import Restarter
@@ -13,15 +14,15 @@ from bots_libraries.sellpy.thread_manager import ThreadManager
 def add_threads():
     thread_list = []
 
-    restart_server_schedule_thread = threading.Thread(target=restarter.schedule_restart_server,
+    restart_server_thread = threading.Thread(target=restarter.restart_server,
                                                       args=(restarter.tm_restart_time_sleep,
                                                             restarter.tm_restart_server_global_sleep))
-    thread_list.append(restart_server_schedule_thread)
+    thread_list.append(restart_server_thread)
 
-    restart_bots_schedule_thread = threading.Thread(target=restarter.schedule_restart_bots,
+    restart_bots_thread = threading.Thread(target=restarter.restart_bots,
                                                     args=(restarter.tm_restart_info_bots,
                                                           restarter.tm_restart_bots_global_sleep))
-    thread_list.append(restart_bots_schedule_thread)
+    thread_list.append(restart_bots_thread)
 
     restart_site_store_thread = threading.Thread(target=manager.create_threads,
                                                  args=('_str_png', TMOnline(), 'restart_site_store',
@@ -44,11 +45,10 @@ def add_threads():
     thread_list.append(trades_thread)
 
     steam_cancel_offers_thread = threading.Thread(target=manager.create_threads,
-                                                      args=('_chk_trd', TMSteam(), 'steam_cancel_offers',
+                                                      args=('_chk_trd', Steam(), 'steam_cancel_offers',
                                                             'tm_cancel_offers_global_sleep',
                                                             'tm_thread_function_sleep', 'tm_cancel_offers_sites_name'))
     thread_list.append(steam_cancel_offers_thread)
-
 
     add_to_sale_thread = threading.Thread(target=manager.create_threads,
                                           args=('_add_sale', TMItems(), 'add_to_sale', 'tm_add_to_sale_global_sleep',
@@ -90,7 +90,6 @@ if __name__ == '__main__':
             Logs.log(f'TM Seller STARTED ({len(manager.content_acc_data_list)} in Account Data '
                      f'and {len(manager.content_acc_list)} in Account Settings)')
             #time.sleep(manager.tm_sleep_before_start)
-            manager.update_account_data_info()
             manager.start_of_work(manager.tm_tg_info, threads, manager.tm_sleep_between_threads)
 
         except ServerSelectionTimeoutError:

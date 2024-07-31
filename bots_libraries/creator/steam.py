@@ -1,9 +1,3 @@
-from lxml import html
-from bots_libraries.sellpy.logs import Logs
-from bots_libraries.steampy.models import GameOptions
-from bots_libraries.steampy.confirmation import Confirmation
-from bots_libraries.sellpy.thread_manager import ThreadManager
-from bots_libraries.steampy.confirmation import ConfirmationExecutor
 import re
 import json
 import time
@@ -11,17 +5,70 @@ import pickle
 import string
 import random
 import requests
-import traceback
+from lxml import html
+from fake_useragent import UserAgent
+from bots_libraries.sellpy.logs import Logs
+from bots_libraries.steampy.client import SteamClient
+from bots_libraries.steampy.models import GameOptions
+from bots_libraries.steampy.confirmation import Confirmation
+from bots_libraries.sellpy.thread_manager import ThreadManager
+from bots_libraries.steampy.confirmation import ConfirmationExecutor
 
 
 class CreatorSteam(ThreadManager):
     def __init__(self):
         super().__init__()
-        self.questionable_proxies = {}
+        self.ua = UserAgent()
 
 
-    #region login in steam and create history collections and accounts data docs
-    def steam_login(self):
+    #region steam login
+
+    def steam_login(self, time_sleep):
+        Logs.log(f'Steam Login: thread are running', '')
+        while True:
+            self.update_account_settings_info()
+            for acc in self.content_acc_list:
+                try:
+                    username = acc['username']
+                    session = self.content_acc_data_dict[username]['steam session']
+                    self.take_session(acc)
+                    try:
+                        self.user_agent = self.steamclient.user_agent
+                    except:
+                        self.user_agent = self.ua.random
+                    self.steamclient = SteamClient('', user_agent=self.user_agent)
+                    self.steamclient.username = acc['username']
+                    self.steamclient.password = acc['password']
+                    self.steamclient.steam_id = acc['steam id']
+                    self.steamclient.shared_secret = acc['shared secret']
+                    self.steamclient.identity_secret = acc['identity secret']
+                    self.steamclient.steam_guard = {"steamid": self.steamclient.steam_id,
+                                        "shared_secret": self.steamclient.shared_secret,
+                                        "identity_secret": self.steamclient.identity_secret
+                                        }
+                    self.steamclient.tm_api = self.get_key(acc, 'tm apikey')
+
+                    proxy = acc['proxy']
+                    if proxy == "proxy":
+                        self.steamclient.proxies = {"NoProxy": 1}
+                    else:
+                        proxy_list = proxy.split(':')
+                        proxy_ip = proxy_list[0]
+                        proxy_port = proxy_list[1]
+                        proxy_login = proxy_list[2]
+                        proxy_password = proxy_list[3]
+
+                        self.steamclient.proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
+                                      'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
+
+                        requests.proxies = self.steamclient.proxies
+                    self.make_steam_login()
+                except Exception as e:
+                    Logs.notify_except(self.creator_tg_info, f'Steam Login Global Error: {e}', self.steamclient.username)
+            time.sleep(time_sleep)
+
+
+    def make_steam_login(self):
         number_of_try = 1
         while True:
             try:
@@ -32,37 +79,26 @@ class CreatorSteam(ThreadManager):
                     if difference_to_update > self.creator_authorization_time_sleep:
                         self.user_agent = self.steamclient.user_agent
                         self.steamclient.login_steam(self.steamclient.username, self.steamclient.password, self.steamclient.steam_guard, self.steamclient.proxies)
-                        Logs.log(
-                            f'{self.steamclient.username}: Steam authorization is successful')
+                        Logs.log( f'Steam authorization is successful', self.steamclient.username)
                         self.handle_account_data_doc()
                         self.create_history_docs()
                         time.sleep(10)
 
                 elif self.steamclient.username not in self.content_acc_data_dict:
                     self.steamclient.login_steam(self.steamclient.username, self.steamclient.password, self.steamclient.steam_guard, self.steamclient.proxies)
-                    Logs.log(
-                        f'{self.steamclient.username}: Steam authorization is successful')
+                    Logs.log('Steam authorization was successful', self.steamclient.username)
 
                     self.handle_account_data_doc()
                     time.sleep(10)
                 break
-            except Exception:
+            except:
                 if number_of_try == 1:
-                    Logs.log(f'{self.steamclient.username}: Steam Authorization Error')
+                    Logs.log('Steam Authorization Error', self.steamclient.username)
                     number_of_try += 1
                     time.sleep(30)
-                elif number_of_try == 2:
-                    Logs.log(f'{self.steamclient.username}: Not authorized on steam')
-                    Logs.send_msg_in_tg(self.creator_tg_info, 'Steam Authorization Error', self.steamclient.username)
+                else:
+                    Logs.notify(self.creator_tg_info, 'Not authorized on Steam', self.steamclient.username)
                     break
-
-    def create_history_docs(self):
-        try:
-            collection_name = f'history_{self.steamclient.username}'
-            if collection_name not in self.history.list_collection_names():
-                self.history.create_collection(collection_name)
-        except:
-            pass
 
     def handle_account_data_doc(self):
         current_timestamp = int(time.time())
@@ -100,263 +136,259 @@ class CreatorSteam(ThreadManager):
             }
             self.acc_data_collection.insert_one(new_doc)
 
-
+    def create_history_docs(self):
+        try:
+            collection_name = f'history_{self.steamclient.username}'
+            if collection_name not in self.history.list_collection_names():
+                self.history.create_collection(collection_name)
+        except:
+            pass
     # endregion
 
-    def steam_inventory(self):
-        self.update_db_prices_and_setting()
-        if self.steamclient.username in self.content_acc_data_dict:
-            try:
-                my_items = self.steamclient.get_inventory_from_link_with_session(
-                    self.steamclient.steam_guard['steamid'],
-                    GameOptions.CS,
-                    proxy=self.steamclient.proxies
-                )
-                all_prices = self.content_database_prices['DataBasePrices']
-                if len(my_items.items()) > 0:
+    def steam_inventory(self, time_sleep):
+        Logs.log('Steam Inventory: thread are running', '')
+        while True:
+            for acc in self.content_acc_data_list:
+                try:
+                    self.take_session(acc)
+                    self.steamclient.username = acc['username']
+                    self.update_db_prices_and_setting()
+                    if self.steamclient.username in self.content_acc_data_dict:
+                        my_items = self.steamclient.get_inventory_from_link_with_session(
+                            self.steamclient.steam_guard['steamid'],
+                            GameOptions.CS,
+                            proxy=self.steamclient.proxies
+                        )
+                        all_prices = self.content_database_prices['DataBasePrices']
+                        if len(my_items.items()) > 0:
 
-                    current_timestamp = int(time.time())
+                            current_timestamp = int(time.time())
 
-                    filtered_items_full = {
-                        item_id: {
-                            "asset_id": item_id,
-                            "market_hash_name": item_info["market_hash_name"],
-                            "tradable": item_info.get("tradable", 'Error')
-                        }
-                        for item_id, item_info in my_items.items()
-                    }
-
-                    filtered_items_phases = {}
-
-                    for item_id, item_info in my_items.items():
-                        if item_info.get("tradable", 0) != 0:
-                            market_hash_name = item_info["market_hash_name"]
-                            max_price = 0
-                            service_launch_price = None
-
-                            for price in all_prices:
-                                if market_hash_name in price:
-                                    max_price = float(price[market_hash_name]["max_price"])
-                                    service_launch_price = price[market_hash_name]["service_max_price"]
-                                    break
-
-                            filtered_items_phases[item_id] = {
-                                "asset_id": item_id,
-                                "market_hash_name": market_hash_name,
-                                "launch_price": max_price,
-                                "service_launch_price": service_launch_price,
-                                "time": current_timestamp
+                            filtered_items_full = {
+                                item_id: {
+                                    "asset_id": item_id,
+                                    "market_hash_name": item_info["market_hash_name"],
+                                    "tradable": item_info.get("tradable", 'Error')
+                                }
+                                for item_id, item_info in my_items.items()
                             }
 
-                    filtered_items_tradable = {
-                        item_id: {
-                            "asset_id": item_id,
-                            "market_hash_name": item_info["market_hash_name"]
-                        }
-                        for item_id, item_info in my_items.items()
-                        if item_info.get("tradable", 0) != 0
-                    }
-                    self.acc_data_collection.update_one({"username": self.steamclient.username},
-                                                        {"$set": {"steam inventory tradable": filtered_items_tradable,
-                                                                  "steam inventory full": filtered_items_full}})
+                            filtered_items_phases = {}
 
-                    try:
-                        inventory_from_mongo = self.content_acc_data_dict[self.steamclient.username]['steam inventory phases']
-                    except:
-                        inventory_from_mongo = {}
+                            for item_id, item_info in my_items.items():
+                                if item_info.get("tradable", 0) != 0:
+                                    market_hash_name = item_info["market_hash_name"]
+                                    max_price = 0
+                                    service_launch_price = None
 
-                    for item_id, item_info in filtered_items_phases.items():
-                        if item_id not in inventory_from_mongo:
-                            inventory_from_mongo[item_id] = {
-                                "asset_id": item_id,
-                                "market_hash_name": item_info["market_hash_name"],
-                                "launch_price": item_info["launch_price"],
-                                "service_launch_price": item_info["service_launch_price"],
-                                "time": current_timestamp
+                                    for price in all_prices:
+                                        if market_hash_name in price:
+                                            max_price = float(price[market_hash_name]["max_price"])
+                                            service_launch_price = price[market_hash_name]["service_max_price"]
+                                            break
+
+                                    filtered_items_phases[item_id] = {
+                                        "asset_id": item_id,
+                                        "market_hash_name": market_hash_name,
+                                        "launch_price": max_price,
+                                        "service_launch_price": service_launch_price,
+                                        "time": current_timestamp
+                                    }
+
+                            filtered_items_tradable = {
+                                item_id: {
+                                    "asset_id": item_id,
+                                    "market_hash_name": item_info["market_hash_name"]
+                                }
+                                for item_id, item_info in my_items.items()
+                                if item_info.get("tradable", 0) != 0
                             }
+                            self.acc_data_collection.update_one({"username": self.steamclient.username},
+                                                                {"$set": {"steam inventory tradable": filtered_items_tradable,
+                                                                          "steam inventory full": filtered_items_full}})
 
-                    items_to_remove = [
-                        item_id
-                        for item_id, item_info in inventory_from_mongo.items()
-                        if item_id not in filtered_items_phases and current_timestamp - item_info["time"] >= self.creator_hashname_difference_time
-                    ]
-                    for item_id in items_to_remove:
-                        del inventory_from_mongo[item_id]
+                            try:
+                                inventory_from_mongo = self.content_acc_data_dict[self.steamclient.username]['steam inventory phases']
+                            except:
+                                inventory_from_mongo = {}
 
-                    self.acc_data_collection.update_one({"username": self.steamclient.username},
-                                                           {"$set": {"steam inventory phases": inventory_from_mongo}})
-            except:
-                Logs.log(f'{self.steamclient.username}: Steam Inventory Error')
-            time.sleep(10)
+                            for item_id, item_info in filtered_items_phases.items():
+                                if item_id not in inventory_from_mongo:
+                                    inventory_from_mongo[item_id] = {
+                                        "asset_id": item_id,
+                                        "market_hash_name": item_info["market_hash_name"],
+                                        "launch_price": item_info["launch_price"],
+                                        "service_launch_price": item_info["service_launch_price"],
+                                        "time": current_timestamp
+                                    }
 
-    def steam_proxy(self):
-        self.update_account_data_info()
-        self.proxy_for_check = []
-        for acc in self.content_acc_data_list:
-            steam_session = acc['steam session']
-            self.take_session(steam_session)
-            self.proxy_for_check.append(self.steamclient.proxies)
-        unique_proxy_for_check = []
-        for proxy in self.proxy_for_check:
-            if proxy not in unique_proxy_for_check and proxy is not None:
-                unique_proxy_for_check.append(proxy)
-        self.proxy_for_check = unique_proxy_for_check
-        for proxy in self.proxy_for_check:
-            try:
-                proxy_ip = proxy['http'].split('://')[1].split('@')[1].split(':')[0]
-            except:
-                proxy_ip = proxy
-            try:
-                response = requests.get(self.creator_proxy_check_url, proxies=proxy, timeout=15)
-                if response.status_code == 200:
-                    try:
-                        del self.questionable_proxies[proxy_ip]
-                    except KeyError:
-                        pass
-            except Exception:
-                if proxy_ip in self.questionable_proxies:
-                    self.questionable_proxies[proxy_ip] += 1
-                    if self.questionable_proxies[proxy_ip] == 3:
-                        Logs.send_msg_in_tg(self.creator_tg_info, 'Proxy Error', proxy_ip)
-                else:
-                    self.questionable_proxies[proxy_ip] = 1
-                Logs.log(f'Proxy Error: {proxy_ip}')
-            time.sleep(10)
-        Logs.log(f'Steam Proxy: All proxies checked ({len(self.proxy_for_check)} proxies)')
+                            items_to_remove = [
+                                item_id
+                                for item_id, item_info in inventory_from_mongo.items()
+                                if item_id not in filtered_items_phases and current_timestamp - item_info["time"] >= self.creator_hashname_difference_time
+                            ]
+                            for item_id in items_to_remove:
+                                del inventory_from_mongo[item_id]
 
-    def steam_access_token(self):
-        if self.steamclient.username in self.content_acc_data_dict:
-            try:
-                url = 'https://steamcommunity.com/pointssummary/ajaxgetasyncconfig'
-                response = self.steamclient._session.get(url, timeout=15)
-                reply = json.loads(response.text)
-                if str(self.steamclient.access_token) != reply['data']['webapi_token']:
-                    self.acc_data_collection.update_one({"username": self.steamclient.username},
-                                                        {"$set": {"time steam session": 0}})
-                    Logs.log_and_send_msg_in_tg(self.creator_tg_info, 'Access Token Error', self.steamclient.username)
-            except:
-                Logs.log(f'{self.steamclient.username}: Access Token Response Error')
+                            self.acc_data_collection.update_one({"username": self.steamclient.username},
+                                                                {"$set": {"steam inventory phases": inventory_from_mongo}})
+                except Exception as e:
+                    Logs.notify_except(self.creator_tg_info, f'Steam Inventory Global Error: {e}', acc['username'])
+                time.sleep(10)
+            time.sleep(time_sleep)
 
-            time.sleep(10)
+    def steam_access_token(self, time_sleep):
+        Logs.log(f'Steam Access Token: thread are running', '')
+        while True:
+            self.update_account_data_info()
+            for acc in self.content_acc_data_list:
+                try:
+                    self.take_session(acc)
+                    if self.steamclient.username in self.content_acc_data_dict:
+                        url = 'https://steamcommunity.com/pointssummary/ajaxgetasyncconfig'
+                        response = self.steamclient._session.get(url, timeout=15)
+                        reply = json.loads(response.text)
+                        if str(self.steamclient.access_token) != reply['data']['webapi_token']:
+                            self.acc_data_collection.update_one({"username": self.steamclient.username},
+                                                                {"$set": {"time steam session": 0}})
+                            Logs.notify(self.creator_tg_info, 'Steam Access Token: Invalid token', self.steamclient.username)
+                except Exception as e:
+                    Logs.notify_except(self.creator_tg_info, f'Steam Access Token Global Error: {e}', self.steamclient.username)
+                time.sleep(10)
+            time.sleep(time_sleep)
 
     # region steam api key
-    def steam_api_key(self):
-        api_key_ = 0
-        if self.steamclient.username in self.content_acc_data_dict:
-            try:
-                response = self.steamclient._session.get('https://steamcommunity.com/dev/apikey', timeout=15)
-                if response.status_code == 200:
-                    api_key_ = self.get_api_key(response.text)
-                    if isinstance(api_key_, bool):
-                        raise Exception
-                    else:
-                        if api_key_ == '00000000000000000000000000000000':
-                            self.revoke_api_key()
-                            raise Exception
-                        old_api_key = self.content_acc_data_dict[self.steamclient.username]['steam apikey']
-                        if api_key_ != '' and api_key_ != '00000000000000000000000000000000' and api_key_ != old_api_key:
-                            self.acc_data_collection.update_one({"username": self.steamclient.username},
-                                                                    {"$set": {"steam apikey": api_key_}})
-                else:
-                    Logs.log(f'{self.steamclient.username}: Page not found 404')
-                    raise Exception
-            except Exception:
-                Logs.log(f'{self.steamclient.username}: steam_api_key error')
-        if api_key_ == '':
-            self.create_api_key()
-        time.sleep(10)
+    def steam_api_key(self, time_sleep):
+        Logs.log(f'Steam Api Key: thread are running', '')
+        while True:
+            for acc in self.content_acc_data_list:
+                try:
+                    self.take_session(acc)
+                    self.steamclient.username = acc['username']
+                    api_key_ = 0
+                    self.update_account_data_info()
+                    if self.steamclient.username in self.content_acc_data_dict:
+                        try:
+                            response = self.steamclient._session.get('https://steamcommunity.com/dev/apikey', timeout=15)
+                            if response.status_code == 200:
+                                api_key_ = self.get_steam_apikey(response.text)
+                                if isinstance(api_key_, bool):
+                                    raise Exception
+                                else:
+                                    if api_key_ == '00000000000000000000000000000000':
+                                        self.revoke_steam_apikey()
+                                        raise Exception
+                                    old_api_key = self.content_acc_data_dict[self.steamclient.username]['steam apikey']
+                                    if api_key_ != '' and api_key_ != '00000000000000000000000000000000' and api_key_ != old_api_key:
+                                        self.acc_data_collection.update_one({"username": self.steamclient.username},
+                                                                                {"$set": {"steam apikey": api_key_}})
+                            else:
+                                continue
+                        except:
+                            pass
+                    if api_key_ == '':
+                        self.create_steam_apikey()
+                except Exception as e:
+                    Logs.notify_except(self.creator_tg_info, f'Steam Api Key Global Error: {e}', self.steamclient.username)
 
-    def revoke_api_key(self):
-        try:
-            url = 'https://steamcommunity.com/dev/revokekey'
-            headers = {
-                'Cookie': self.get_steam_comm_cookie(),
-                'Origin': 'https://steamcommunity.com',
-                'Referer': 'https://steamcommunity.com/dev/apikey',
-                'X-Requested-With': 'XMLHttpRequest',
-                'User-Agent': self.steamclient.user_agent
-            }
+                time.sleep(10)
+            time.sleep(time_sleep)
 
-            sessioon_id = self.get_steam_comm_cookie().split(';')
-            for asd in sessioon_id:
-                if 'sessionid' in asd:
-                    sessioon_id = asd.split('=')[1]
-                    break
+    def get_steam_apikey(self, text):
+        parsed_body = html.fromstring(text)
+        api_key = parsed_body.xpath("//div[@id='bodyContents_ex']/p")
+        if len(api_key) == 0:
+            return False
+        api_key_ = ''
+        for p in api_key:
+            if 'Key: ' in p.text:
+                api_key_ = p.text.replace('Key: ', '')
+                return api_key_
+        return api_key_
 
-            data = {'Revoke': 'Revoke My Steam Web API Key',
-                    'sessionid': sessioon_id}
-            delete_api_key_response = self.steamclient.session.post(url, headers=headers, data=data, timeout=15)
-            if delete_api_key_response:
-                Logs.log(f'{self.steamclient.username}: Steam ApiKey removed')
-                self.create_api_key()
-        except Exception:
-            Logs.log(f'{self.steamclient.username}: error revoke_api_key')
+    def revoke_steam_apikey(self):
+        url = 'https://steamcommunity.com/dev/revokekey'
+        headers = {
+            'Cookie': self.get_steam_comm_cookie(),
+            'Origin': 'https://steamcommunity.com',
+            'Referer': 'https://steamcommunity.com/dev/apikey',
+            'X-Requested-With': 'XMLHttpRequest',
+            'User-Agent': self.steamclient.user_agent
+        }
 
-    def create_api_key(self):
-        try:
-            headers = {
-                'Cookie': self.get_steam_comm_cookie(),
-                'Origin': 'https://steamcommunity.com',
-                'Referer': 'https://steamcommunity.com/dev/apikey',
-                'X-Requested-With': 'XMLHttpRequest',
-                'User-Agent': self.steamclient.user_agent
-            }
-            sessioon_id = self.get_steam_comm_cookie().split(';')
-            for asd in sessioon_id:
-                if 'sessionid' in asd:
-                    sessioon_id = asd.split('=')[1]
-                    break
+        sessioon_id = self.get_steam_comm_cookie().split(';')
+        for asd in sessioon_id:
+            if 'sessionid' in asd:
+                sessioon_id = asd.split('=')[1]
+                break
 
-            json_data = {
-                'domain': 'localhost',
-                'agreeToTerms': True,
-                'sessionid': sessioon_id,
-                "request_id": 0
-            }
+        data = {'Revoke': 'Revoke My Steam Web API Key',
+                'sessionid': sessioon_id}
+        delete_api_key_response = self.steamclient.session.post(url, headers=headers, data=data, timeout=15)
+        if delete_api_key_response:
+            Logs.log(f'Steam ApiKey removed', '')
+            self.create_steam_apikey()
 
-            response = self.steamclient.session.post('https://steamcommunity.com/dev/requestkey', headers=headers,
-                                                      data=json_data, timeout=15)
+    def create_steam_apikey(self):
+        headers = {
+            'Cookie': self.get_steam_comm_cookie(),
+            'Origin': 'https://steamcommunity.com',
+            'Referer': 'https://steamcommunity.com/dev/apikey',
+            'X-Requested-With': 'XMLHttpRequest',
+            'User-Agent': self.steamclient.user_agent
+        }
+        sessioon_id = self.get_steam_comm_cookie().split(';')
+        for asd in sessioon_id:
+            if 'sessionid' in asd:
+                sessioon_id = asd.split('=')[1]
+                break
 
-            if response.status_code == 200 and 'requires_confirmation' in response.json():
-                request_id = response.json()['request_id']
-                confrim_response = self.confrim_request_api_key(request_id)
-                if confrim_response:
-                    headers = {
-                        'Cookie': self.get_steam_comm_cookie(),
-                        'Origin': 'https://steamcommunity.com',
-                        'Referer': 'https://steamcommunity.com/dev/apikey',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'User-Agent': self.steamclient.user_agent
-                    }
-                    sessioon_id = self.get_steam_comm_cookie().split(';')
-                    for asd in sessioon_id:
-                        if 'sessionid' in asd:
-                            sessioon_id = asd.split('=')[1]
-                            break
+        json_data = {
+            'domain': 'localhost',
+            'agreeToTerms': True,
+            'sessionid': sessioon_id,
+            "request_id": 0
+        }
 
-                    json_data = {
-                        "request_id": request_id,
-                        'sessionid': sessioon_id,
-                        'domain': ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(random.randint(7, 15))) + ".com",
-                        'agreeToTerms': 'true'
-                    }
+        response = self.steamclient.session.post('https://steamcommunity.com/dev/requestkey', headers=headers,
+                                                  data=json_data, timeout=15)
 
-                    response_second = self.steamclient.session.post('https://steamcommunity.com/dev/requestkey',
-                                                                    headers=headers, timeout=15,
-                                                                    data=json_data).json()
+        if response.status_code == 200 and 'requires_confirmation' in response.json():
+            request_id = response.json()['request_id']
+            confrim_response = self.confrim_request_steam_apikey(request_id)
+            if confrim_response:
+                headers = {
+                    'Cookie': self.get_steam_comm_cookie(),
+                    'Origin': 'https://steamcommunity.com',
+                    'Referer': 'https://steamcommunity.com/dev/apikey',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'User-Agent': self.steamclient.user_agent
+                }
+                sessioon_id = self.get_steam_comm_cookie().split(';')
+                for asd in sessioon_id:
+                    if 'sessionid' in asd:
+                        sessioon_id = asd.split('=')[1]
+                        break
 
-                    if 'api_key' in response_second and isinstance(response_second['api_key'], str):
-                        self.acc_data_collection.update_one({"username": self.steamclient.username},
-                                                                {"$set": {"steam apikey": response_second['api_key']}})
-                    else:
-                        Logs.log(f'{self.steamclient.username}: Failed to create_api_key-2 key')
-                else:
-                    Logs.log(f'{self.steamclient.username}: Failed to create_api_key-3 key')
-        except:
-            Logs.log(f'{self.steamclient.username}: Steam ApiKey not created')
-            pass
+                json_data = {
+                    "request_id": request_id,
+                    'sessionid': sessioon_id,
+                    'domain': ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(random.randint(7, 15))) + ".com",
+                    'agreeToTerms': 'true'
+                }
 
-    def confrim_request_api_key(self, request_id: str):
+                response_second = self.steamclient.session.post('https://steamcommunity.com/dev/requestkey',
+                                                                headers=headers, timeout=15,
+                                                                data=json_data).json()
+
+                if 'api_key' in response_second and isinstance(response_second['api_key'], str):
+                    self.acc_data_collection.update_one({"username": self.steamclient.username},
+                                                            {"$set": {"steam apikey": response_second['api_key']}})
+                    Logs.log('Steam ApiKey created', self.steamclient.username)
+
+
+
+    def confrim_request_steam_apikey(self, request_id: str):
         try:
             confrirmations = ConfirmationExecutor(self.steamclient.steam_guard['identity_secret'],
                                                   self.steamclient.steam_guard['steamid'],
@@ -380,7 +412,6 @@ class CreatorSteam(ThreadManager):
             else:
                 return False
         except:
-            print(traceback.format_exc())
             return False
 
     def get_steam_comm_cookie(self):
@@ -389,18 +420,6 @@ class CreatorSteam(ThreadManager):
             if cookie.domain == 'steamcommunity.com':
                 str += cookie.name + '=' + cookie.value + '; '
         return str[0: len(str) - 2]
-
-    def get_api_key(self, text):
-        parsed_body = html.fromstring(text)
-        api_key = parsed_body.xpath("//div[@id='bodyContents_ex']/p")
-        if len(api_key) == 0:
-            return False
-        api_key_ = ''
-        for p in api_key:
-            if 'Key: ' in p.text:
-                api_key_ = p.text.replace('Key: ', '')
-                return api_key_
-        return api_key_
 
     # endregion
 

@@ -33,11 +33,8 @@ mango = Mongo()
 try:
     1 / 0
 except:
-    Logs.notify_except(mango.creator_tg_info, 'test error', 'ууу')
+    Logs.notify_except(mango.sellpy_tg_info, 'test error', '')
 
-tm_seller_value = None
-for condition in tm_seller_value:
-    print(1)
 
 # class Test(Mongo):
 #     def __init__(self):

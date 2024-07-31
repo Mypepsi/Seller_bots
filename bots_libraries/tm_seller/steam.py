@@ -10,8 +10,6 @@ from bots_libraries.sellpy.thread_manager import ThreadManager
 class TMSteam(ThreadManager):
     def __init__(self):
         super().__init__()
-        self.commission = 0
-        self.rate = 0
 
     #region steam send offers
     def request_give_p2p_all(self):
@@ -198,11 +196,9 @@ class TMSteam(ThreadManager):
     def steam_send_offers(self, acc_info, time_sleep):
         while True:
             self.update_account_data_info()
-            username = acc_info['username']
             acc_data_inventory_phases = acc_info['steam inventory phases']
-            steam_session = acc_info['steam session']
-            self.take_session(steam_session)
-            collection_name = f'history_{username}'
+            self.take_session(acc_info)
+            collection_name = f'history_{self.steamclient.username}'
             self.acc_history_collection = self.get_collection(self.history, collection_name)
 
             response_data = self.request_give_p2p_all()

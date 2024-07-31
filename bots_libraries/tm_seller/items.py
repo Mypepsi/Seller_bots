@@ -11,18 +11,16 @@ import urllib.parse
 class TMItems(ThreadManager):
     def __init__(self):
         super().__init__()
-        try:
-            self.commission = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_commission']
-            self.rate = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_rate']
-        except:
-            self.commission = 0
-            self.rate = 0
-            Logs.log(f'Error during taking a info from DataBaseSettings -> TM_Seller')
 
     # region functions for add to sale and change price
     def get_my_market_price(self, asset_id_in_phases_inventory, conditions, limits_value):
         start_sale_time = asset_id_in_phases_inventory['time']
         hash_name = asset_id_in_phases_inventory['market_hash_name']
+        try:
+            self.commission = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_commission']
+            self.rate = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_rate']
+        except:
+            Logs.log(f'Error during taking a info from DataBaseSettings -> TM_Seller', self.steamclient.username)
         for condition in conditions:
             if condition['date to'] >= start_sale_time >= condition['date from']:
                 current_timestamp = int(time.time())
@@ -84,8 +82,7 @@ class TMItems(ThreadManager):
             self.update_db_prices_and_setting()
             acc_data_tradable_inventory = acc_info['steam inventory tradable']
             acc_data_phases_inventory = acc_info['steam inventory phases']
-            steam_session = acc_info['steam session']
-            self.take_session(steam_session)
+            self.take_session(acc_info)
             filtered_inventory = self.get_and_filtered_inventory(acc_data_tradable_inventory)
             tm_seller_value = self.taking_information_for_price('tm_seller')
             if tm_seller_value:
@@ -211,9 +208,7 @@ class TMItems(ThreadManager):
             self.update_db_prices_and_setting()
             acc_data_tradable_inventory = acc_info['steam inventory tradable']
             acc_data_phases_inventory = acc_info['steam inventory phases']
-            username = acc_info['username']
-            steam_session = acc_info['steam session']
-            self.take_session(steam_session)
+            self.take_session(acc_info)
             store_items = self.get_store_items()
             if store_items is not None and 'items' in store_items and type(store_items['items']) == list:
                 item_to_delete = []

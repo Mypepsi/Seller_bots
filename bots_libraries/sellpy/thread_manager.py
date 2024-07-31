@@ -3,7 +3,6 @@ import requests
 import threading
 from bots_libraries.sellpy.logs import Logs
 from bots_libraries.sellpy.steam import Steam
-from bots_libraries.steampy.client import SteamClient
 
 
 class ThreadManager(Steam):
@@ -16,6 +15,8 @@ class ThreadManager(Steam):
                 thread.start()
                 time.sleep(sleep_between_threads)
             except Exception as e:
+                modified_desired_key = 'Failed to get name'
+
                 try:
                     for key, value in globals().items():
                         if hasattr(value, 'name') and value.name == thread.name:
@@ -23,7 +24,7 @@ class ThreadManager(Steam):
                             modified_desired_key = desired_key.replace("_", " ").title()
                             break
                 except:
-                    modified_desired_key = 'Failed to get name'
+                    pass
                 Logs.notify_except(tg_info, f'{modified_desired_key}: Thread has not started: {e}',
                                    self.steamclient.username)
 
@@ -46,64 +47,17 @@ class ThreadManager(Steam):
                 thread.start()
                 counter += 1
                 time.sleep(getattr(class_obj, thread_function_sleep))
-            except:
-                Logs.log(f'{modified_function_name}: Error during start: {username}')
-        Logs.log(f'{modified_function_name}: {counter} threads are running')
-
-    def create_threads_with_acc_settings(self, function, time_sleep):
-        while True:
-            self.update_account_data_info()
-            for acc in self.content_acc_list:
-                username = acc['username']
-                session = self.content_acc_data_dict[username]['steam session']
-                self.take_session(session)
-                try:
-                    self.user_agent = self.steamclient.user_agent
-                except:
-                    self.user_agent = self.ua.random
-                self.steamclient = SteamClient('', user_agent=self.user_agent)
-                try:
-                    self.steamclient.username = acc['username']
-                    self.steamclient.password = acc['password']
-                    self.steamclient.steam_id = acc['steam id']
-                    self.steamclient.shared_secret = acc['shared secret']
-                    self.steamclient.identity_secret = acc['identity secret']
-                    self.steamclient.steam_guard = {"steamid": self.steamclient.steam_id,
-                                        "shared_secret": self.steamclient.shared_secret,
-                                        "identity_secret": self.steamclient.identity_secret
-                                        }
-                    self.steamclient.tm_api = self.get_key(acc, 'tm apikey')
-                except Exception as e:
-                    Logs.log(f'Error during taking information from account settings: {e}')
-
-                proxy = acc['proxy']
-                if proxy == "proxy":
-                    self.steamclient.proxies = {"NoProxy": 1}
-                else:
-                    proxy_list = proxy.split(':')
-                    proxy_ip = proxy_list[0]
-                    proxy_port = proxy_list[1]
-                    proxy_login = proxy_list[2]
-                    proxy_password = proxy_list[3]
-
-                    self.steamclient.proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
-                                  'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
-
-                    requests.proxies = self.steamclient.proxies
-                function()
-            modified_function_name = function.__name__.replace("_", " ").title()
-            Logs.log(
-                f'{modified_function_name}: All accounts authorized')
-            time.sleep(time_sleep)
+            except Exception as e:
+                Logs.log_except(f'{modified_function_name}: Thread for Account has not created: {e}',
+                                self.steamclient.username)
+        Logs.log(f'{modified_function_name}: {counter} threads are running', '')
 
     def create_threads_with_acc_data(self, function, time_sleep, sleep_in_the_end=True):
         while True:
             if not sleep_in_the_end:
                 time.sleep(time_sleep)
-            self.update_account_data_info()
             for acc in self.content_acc_data_list:
-                steam_session = acc['steam session']
-                self.take_session(steam_session)
+                self.take_session(acc)
                 self.steamclient.username = acc['username']
                 function()
             modified_function_name = function.__name__.replace("_", " ").title()
@@ -117,18 +71,3 @@ class ThreadManager(Steam):
             function()
             time.sleep(time_sleep)
 
-    def error_alert(self, tg_info, thread_name: str, error) -> None:
-        global threads_alert
-        if 'threads_alert' not in globals():
-            threads_alert = False
-
-        function_name = thread_name
-        modified_function_name = function_name.replace("_", " ").title()
-        Logs.log(f'{modified_function_name}: has not started: {error}')
-        try:
-            acc_setting_first_username = self.content_acc_list[0]['username']
-        except:
-            acc_setting_first_username = ''
-        if not threads_alert:
-            Logs.send_msg_in_tg(tg_info, 'Fatal Error: threads not running', acc_setting_first_username)
-            threads_alert = True

@@ -9,14 +9,15 @@ class Mongo:
 
         self.client = MongoClient("mongodb://127.0.0.1:27017")
 
-
-
         # region MongoDB
         self.database = self.get_database('Seller_DataBases')
         self.database_prices_collection = self.get_collection(self.database, 'database_prices')
         self.database_settings_collection = self.get_collection(self.database, 'database_settings')
+        self.database_ip_collection = self.get_collection(self.database, 'server_ip_address')
+
         self.content_database_prices = self.get_first_doc_from_mongo_collection(self.database_prices_collection)
         self.content_database_settings = self.get_first_doc_from_mongo_collection(self.database_settings_collection)
+        self.content_database_ip = self.get_first_doc_from_mongo_collection(self.database_ip_collection)
 
 
         self.settings = self.get_database('Seller_Settings')
@@ -43,22 +44,27 @@ class Mongo:
         self.content_acc_for_parsing_list = self.get_all_docs_from_mongo_collection(self.acc_for_parsing_collection)
 
         self.content_merges = self.create_merge_info_for_parsing()
-        # endregion`
+        # endregion
 
 
 
         # region Collection  creator_settings
         self.creator_settings_general = self.get_key(self.content_settings_creator, 'general')
-        self.creator_tg_token = self.get_key(self.creator_settings_general, 'tg token')
-        self.creator_tg_id = self.get_key(self.creator_settings_general, 'tg id')
-        self.creator_sellpy_tg_token = self.get_key(self.creator_settings_general, 'sellpy tg token')
-        self.creator_sellpy_tg_id = self.get_key(self.creator_settings_general, 'sellpy tg id')
         self.creator_sleep_before_start = self.get_key(self.creator_settings_general, 'waiting start time')
         self.creator_sleep_between_threads = self.get_key(self.creator_settings_general, 'thread start time')
 
+        self.creator_settings_telegram = self.get_key(self.content_settings_creator, 'telegram')
+        self.creator_tg_token = self.get_key(self.creator_settings_telegram, 'tg token')
+        self.creator_tg_id = self.get_key(self.creator_settings_telegram, 'tg id')
+        self.creator_tg_bot_name = self.get_key(self.creator_settings_telegram, 'tg bot name')
+
+        self.creator_settings_sellpy = self.get_key(self.content_settings_creator, 'sellpy')
+        self.creator_sellpy_tg_token = self.get_key(self.creator_settings_sellpy, 'sellpy tg token')
+        self.creator_sellpy_tg_id = self.get_key(self.creator_settings_sellpy, 'sellpy tg id')
+
         self.creator_settings_database = self.get_key(self.content_settings_creator, 'database')
-        self.creator_db_prices_url = self.get_key(self.creator_settings_database, 'db prices url')
-        self.creator_db_settings_url = self.get_key(self.creator_settings_database, 'db settings url')
+        self.creator_db_prices_url = f"http://{self.get_key(self.creator_settings_database, 'db prices url')}"
+        self.creator_db_settings_url = f"http://{self.get_key(self.creator_settings_database, 'db settings url')}"
         self.creator_db_price_sleep_time = self.get_key(self.creator_settings_database, 'db prices validity time')
         self.creator_db_settings_sleep_time = self.get_key(self.creator_settings_database, 'db settings validity time')
         self.creator_db_prices_global_time = self.get_key(self.creator_settings_database, 'db prices global time')
@@ -73,7 +79,7 @@ class Mongo:
         self.creator_access_token_global_sleep = self.get_key(self.creator_settings_steam, 'steam access token global time')
 
         self.creator_settings_proxy = self.get_key(self.content_settings_creator, 'proxy')
-        self.creator_proxy_check_url = self.get_key(self.creator_settings_proxy, 'proxy url')
+        self.creator_proxy_check_url = f"https://{self.get_key(self.creator_settings_proxy, 'proxy url')}"
         self.creator_proxy_global_sleep = self.get_key(self.creator_settings_proxy, 'proxy global time')
 
         self.creator_settings_restart = self.get_key(self.content_settings_creator, 'restart')
@@ -91,11 +97,14 @@ class Mongo:
         self.tm_sleep_before_start = self.get_key(self.tm_settings_general, 'waiting start time')
         self.tm_sleep_between_threads = self.get_key(self.tm_settings_general, 'thread start time')
         self.tm_thread_function_sleep = self.get_key(self.tm_settings_general, 'thread function time')
-        self.tm_tg_id = self.get_key(self.tm_settings_general, 'tg id')
-        self.tm_tg_token = self.get_key(self.tm_settings_general, 'tg token')
         self.tm_url = self.get_key(self.tm_settings_general, 'site url')
         self.tm_transfer_global_sleep = self.get_key(self.tm_settings_general, 'money transfer global time')
         self.tm_api_key_checker_global_sleep = self.get_key(self.tm_settings_general, 'site apikey global time')
+
+        self.tm_settings_telegram = self.get_key(self.content_settings_tm, 'telegram')
+        self.tm_tg_id = self.get_key(self.tm_settings_telegram, 'tg id')
+        self.tm_tg_token = self.get_key(self.tm_settings_telegram, 'tg token')
+        self.tm_tg_bot_name = self.get_key(self.tm_settings_telegram, 'tg bot name')
 
         self.tm_settings_online = self.get_key(self.content_settings_tm, 'online')
         self.tm_ping_global_sleep = self.get_key(self.tm_settings_online, 'online ping global time')
@@ -116,46 +125,18 @@ class Mongo:
         self.tm_cancel_offers_sites_name = self.get_key(self.tm_settings_steam, 'steam cancel offers sites name')  # list of dict
 
         self.tm_settings_history = self.get_key(self.content_settings_tm, 'history')
-        self.tm_history_tg_id = self.get_key(self.tm_settings_history, 'history items sold tg id')
-        self.tm_history_tg_token = self.get_key(self.tm_settings_history, 'history items sold tg token')
+        self.tm_history_tg_id = self.get_key(self.tm_settings_history, 'history tg id')
+        self.tm_history_tg_token = self.get_key(self.tm_settings_history, 'history tg token')
         self.tm_history_global_sleep = self.get_key(self.tm_settings_history, 'history global time')
 
         self.tm_settings_items = self.get_key(self.content_settings_tm, 'items')
         self.tm_add_to_sale_global_sleep = self.get_key(self.tm_settings_items, 'add to sale global time')
         self.tm_change_price_global_sleep = self.get_key(self.tm_settings_items, 'change price global time')
 
-
-
-
-
         # endregion
 
 
-        # region telegram bots dictionary
-        if self.creator_tg_token:
-            self.creator_tg_bot = telebot.TeleBot(self.creator_tg_token)
-        self.creator_tg_info = {
-            'tg id': self.creator_tg_id,
-            'tg bot': self.creator_tg_bot,
-            'bot name': 'Creator'
-        }
-
-        if self.tm_tg_token:
-            self.tm_tg_bot = telebot.TeleBot(self.tm_tg_token)
-        self.tm_tg_info = {
-            'tg id': self.tm_tg_id,
-            'tg bot': self.tm_tg_bot,
-            'bot name': 'TM Seller'
-        }
-
-        if self.tm_history_tg_token:
-            self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
-        self.tm_history_tg_info = {
-            'tg id': self.tm_history_tg_id,
-            'tg bot': self.tm_history_tg_bot,
-            'bot name': 'TM Seller'
-        }
-
+        # region Telegram Info
         if self.creator_sellpy_tg_token:
             self.creator_sellpy_tg_bot = telebot.TeleBot(self.creator_sellpy_tg_token)
         self.sellpy_tg_info = {
@@ -163,9 +144,39 @@ class Mongo:
             'tg bot': self.creator_sellpy_tg_bot,
             'bot name': None
         }
+
+        if self.creator_tg_token:
+            self.creator_tg_bot = telebot.TeleBot(self.creator_tg_token)
+        self.creator_tg_info = {
+            'tg id': self.creator_tg_id,
+            'tg bot': self.creator_tg_bot,
+            'bot name': self.creator_tg_bot_name
+        }
+
+        if self.tm_tg_token:
+            self.tm_tg_bot = telebot.TeleBot(self.tm_tg_token)
+        self.tm_tg_info = {
+            'tg id': self.tm_tg_id,
+            'tg bot': self.tm_tg_bot,
+            'bot name': self.tm_tg_bot_name
+        }
+
+        if self.tm_history_tg_token:
+            self.tm_history_tg_bot = telebot.TeleBot(self.tm_history_tg_token)
+        self.tm_history_tg_info = {
+            'tg id': self.tm_history_tg_id,
+            'tg bot': self.tm_history_tg_bot,
+            'bot name': self.tm_tg_bot_name
+        }
+
         # endregion
 
+        # region Default Params
+        self.acc_history_collection = None
+        self.rate = 0
+        self.commission = 0
 
+        # endregion
 
     # region Update Info
     def update_account_settings_info(self):
