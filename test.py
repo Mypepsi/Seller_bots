@@ -31,7 +31,8 @@ from bots_libraries.sellpy.logs import Logs
 # Приклад словника
 mango = Mongo()
 try:
-    1 / 0
+    print(None < 10)
+
 except:
     Logs.notify_except(mango.sellpy_tg_info, 'test error', '')
 

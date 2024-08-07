@@ -1,7 +1,7 @@
-import base64
-import hmac
-import struct
 import time
+import hmac
+import base64
+import struct
 from hashlib import sha1
 
 

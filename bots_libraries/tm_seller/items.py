@@ -9,8 +9,8 @@ import urllib.parse
 
 
 class TMItems(ThreadManager):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
     # region functions for add to sale and change price
     def get_my_market_price(self, asset_id_in_phases_inventory, conditions, limits_value):
@@ -25,7 +25,7 @@ class TMItems(ThreadManager):
             if condition['date to'] >= start_sale_time >= condition['date from']:
                 current_timestamp = int(time.time())
                 phases_difference = (current_timestamp - start_sale_time) / 86400
-                phases_key = str(self.find_matching_key(phases_difference, condition['days from']))
+                phases_key = self.find_matching_key(phases_difference, condition['days from'])
                 all_prices = self.content_database_prices['DataBasePrices']
                 for price in all_prices:
                     if hash_name in price and phases_key:
@@ -49,13 +49,13 @@ class TMItems(ThreadManager):
     #region add to sale
     def get_and_filtered_inventory(self, inventory_from_acc_data):
         try:
-            update_inventory_url = f'https://{self.tm_url}/api/v2/update-inventory/?key={self.steamclient.tm_api}'
+            update_inventory_url = f'{self.tm_site_url}/api/v2/update-inventory/?key={self.steamclient.tm_api}'
             try:
                 requests.get(update_inventory_url, timeout=5)
             except:
                 pass
             time.sleep(5)
-            my_inventory_url = f'https://{self.tm_url}/api/v2/my-inventory/?key={self.steamclient.tm_api}'
+            my_inventory_url = f'{self.tm_site_url}/api/v2/my-inventory/?key={self.steamclient.tm_api}'
             try:
                 my_inventory = requests.get(my_inventory_url, timeout=30).json()
             except:
@@ -76,34 +76,35 @@ class TMItems(ThreadManager):
         except:
             return []
 
-    def add_to_sale(self, acc_info, time_sleep):
+    def add_to_sale(self, acc_info, tg_info, global_time):
         while True:
             self.update_account_data_info()
-            self.update_db_prices_and_setting()
+            self.update_db_prices_and_settings()
             acc_data_tradable_inventory = acc_info['steam inventory tradable']
             acc_data_phases_inventory = acc_info['steam inventory phases']
-            self.take_session(acc_info)
-            filtered_inventory = self.get_and_filtered_inventory(acc_data_tradable_inventory)
-            tm_seller_value = self.taking_information_for_price('tm_seller')
-            if tm_seller_value:
-                for asset_id in filtered_inventory:
-                    try:
-                        market_price = self.get_my_market_price(acc_data_phases_inventory[asset_id], tm_seller_value, 'max')
-                        if market_price is not None and market_price != 0:
-                            add_to_sale_url = (f'https://{self.tm_url}/api/v2/add-to-sale?key={self.steamclient.tm_api}'
-                                               f'&cur=RUB&id={asset_id}&price={market_price}')
-                            requests.get(add_to_sale_url, timeout=5)
-                    except:
-                        pass
-                    time.sleep(2)
+            active_session = self.take_session(acc_info, tg_info)
+            if active_session:
+                filtered_inventory = self.get_and_filtered_inventory(acc_data_tradable_inventory)
+                seller_value = self.get_information_for_price(tg_info, 'tm_seller')
+                if seller_value:
+                    for asset_id in filtered_inventory:
+                        try:
+                            market_price = self.get_my_market_price(acc_data_phases_inventory[asset_id], seller_value, 'max')
+                            if market_price is not None and market_price != 0:
+                                add_to_sale_url = (f'{self.tm_site_url}/api/v2/add-to-sale?key={self.steamclient.tm_api}'
+                                                   f'&cur=RUB&id={asset_id}&price={market_price}')
+                                requests.get(add_to_sale_url, timeout=5)
+                        except:
+                            pass
+                        time.sleep(2)
 
-            time.sleep(time_sleep)
+            time.sleep(global_time)
     #endregion
 
     # region change price
     def get_store_items(self):
         try:
-            exhibited_items_url = f'https://{self.tm_url}/api/v2/items?key={self.steamclient.tm_api}'
+            exhibited_items_url = f'{self.tm_site_url}/api/v2/items?key={self.steamclient.tm_api}'
             response = requests.get(exhibited_items_url, timeout=30).json()
             return response
         except:
@@ -131,7 +132,7 @@ class TMItems(ThreadManager):
         return filtered_items
 
     def request_mass_change_price(self, item_id_to_delete):
-        url_change_price = f'https://{self.tm_url}/api/MassSetPriceById/'
+        url_change_price = f'{self.tm_site_url}/api/MassSetPriceById/'
         item_to_remove = 100
         for i in range(0, len(item_id_to_delete), item_to_remove):
             sublist_keys = list(item_id_to_delete.keys())[i:i + item_to_remove]
@@ -149,7 +150,7 @@ class TMItems(ThreadManager):
     def parsing_prices(self, api_key, hash_names, results, results_lock, threads):
         try:
             list_hash_names = '&list_hash_name[]=' + '&list_hash_name[]='.join(hash_names)
-            search_hash_name_url = (f'https://{self.tm_url}/api/v2/search-list-items-by-hash-name-all?'
+            search_hash_name_url = (f'{self.tm_site_url}/api/v2/search-list-items-by-hash-name-all?'
                                     f'key={api_key}{list_hash_names}')
             parsed_info = requests.get(search_hash_name_url, timeout=30).json()
             if parsed_info['success'] and parsed_info['currency'] == 'RUB':
@@ -201,82 +202,82 @@ class TMItems(ThreadManager):
             return results
     # endregion
 
-    def change_price(self, acc_info, time_sleep):
-        username = ''
+    def change_price(self, acc_info, tg_info, global_time):
         while True:
             self.update_account_data_info()
-            self.update_db_prices_and_setting()
+            self.update_db_prices_and_settings()
             acc_data_tradable_inventory = acc_info['steam inventory tradable']
             acc_data_phases_inventory = acc_info['steam inventory phases']
-            self.take_session(acc_info)
-            store_items = self.get_store_items()
-            if store_items is not None and 'items' in store_items and type(store_items['items']) == list:
-                item_to_delete = []
-                for item in store_items['items']:
-                    item_status = item['status']
-                    if item_status == '1':
-                        item_to_delete.append(item)
-                new_store_items = self.delete_item_from_sale(acc_data_tradable_inventory, item_to_delete)
-                max_items_count = 100
-                for i in range(0, len(new_store_items), max_items_count):
-                    sublist = new_store_items[i:i + max_items_count]
-                    try:
-                        another_tm_apis_list = self.search_in_merges_by_username(self.steamclient.username)['tm apikey']
-                        items_item_ids = [item["item_id"] for item in sublist]
-                        parsed_info = self.threads_to_parsing(sublist, another_tm_apis_list)
-                        my_prices = {}
-                        for item in range(len(sublist)):
-                            try:
-                                item_name = sublist[item]['market_hash_name']
-                                item_id = sublist[item]['item_id']
-                                for el in parsed_info.keys():
-                                    if el == item_name:
-                                        filtered_dict = {
-                                            item["id"]: item for item in parsed_info[el]
-                                            if str(item["id"]) not in str(items_item_ids)
-                                        }
-                                        if filtered_dict:
-                                            item_prices_with_my = [item["price"] for item in parsed_info[el]]
-                                            item_prices = [item["price"] for item in filtered_dict.values()]
-                                            tm_seller_value = self.taking_information_for_price('tm_seller')
-                                            if tm_seller_value:
-                                                max_market_price = self.get_my_market_price(
-                                                    acc_data_phases_inventory[sublist[item]["assetid"]], tm_seller_value, 'max')
+            active_session = self.take_session(acc_info, tg_info)
+            if active_session:
+                store_items = self.get_store_items()
+                if store_items is not None and 'items' in store_items and type(store_items['items']) == list:
+                    item_to_delete = []
+                    for item in store_items['items']:
+                        item_status = item['status']
+                        if item_status == '1':
+                            item_to_delete.append(item)
+                    new_store_items = self.delete_item_from_sale(acc_data_tradable_inventory, item_to_delete)
+                    max_items_count = 100
+                    for i in range(0, len(new_store_items), max_items_count):
+                        sublist = new_store_items[i:i + max_items_count]
+                        try:
+                            another_tm_apis_list = self.search_in_merges_by_username(tg_info, self.steamclient.username)['tm apikey']
+                            items_item_ids = [item["item_id"] for item in sublist]
+                            parsed_info = self.threads_to_parsing(sublist, another_tm_apis_list)
+                            my_prices = {}
+                            for item in range(len(sublist)):
+                                try:
+                                    item_name = sublist[item]['market_hash_name']
+                                    item_id = sublist[item]['item_id']
+                                    for el in parsed_info.keys():
+                                        if el == item_name:
+                                            filtered_dict = {
+                                                item["id"]: item for item in parsed_info[el]
+                                                if str(item["id"]) not in str(items_item_ids)
+                                            }
+                                            if filtered_dict:
+                                                item_prices_with_my = [item["price"] for item in parsed_info[el]]
+                                                item_prices = [item["price"] for item in filtered_dict.values()]
+                                                seller_value = self.get_information_for_price(tg_info, 'tm_seller')
+                                                if seller_value:
+                                                    max_market_price = self.get_my_market_price(
+                                                        acc_data_phases_inventory[sublist[item]["assetid"]], seller_value, 'max')
 
-                                                min_market_price = self.get_my_market_price(
-                                                    acc_data_phases_inventory[sublist[item]["assetid"]], tm_seller_value, 'min')
+                                                    min_market_price = self.get_my_market_price(
+                                                        acc_data_phases_inventory[sublist[item]["assetid"]], seller_value, 'min')
 
-                                                if len(item_prices) > 0:
-                                                    min_price_raw = min([int(price) for price in item_prices])
-                                                    min_price_opponent = (min_price_raw - 1)
+                                                    if len(item_prices) > 0 and min_market_price and max_market_price:
+                                                        min_price_raw = min([int(price) for price in item_prices])
+                                                        min_price_opponent = (min_price_raw - 1)
 
-                                                    if min_market_price <= min_price_opponent <= max_market_price:
-                                                        my_market_price = min_price_opponent
-                                                    elif min_price_opponent < min_market_price:
-                                                        my_market_price = min_market_price
-                                                    else:
+                                                        if min_market_price <= min_price_opponent <= max_market_price:
+                                                            my_market_price = min_price_opponent
+                                                        elif min_price_opponent < min_market_price:
+                                                            my_market_price = min_market_price
+                                                        else:
+                                                            my_market_price = max_market_price
+                                                    elif len(item_prices) == 0 and len(item_prices_with_my) > 0:
                                                         my_market_price = max_market_price
-                                                elif len(item_prices) == 0 and len(item_prices_with_my) > 0:
-                                                    my_market_price = max_market_price
-                                                else:
-                                                    continue
-                                                for item_ in store_items['items']:
-                                                    if (item_['item_id'] == item_id and my_market_price != 0 and
-                                                            item_['price'] != my_market_price / 100):
-                                                        my_prices[sublist[item]["item_id"]] = my_market_price
+                                                    else:
+                                                        continue
+                                                    for item_ in store_items['items']:
+                                                        if (item_['item_id'] == item_id and my_market_price != 0 and
+                                                                item_['price'] != my_market_price / 100):
+                                                            my_prices[sublist[item]["item_id"]] = my_market_price
 
-                            except Exception as e:
-                                Logs.log(f'{username}: Error in change_price: {e}')
+                                except Exception as e:
+                                    Logs.log(f'{self.steamclient.username}: Error in change_price: {e}')
 
-                        if len(my_prices) > 0:
-                            self.request_mass_change_price(my_prices)
+                            if len(my_prices) > 0:
+                                self.request_mass_change_price(my_prices)
 
-                    except Exception as e:
-                        Logs.log(f'{username}: Fatal error in change_price: {e}')
-            elif store_items is not None:
-                Logs.log('Error during receiving inventory')
+                        except Exception as e:
+                            Logs.log(f'{self.steamclient.username}: Fatal error in change_price: {e}')
+                elif store_items is not None:
+                    Logs.log('Error during receiving inventory')
 
-            time.sleep(time_sleep)
+            time.sleep(global_time)
 
     #endregion
 

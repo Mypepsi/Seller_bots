@@ -1,5 +1,5 @@
-import bs4
 import re
+import bs4
 from bots_libraries.steampy.models import Endpoints, SteamUrl
 from bots_libraries.steampy.utils import account_id_to_steam_id
 

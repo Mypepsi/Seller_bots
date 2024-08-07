@@ -1,34 +1,44 @@
+import bs4
+import rsa
+import json
 import base64
 import decimal
-import bs4
-import urllib.parse as urlparse
-from typing import List, Union
-import json
 import requests
-import rsa
-from bots_libraries.steampy.steam_auth.auth.schemas import FinalizeLoginStatus
-from bots_libraries.steampy.steam_auth.pb2.enums_pb2 import ESessionPersistence
+import urllib.parse as urlparse
+
+from typing import List, Union
 from bots_libraries.steampy import guard
 from bots_libraries.steampy.chat import SteamChat
-from bots_libraries.steampy.confirmation import ConfirmationExecutor
-from bots_libraries.steampy.exceptions import SevenDaysHoldException, LoginRequired, ApiException
-from bots_libraries.steampy.login import InvalidCredentials
 from bots_libraries.steampy.market import SteamMarket
+from bots_libraries.steampy.login import InvalidCredentials
+from bots_libraries.steampy.confirmation import ConfirmationExecutor
+from bots_libraries.steampy.steam_auth.auth.schemas import FinalizeLoginStatus
+from bots_libraries.steampy.steam_auth.pb2.enums_pb2 import ESessionPersistence
 from bots_libraries.steampy.models import Asset, TradeOfferState, SteamUrl, GameOptions
-from bots_libraries.steampy.utils import text_between, texts_between, merge_items_with_descriptions_from_inventory, \
-    get_description_key, \
-    merge_items_with_descriptions_from_offer, account_id_to_steam_id, get_key_value_from_url, parse_price
+from bots_libraries.steampy.exceptions import SevenDaysHoldException, LoginRequired, ApiException
+
+from bots_libraries.steampy.utils import (
+    parse_price,
+    text_between,
+    texts_between,
+    get_description_key,
+    get_key_value_from_url,
+    account_id_to_steam_id,
+    merge_items_with_descriptions_from_offer,
+    merge_items_with_descriptions_from_inventory,
+)
+
 from bots_libraries.steampy.steam_auth.pb2.steammessages_auth.steamclient_pb2 import (
-    CAuthentication_AllowedConfirmation,
-    CAuthentication_BeginAuthSessionViaCredentials_Request,
-    CAuthentication_BeginAuthSessionViaCredentials_Response,
-    CAuthentication_GetPasswordRSAPublicKey_Request,
-    CAuthentication_GetPasswordRSAPublicKey_Response,
-    CAuthentication_PollAuthSessionStatus_Request,
-    CAuthentication_PollAuthSessionStatus_Response,
-    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request,
     EAuthSessionGuardType,
     EAuthTokenPlatformType,
+    CAuthentication_AllowedConfirmation,
+    CAuthentication_PollAuthSessionStatus_Request,
+    CAuthentication_PollAuthSessionStatus_Response,
+    CAuthentication_GetPasswordRSAPublicKey_Request,
+    CAuthentication_GetPasswordRSAPublicKey_Response,
+    CAuthentication_BeginAuthSessionViaCredentials_Request,
+    CAuthentication_BeginAuthSessionViaCredentials_Response,
+    CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request,
 )
 
 
@@ -195,7 +205,7 @@ class SteamClient:
                 'Origin': SteamUrl.COMMUNITY_URL,
                 'Host': 'steamcommunity.com'
             }
-            response = self._session.post(url, data=params, headers=headers).json()
+            response = self._session.post(url, data=params, headers=headers, timeout=15).json()
             return response
         except:
             return None
@@ -211,13 +221,16 @@ class SteamClient:
 
     def decline_trade_offer(self, trade_offer_id: str) -> dict:
         url = 'https://steamcommunity.com/tradeoffer/' + trade_offer_id + '/decline'
-        response = self._session.post(url, data={'sessionid': self._get_session_id()}).json()
+        response = self._session.post(url, data={'sessionid': self._get_session_id()}, timeout=15).json()
         return response
 
-    def cancel_trade_offer(self, trade_offer_id: str) -> dict:
-        url = 'https://steamcommunity.com/tradeoffer/' + trade_offer_id + '/cancel'
-        response = self._session.post(url, data={'sessionid': self._get_session_id()}).json()
-        return response
+    def cancel_trade_offer(self, trade_offer_id: str):
+        try:
+            url = 'https://steamcommunity.com/tradeoffer/' + trade_offer_id + '/cancel'
+            response = self._session.post(url, data={'sessionid': self._get_session_id()}, timeout=15).json()
+            return response
+        except:
+            return None
 
     def get_trade_offers_summary(self) -> dict:
         params = {'key': self._api_key}
@@ -314,7 +327,7 @@ class SteamClient:
                   'captcha': ''}
         headers = {'Referer': self._get_trade_offer_url(trade_offer_id)}
 
-        response = self._session.post(accept_url, data=params, headers=headers)
+        response = self._session.post(accept_url, data=params, headers=headers, timeout=15)
         try:
             response = response.json()
         except Exception:
@@ -388,7 +401,7 @@ class SteamClient:
         return str[0: len(str) - 2]
 
     def get_server_time(self) -> int:
-        response = self._session.post('https://api.steampowered.com/ITwoFactorService/QueryTime/v0001')
+        response = self._session.post('https://api.steampowered.com/ITwoFactorService/QueryTime/v0001', timeout=15)
         data = response.json()
         return int(data['response']['server_time'])
 
@@ -445,15 +458,15 @@ class SteamClient:
         response = self._session.post(url, data=data)
 
     def _finalize_login(self, data) -> FinalizeLoginStatus:
-        response = self._session.post('https://login.steampowered.com/jwt/finalizelogin', data=data)
+        response = self._session.post('https://login.steampowered.com/jwt/finalizelogin', data=data, timeout=15)
         return FinalizeLoginStatus.parse_raw(response.content)
 
     def _poll_auth_session_status(self, data) -> CAuthentication_PollAuthSessionStatus_Response:
-        response = self._session.post('https://api.steampowered.com/IAuthenticationService/PollAuthSessionStatus/v1', data=data)
+        response = self._session.post('https://api.steampowered.com/IAuthenticationService/PollAuthSessionStatus/v1', data=data, timeout=15)
         return CAuthentication_PollAuthSessionStatus_Response.FromString(response.content)
 
     def _update_auth_session(self, data) -> None:
-        response = self._session.post('https://api.steampowered.com/IAuthenticationService/UpdateAuthSessionWithSteamGuardCode/v1', data=data)
+        response = self._session.post('https://api.steampowered.com/IAuthenticationService/UpdateAuthSessionWithSteamGuardCode/v1', data=data, timeout=15)
 
     def _get_session_id(self) -> str:
         return self._session.cookies.get('sessionid', domain='steamcommunity.com')
@@ -463,7 +476,7 @@ class SteamClient:
         return confirmation.confirmation_type == EAuthSessionGuardType.k_EAuthSessionGuardType_DeviceCode
 
     def _begin_auth_session(self, data) -> CAuthentication_BeginAuthSessionViaCredentials_Response:
-        response = self._session.post('https://api.steampowered.com/IAuthenticationService/BeginAuthSessionViaCredentials/v1', data=data)
+        response = self._session.post('https://api.steampowered.com/IAuthenticationService/BeginAuthSessionViaCredentials/v1', data=data, timeout=15)
         return CAuthentication_BeginAuthSessionViaCredentials_Response.FromString(response.content)
 
     def _fetch_rsa_params(self, message, current_number_of_repetitions: int = 0):

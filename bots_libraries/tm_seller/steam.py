@@ -8,13 +8,13 @@ from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
 class TMSteam(ThreadManager):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, name):
+        super().__init__(name)
 
     #region steam send offers
     def request_give_p2p_all(self):
         try:
-            url = f'https://{self.tm_url}/api/v2/trade-request-give-p2p-all?key={self.steamclient.tm_api}'
+            url = f'{self.tm_site_url}/api/v2/trade-request-give-p2p-all?key={self.steamclient.tm_api}'
             response = requests.get(url, timeout=30).json()
             return response
         except:
@@ -193,90 +193,91 @@ class TMSteam(ThreadManager):
                 }
                 self.acc_history_collection.insert_one(data_append)
 
-    def steam_send_offers(self, acc_info, time_sleep):
+    def steam_send_offers(self, acc_info, tg_info, global_time):
         while True:
             self.update_account_data_info()
             acc_data_inventory_phases = acc_info['steam inventory phases']
-            self.take_session(acc_info)
-            collection_name = f'history_{self.steamclient.username}'
-            self.acc_history_collection = self.get_collection(self.history, collection_name)
+            active_session = self.take_session(acc_info, tg_info)
+            if active_session:
+                collection_name = f'history_{self.steamclient.username}'
+                self.acc_history_collection = self.get_collection(self.history, collection_name)
 
-            response_data = self.request_give_p2p_all()
+                response_data = self.request_give_p2p_all()
 
-            if ((self.acc_history_collection is not None and
-                    response_data is not None and 'offers' in response_data
-                    and type(response_data['offers']) == list)):
-                send_offers = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
+                if (self.acc_history_collection is not None and
+                        response_data is not None and 'offers' in response_data
+                        and type(response_data['offers']) == list):
+                    send_offers = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
 
-                for i in range(len(response_data['offers'])):
-                    try:
-                        msg = response_data['offers'][i]['tradeoffermessage']
-                        unique_msg_in_send_offers = []
-                        trade_ready_list = []
-                        for offer in send_offers:  # Trade ready:
-                            try:
-                                if 'site id' in offer:
-                                    data_text = offer['site id']
-                                    if msg == data_text:
-                                        trade_ready_list.append(offer)
-                            except:
-                                pass
-                        if len(trade_ready_list) > 0:
-                            latest_offer = max(trade_ready_list, key=lambda t: t['time'])
-                            trade_id = latest_offer['trade id']
-                            if trade_id is not None:
-                                trade_ready_url = (f'https://{self.tm_url}/api/v2/trade-ready?'
-                                                   f'key={self.steamclient.tm_api}&tradeoffer={trade_id}')
+                    for i in range(len(response_data['offers'])):
+                        try:
+                            msg = response_data['offers'][i]['tradeoffermessage']
+                            unique_msg_in_send_offers = []
+                            trade_ready_list = []
+                            for offer in send_offers:  # Trade ready:
                                 try:
-                                    requests.get(trade_ready_url, timeout=5)
+                                    if 'site id' in offer:
+                                        data_text = offer['site id']
+                                        if msg == data_text:
+                                            trade_ready_list.append(offer)
                                 except:
                                     pass
-                                time.sleep(2)
-
-                        match_msg = False
-                        for offer in send_offers:
-                            if 'site id' in offer and msg == offer['site id'] and offer['trade id'] is not None:
-                                match_msg = True
-                                break
-                        if not match_msg:
-
-                            self.make_steam_offer(response_data['offers'][i], send_offers, acc_data_inventory_phases)
-
-                        for offer in send_offers:  # Resending and sending
-                            if 'site id' in offer and msg == offer['site id'] and msg not in unique_msg_in_send_offers:
-                                unique_msg_in_send_offers.append(msg)
-                                trade_id = offer['trade id']
-                                if trade_id is None:
-                                    continue
-
-                                response_steam_trade_offer = self.steamclient.get_trade_offer_state(trade_id)
-                                time.sleep(2)
-
-                                if not isinstance(response_steam_trade_offer, dict):
-                                    continue
-
-                                if 'response' in response_steam_trade_offer and 'offer' in response_steam_trade_offer['response']:
-                                    offer_status = response_steam_trade_offer['response']['offer']['trade_offer_state']
-                                else:
-                                    continue
-
-                                if int(offer_status) == 9:
+                            if len(trade_ready_list) > 0:
+                                latest_offer = max(trade_ready_list, key=lambda t: t['time'])
+                                trade_id = latest_offer['trade id']
+                                if trade_id is not None:
+                                    trade_ready_url = (f'{self.tm_site_url}/api/v2/trade-ready?'
+                                                       f'key={self.steamclient.tm_api}&tradeoffer={trade_id}')
                                     try:
-                                        self.steamclient.confirm_offer_via_tradeofferid({'tradeofferid': trade_id})
+                                        requests.get(trade_ready_url, timeout=5)
                                     except:
                                         pass
-                                    continue
+                                    time.sleep(2)
 
-                                if int(offer_status) not in [1, 4, 8, 10]:
-                                    continue
+                            match_msg = False
+                            for offer in send_offers:
+                                if 'site id' in offer and msg == offer['site id'] and offer['trade id'] is not None:
+                                    match_msg = True
+                                    break
+                            if not match_msg:
+
                                 self.make_steam_offer(response_data['offers'][i], send_offers, acc_data_inventory_phases)
 
-                    except:
-                        Logs.log('Error in steam send offers')
-            elif self.acc_history_collection is not None and response_data is not None and 'error' in response_data:
-                if response_data['error'] != 'nothing' and response_data['error'] != 'interval 45s':
-                    Logs.log_and_send_msg_in_tg(self.tm_tg_info, 'Steam Send Offers: Error in '
-                                                                 'trade-request-give-p2p-all', self.steamclient.username)
-            time.sleep(time_sleep)
+                            for offer in send_offers:  # Resending and sending
+                                if 'site id' in offer and msg == offer['site id'] and msg not in unique_msg_in_send_offers:
+                                    unique_msg_in_send_offers.append(msg)
+                                    trade_id = offer['trade id']
+                                    if trade_id is None:
+                                        continue
+
+                                    response_steam_trade_offer = self.steamclient.get_trade_offer_state(trade_id)
+                                    time.sleep(2)
+
+                                    if not isinstance(response_steam_trade_offer, dict):
+                                        continue
+
+                                    if 'response' in response_steam_trade_offer and 'offer' in response_steam_trade_offer['response']:
+                                        offer_status = response_steam_trade_offer['response']['offer']['trade_offer_state']
+                                    else:
+                                        continue
+
+                                    if int(offer_status) == 9:
+                                        try:
+                                            self.steamclient.confirm_offer_via_tradeofferid({'tradeofferid': trade_id})
+                                        except:
+                                            pass
+                                        continue
+
+                                    if int(offer_status) not in [1, 4, 8, 10]:
+                                        continue
+                                    self.make_steam_offer(response_data['offers'][i], send_offers, acc_data_inventory_phases)
+
+                        except:
+                            Logs.log('Error in steam send offers')
+                elif self.acc_history_collection is not None and response_data is not None and 'error' in response_data:
+                    if response_data['error'] != 'nothing' and response_data['error'] != 'interval 45s':
+                        Logs.log_and_send_msg_in_tg(tg_info, 'Steam Send Offers: Error in '
+                                                                     'trade-request-give-p2p-all', self.steamclient.username)
+            time.sleep(global_time)
 
     # endregion

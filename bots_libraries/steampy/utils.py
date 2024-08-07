@@ -1,12 +1,13 @@
-import decimal
 import os
+import re
 import copy
 import struct
+import decimal
 import urllib.parse as urlparse
-import re
-from requests.structures import CaseInsensitiveDict
+
 from typing import List
 from bs4 import BeautifulSoup, Tag
+from requests.structures import CaseInsensitiveDict
 from bots_libraries.steampy.models import GameOptions
 
 

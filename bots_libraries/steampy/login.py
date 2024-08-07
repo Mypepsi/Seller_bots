@@ -1,14 +1,13 @@
-import base64
+import rsa
 import time
+import base64
 import requests
 from bots_libraries.steampy import guard
-import rsa
 from bots_libraries.steampy.models import SteamUrl
 from bots_libraries.steampy.exceptions import InvalidCredentials, CaptchaRequired
 
 
 class LoginExecutor:
-
     def __init__(self, username: str, password: str, shared_secret: str, session: requests.Session) -> None:
         self.username = username
         self.password = password

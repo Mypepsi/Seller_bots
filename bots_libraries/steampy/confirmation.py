@@ -1,8 +1,8 @@
 import enum
 import json
 import time
-from typing import List
 import requests
+from typing import List
 from bs4 import BeautifulSoup
 from bots_libraries.steampy import guard
 from bots_libraries.steampy.exceptions import ConfirmationExpected
