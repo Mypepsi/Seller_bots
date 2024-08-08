@@ -29,13 +29,9 @@ from bots_libraries.sellpy.logs import Logs
 # # Вивід оновленого списку
 # print(my_list)
 # Приклад словника
-mango = Mongo()
-try:
-    print(None < 10)
-
-except:
-    Logs.notify_except(mango.sellpy_tg_info, 'test error', '')
-
+reply = {'data': {'webapi_token': []}}
+if not reply['data']['webapi_token']:
+    print(1)
 
 # class Test(Mongo):
 #     def __init__(self):

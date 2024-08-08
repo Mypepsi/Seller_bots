@@ -168,7 +168,7 @@ class SteamClient:
             return merge_items_with_descriptions_from_inventory(response_dict, game)
         return response_dict
 
-    def get_inventory_from_link_with_session(self, partner_steam_id: str, game: GameOptions, proxy=None, merge: bool = True,
+    def get_inventory_from_link_with_session(self, partner_steam_id: str, game: GameOptions, merge: bool = True,
                                 count: int = 5000) -> dict:
         url = '/'.join([SteamUrl.COMMUNITY_URL, 'inventory', partner_steam_id, game.app_id, game.context_id])
         params = {'l': 'english',

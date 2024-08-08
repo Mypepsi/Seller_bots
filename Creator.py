@@ -55,10 +55,10 @@ def add_threads():
         threads_list.append(steam_inventory)
 
     if manager.creator_steam_apikey_global_time != 0:
-        steam_api_key = threading.Thread(target=steam_api.steam_api_key,
+        steam_apikey = threading.Thread(target=steam_api.steam_apikey,
                                          args=(steam_api.creator_tg_info,
                                                steam_api.creator_steam_apikey_global_time))
-        threads_list.append(steam_api_key)
+        threads_list.append(steam_apikey)
 
     if manager.creator_proxy_global_time != 0:
         proxy_checker = threading.Thread(target=steam_prx.proxy_checker,

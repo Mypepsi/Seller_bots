@@ -96,10 +96,10 @@ def add_threads(name):
                                               'tm_tg_info'))
         threads_list.append(change_price)
 
-    if manager.tm_money_transfer_global_time != 0:
+    if manager.tm_transfer_balance_global_time != 0:
         transfer_balance = threading.Thread(target=blc_trf.transfer_balance,
                                             args=(blc_trf.tm_tg_info,
-                                                  blc_trf.tm_money_transfer_global_time))
+                                                  blc_trf.tm_transfer_balance_global_time))
         threads_list.append(transfer_balance)
 
     if manager.tm_history_global_time != 0:

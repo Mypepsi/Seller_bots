@@ -113,7 +113,7 @@ class Mongo:
         self.tm_thread_start_time = self.get_key(self.tm_settings_general, 'thread start time')
         self.tm_thread_function_time = self.get_key(self.tm_settings_general, 'thread function time')
         self.tm_site_url = f"https://{self.get_key(self.tm_settings_general, 'site url')}"
-        self.tm_money_transfer_global_time = self.get_key(self.tm_settings_general, 'money transfer global time')
+        self.tm_transfer_balance_global_time = self.get_key(self.tm_settings_general, 'money transfer global time')
         self.tm_site_apikey_global_time = self.get_key(self.tm_settings_general, 'site apikey global time')
 
         self.tm_settings_telegram = self.get_key(self.content_tm_settings, 'telegram')
