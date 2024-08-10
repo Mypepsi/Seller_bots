@@ -44,7 +44,6 @@ def add_threads():
     if manager.creator_steam_session_global_time != 0:
         steam_login = threading.Thread(target=steam_aut.steam_login,
                                        args=(steam_aut.creator_tg_info,
-                                             steam_aut.make_steam_login,
                                              steam_aut.creator_steam_session_global_time))
         threads_list.append(steam_login)
 
@@ -69,8 +68,7 @@ def add_threads():
     if manager.creator_steam_access_token_global_time != 0:
         steam_access_token = threading.Thread(target=steam_acs.steam_access_token,
                                               args=(steam_acs.creator_tg_info,
-                                                    steam_acs.creator_steam_access_token_global_time,
-                                                    False))
+                                                    steam_acs.creator_steam_access_token_global_time))
         threads_list.append(steam_access_token)
 
     if manager.creator_mongodb_global_time != 0:

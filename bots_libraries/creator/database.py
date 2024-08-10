@@ -193,7 +193,7 @@ class DataBase(Mongo):
                 except:
                     ip_doc = None
                 if ip_doc:
-                    ip_mongo = int(ip_doc.get("ip_address"))
+                    ip_mongo = ip_doc.get("ip_address")
                     if not ip_mongo:
                         ip = DataBase.database_ip()
                         ip_doc = {"ip_address": ip}

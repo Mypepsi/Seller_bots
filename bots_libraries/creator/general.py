@@ -8,7 +8,7 @@ class CreatorGeneral(ThreadManager):
     def __init__(self, name):
         super().__init__(name)
         self.questionable_proxies = {}
-
+        self.mongo_tg_alert = False
 
     def proxy_checker(self, tg_info, global_time):
         Logs.log(f"Proxy Checker: thread are running", '')
@@ -53,12 +53,11 @@ class CreatorGeneral(ThreadManager):
 
     def mongodb_checker(self, tg_info, global_time):
         Logs.log(f"MongoDB Checker: thread are running", '')
-        tg_alert = False
         while True:
             try:
                 response = self.client.admin.command('ping')
-                if response.get('ok') != 1 and not tg_alert:
-                    tg_alert = True
+                if response.get('ok') != 1 and not self.mongo_tg_alert:
+                    self.mongo_tg_alert = True
                     raise ExitException
             except Exception as e:
                 Logs.notify_except(tg_info, f"MongoDB Checker: MongoDB did not answered: {e}", '')

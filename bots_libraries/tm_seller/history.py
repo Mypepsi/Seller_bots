@@ -1,14 +1,15 @@
-from bots_libraries.sellpy.logs import Logs
-from bots_libraries.sellpy.thread_manager import ThreadManager
 import time
 import requests
+from bots_libraries.sellpy.logs import Logs
+from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
 class TMHistory(ThreadManager):
     def __init__(self, name):
         super().__init__(name)
 
-    def history_check(self, acc_info, tg_info, global_time):
+    # region History
+    def history(self, acc_info, tg_info, global_time):
         while True:
             time.sleep(global_time)
             self.update_account_data_info()
@@ -28,14 +29,14 @@ class TMHistory(ThreadManager):
                     time.sleep(3)
 
                     try:
-                        self.tm_item_history(collection_info, tg_info, acc_data_phases_inventory)
+                        self.site_history(collection_info, tg_info, acc_data_phases_inventory)
                     except:
                         Logs.log_and_send_msg_in_tg(tg_info, 'Error in item history', self.steamclient.username)
                         pass
                     time.sleep(3)
 
                     try:
-                        self.tm_money_history(collection_info, tg_info)
+                        self.money_history(collection_info, tg_info)
                     except:
                         Logs.log_and_send_msg_in_tg(tg_info, 'Error in money history', self.steamclient.username)
                         pass
@@ -100,11 +101,12 @@ class TMHistory(ThreadManager):
                                                         f'Mongo {doc["trade id"]} trade id not in steam trade history',
                                                         self.steamclient.username)
 
-    def tm_item_history(self, collection_info, tg_info, acc_data_phases_inventory):
+    # region Site History
+    def site_history(self, collection_info, tg_info, acc_data_phases_inventory):
         current_timestamp = int(time.time())
         current_timestamp_unique = int(time.time())
         month_ago = current_timestamp - 30 * 24 * 60 * 60
-        item_history_url = (f'{self.tm_site_url}/api/v2/history?key={self.steamclient.tm_api}'
+        item_history_url = (f'{self.tm_url}/api/v2/history?key={self.steamclient.tm_api}'
                             f'&date={month_ago}&date_end={current_timestamp}')
         try:
             response = requests.get(item_history_url, timeout=30).json()
@@ -116,7 +118,7 @@ class TMHistory(ThreadManager):
         if response and response.get('success') and isinstance(response.get('data'), list):
             collection_info_sorted = [doc for doc in collection_info if doc.get('site') == 'tm'
                                       and doc.get('transaction') == 'sale_record']
-            collection_info_with_new_id = self.handling_empty_site_item_id(collection_info_sorted, response_info)
+            collection_info_with_new_id = self.search_site_item_id(collection_info_sorted, response_info)
 
             for doc in collection_info_with_new_id:
                 if all(key in doc for key in ['site item id', 'site status']):
@@ -208,7 +210,7 @@ class TMHistory(ThreadManager):
                         self.acc_history_collection.insert_one(data_append)
                         time.sleep(1)
 
-    def handling_empty_site_item_id(self, collection_info_sorted, item_history_response_info):
+    def search_site_item_id(self, collection_info_sorted, item_history_response_info):
         current_timestamp = int(time.time())
         collection_info_sorted_by_time = sorted(collection_info_sorted, key=lambda x: x.get('time', 0), reverse=True)
 
@@ -242,10 +244,11 @@ class TMHistory(ThreadManager):
             except:
                 pass
         return collection_info_sorted_by_time
+    # endregion
 
-    def tm_money_history(self, collection_info, tg_info):
+    def money_history(self, collection_info, tg_info):
         transfer_id = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_transfer_id']
-        money_history_url = f'{self.tm_site_url}/api/v2/money-send-history/0?key={self.steamclient.tm_api}'
+        money_history_url = f'{self.tm_url}/api/v2/money-send-history/0?key={self.steamclient.tm_api}'
         try:
             response = requests.get(money_history_url, timeout=30).json()
         except:
@@ -282,3 +285,5 @@ class TMHistory(ThreadManager):
                         }
                         self.acc_history_collection.insert_one(data_append)
                         time.sleep(1)
+
+    # endregion

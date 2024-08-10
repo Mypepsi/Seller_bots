@@ -6,19 +6,6 @@ from bots_libraries.sellpy.logs import Logs
 
 class Mongo:
     def __init__(self, name):
-        # region Default Params
-        self.acc_history_collection = None
-        self.rate = 0
-        self.commission = 0
-
-        self.sellpy_tg_bot = telebot.TeleBot('6710866120:AAElhQPr-4PkOnZvvLDSnYA163Ez0td4KzQ')
-        self.sellpy_tg_info = {
-            'tg id': -1001807211917,
-            'tg bot': self.sellpy_tg_bot,
-            'bot name': name
-        }
-        # endregion
-
         self.client = MongoClient(
             "mongodb://127.0.0.1:27017",
             serverSelectionTimeoutMS=30000,  # Server selection timeout.
@@ -104,6 +91,11 @@ class Mongo:
         self.creator_restart_server_global_time = self.get_key(self.creator_settings_restart, 'restart server global time')
         self.creator_restart_bots_name = self.get_key(self.creator_settings_restart, 'restart bots name')  # list of dict
         self.creator_restart_bots_global_time = self.get_key(self.creator_settings_restart, 'restart bots global time')
+
+        self.creator_settings_sellpy = self.get_key(self.content_creator_settings, 'sellpy')
+        self.creator_sellpy_tg_token = self.get_key(self.creator_settings_sellpy, 'sellpy tg token')
+        self.creator_sellpy_tg_id = self.get_key(self.creator_settings_sellpy, 'sellpy tg id')
+
         # endregion
 
 
@@ -112,7 +104,7 @@ class Mongo:
         self.tm_waiting_start_time = self.get_key(self.tm_settings_general, 'waiting start time')
         self.tm_thread_start_time = self.get_key(self.tm_settings_general, 'thread start time')
         self.tm_thread_function_time = self.get_key(self.tm_settings_general, 'thread function time')
-        self.tm_site_url = f"https://{self.get_key(self.tm_settings_general, 'site url')}"
+        self.tm_url = f"https://{self.get_key(self.tm_settings_general, 'url')}"
         self.tm_transfer_balance_global_time = self.get_key(self.tm_settings_general, 'money transfer global time')
         self.tm_site_apikey_global_time = self.get_key(self.tm_settings_general, 'site apikey global time')
 
@@ -131,7 +123,7 @@ class Mongo:
         self.tm_restart_server_global_time = self.get_key(self.tm_settings_restart, 'restart server global time')
         self.tm_restart_bots_name = self.get_key(self.tm_settings_restart, 'restart bots name')  # list of dict
         self.tm_restart_bots_global_time = self.get_key(self.tm_settings_restart, 'restart bots global time')
-        self.tm_restart_site_store_global_time = self.get_key(self.tm_settings_restart, 'restart site store global time')
+        self.tm_restart_store_global_time = self.get_key(self.tm_settings_restart, 'restart store global time')
 
         self.tm_settings_steam = self.get_key(self.content_tm_settings, 'steam')
         self.tm_steam_send_offers_global_time = self.get_key(self.tm_settings_steam, 'steam send offers global time')
@@ -173,8 +165,22 @@ class Mongo:
             'tg bot': self.tm_history_tg_bot,
             'bot name': self.tm_tg_bot_name
         }
+
+        if self.creator_sellpy_tg_token:
+            self.sellpy_tg_bot = telebot.TeleBot(self.creator_sellpy_tg_token)
+            self.sellpy_tg_info = {
+                'tg id': self.creator_sellpy_tg_id,
+                'tg bot': self.sellpy_tg_bot,
+                'bot name': name
+            }
+
         # endregion
 
+        # region Default Params
+        self.acc_history_collection = None
+        self.rate = 0
+        self.commission = 0
+        # endregion
 
     # region Update Info
     def update_account_settings_info(self):

@@ -29,15 +29,15 @@ def add_threads(name):
                                               restarter.tm_restart_bots_global_time))
         threads_list.append(restart_bots)
 
-    if manager.tm_restart_site_store_global_time != 0:
-        restart_site_store = threading.Thread(target=manager.create_threads,
+    if manager.tm_restart_store_global_time != 0:
+        restart_store = threading.Thread(target=manager.create_threads,
                                               args=('_str_png',
                                                     TMOnline(name),
-                                                    'restart_site_store',
-                                                    'tm_restart_site_store_global_time',
+                                                    'restart_store',
+                                                    'tm_restart_store_global_time',
                                                     'tm_thread_function_time',
                                                     'tm_tg_info'))
-        threads_list.append(restart_site_store)
+        threads_list.append(restart_store)
 
     if manager.tm_site_apikey_global_time != 0:
         validity_tm_apikey = threading.Thread(target=api_chk.validity_tm_apikey,
@@ -103,14 +103,14 @@ def add_threads(name):
         threads_list.append(transfer_balance)
 
     if manager.tm_history_global_time != 0:
-        history_check = threading.Thread(target=manager.create_threads,
+        history = threading.Thread(target=manager.create_threads,
                                          args=('_hstr_thd',
                                                TMHistory(name),
-                                               'history_check',
+                                               'history',
                                                'tm_history_global_time',
                                                'tm_thread_function_time',
                                                'tm_tg_info'))
-        threads_list.append(history_check)
+        threads_list.append(history)
 
     if manager.tm_visible_store_global_time != 0:
         store_items_visible = threading.Thread(target=manager.create_threads,

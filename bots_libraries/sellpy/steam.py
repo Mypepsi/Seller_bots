@@ -1,13 +1,16 @@
 import io
 import time
 import pickle
-from bots_libraries.sellpy.logs import Logs, ExitException
+from bots_libraries.steampy.client import SteamClient
 from bots_libraries.sellpy.mongo import Mongo
+from bots_libraries.sellpy.logs import Logs, ExitException
 
 
 class Steam(Mongo):
     def __init__(self, name):
         super().__init__(name)
+        self.steamclient = SteamClient('')
+        self.steamclient.username = None
 
     def take_session(self, acc, tg_info):
         username = None

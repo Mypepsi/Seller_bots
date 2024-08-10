@@ -29,10 +29,14 @@ from bots_libraries.sellpy.logs import Logs
 # # Вивід оновленого списку
 # print(my_list)
 # Приклад словника
-reply = {'data': {'webapi_token': []}}
-if not reply['data']['webapi_token']:
-    print(1)
 
+
+i = 0
+
+if i:
+    print(1)
+else:
+    print(2)
 # class Test(Mongo):
 #     def __init__(self):
 #         super().__init__()

@@ -43,8 +43,8 @@ class ThreadManager(Steam):
                                                     getattr(class_obj, global_time)))
                 else:
                     thread = threading.Thread(target=func_to_call,
-                                              args=(i, getattr(class_obj, global_time),
-                                                    getattr(class_obj, tg_info),
+                                              args=(i, getattr(class_obj, tg_info),
+                                                    getattr(class_obj, global_time),
                                                     getattr(class_obj, cancel_offers_sites_name)))
                 thread.start()
                 counter += 1
