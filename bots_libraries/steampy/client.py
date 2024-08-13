@@ -66,10 +66,7 @@ class SteamClient:
         self.market = SteamMarket(self._session)
         self.chat = SteamChat(self._session)
 
-        self.steam_inventory_tradable = None
-        self.steam_inventory_full = None
-        self.steam_inventory_phases = None
-        self.tm_apikey = None
+
 
     def login_steam(self, username: str, password: str, steam_guard: dict, proxy: dict):
         self.steam_guard = guard.load_steam_guard(steam_guard)

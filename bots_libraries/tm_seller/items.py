@@ -22,10 +22,10 @@ class TMItems(ThreadManager):
                     seller_value = self.get_information_for_price(tg_info, self.tm_sale_price_bot_name)
                     if filtered_inventory and seller_value:
                         for asset_id in filtered_inventory:
-                            site_price = self.get_site_price(self.steamclient.steam_inventory_phases[asset_id], seller_value, 'max')
+                            site_price = self.get_site_price(self.steam_inventory_phases[asset_id], seller_value, 'max')
                             if site_price is not None and site_price != 0:
                                 try:
-                                    add_to_sale_url = (f'{self.tm_url}/api/v2/add-to-sale?key={self.steamclient.tm_apikey}'
+                                    add_to_sale_url = (f'{self.tm_url}/api/v2/add-to-sale?key={self.tm_apikey}'
                                                        f'&cur=RUB&id={asset_id}&price={site_price}')
                                     requests.get(add_to_sale_url, timeout=5)
                                 except:
@@ -41,17 +41,17 @@ class TMItems(ThreadManager):
 
     def add_to_sale_inventory(self):
         try:
-            update_inventory_url = f'{self.tm_url}/api/v2/update-inventory/?key={self.steamclient.tm_apikey}'
+            update_inventory_url = f'{self.tm_url}/api/v2/update-inventory/?key={self.tm_apikey}'
             requests.get(update_inventory_url, timeout=5)
         except:
             pass
         time.sleep(10)
         try:
-            my_inventory_url = f'{self.tm_url}/api/v2/my-inventory/?key={self.steamclient.tm_apikey}'
+            my_inventory_url = f'{self.tm_url}/api/v2/my-inventory/?key={self.tm_apikey}'
             my_inventory = requests.get(my_inventory_url, timeout=30).json()
             my_inventory_items = my_inventory['items']
             my_inventory_list = [item['id'] for item in my_inventory_items]
-            acc_data_inventory_assets_id = [item['asset_id'] for item in self.steamclient.steam_inventory_tradable.values()]
+            acc_data_inventory_assets_id = [item['asset_id'] for item in self.steam_inventory_tradable.values()]
             filtered_inventory = [item for item in my_inventory_list if item in acc_data_inventory_assets_id]
             return filtered_inventory
         except:
@@ -99,7 +99,7 @@ class TMItems(ThreadManager):
                 active_session = self.take_session(acc_info, tg_info)
                 if active_session:
                     try:
-                        exhibited_items_url = f'{self.tm_url}/api/v2/items?key={self.steamclient.tm_apikey}'
+                        exhibited_items_url = f'{self.tm_url}/api/v2/items?key={self.tm_apikey}'
                         listed_items = requests.get(exhibited_items_url, timeout=30).json()
                     except:
                         listed_items = None
@@ -135,10 +135,10 @@ class TMItems(ThreadManager):
                                                 item_prices_all = [item["price"] for item in parsed_info[el]]
                                                 item_prices_opponent = [item["price"] for item in filtered_dict.values()]
                                                 max_site_price = self.get_site_price(
-                                                    self.steamclient.steam_inventory_phases[sublist[item]["assetid"]], seller_value, 'max')
+                                                    self.steam_inventory_phases[sublist[item]["assetid"]], seller_value, 'max')
 
                                                 min_site_price = self.get_site_price(
-                                                    self.steamclient.steam_inventory_phases[sublist[item]["assetid"]], seller_value, 'min')
+                                                    self.steam_inventory_phases[sublist[item]["assetid"]], seller_value, 'min')
 
                                                 if len(item_prices_opponent) > 0 and min_site_price and max_site_price:
                                                     lower_market_price_opponent = min([int(price) for price in item_prices_opponent])
@@ -155,7 +155,7 @@ class TMItems(ThreadManager):
                                                 else:
                                                     Logs.log(f"Change Price:"
                                                              f" Unable to calculate new price for item on sale:"
-                                                             f" {self.steamclient.steam_inventory_phases[sublist[item]['assetid']]}",
+                                                             f" {self.steam_inventory_phases[sublist[item]['assetid']]}",
                                                              self.steamclient.username)
                                                     break
                                                 for item_ in listed_items['items']:
@@ -175,7 +175,7 @@ class TMItems(ThreadManager):
         asset_id_to_delete = []
         item_id_to_delete = {}
         asset_id_on_sale = [item["assetid"] for item in items_on_sale]
-        tradable_asset_id = list(self.steamclient.steam_inventory_tradable.keys())
+        tradable_asset_id = list(self.steam_inventory_tradable.keys())
         for assetid in asset_id_on_sale:
             if assetid not in tradable_asset_id:
                 asset_id_to_delete.append(assetid)
@@ -195,7 +195,7 @@ class TMItems(ThreadManager):
             sublist_keys = list(item_id_to_change_price.keys())[i:i + items_to_change_price]
             sublist = {k: item_id_to_change_price[k] for k in sublist_keys}
             items = {ui_id: item_id_to_change_price[ui_id] for ui_id in sublist}
-            params = {'key': self.steamclient.tm_apikey}
+            params = {'key': self.tm_apikey}
             data = {f'list[{ui_id}]': price for ui_id, price in items.items()}
             try:
                 url_change_price = f'{self.tm_url}/api/MassSetPriceById/'

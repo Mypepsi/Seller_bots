@@ -31,7 +31,7 @@ class TMOnline(ThreadManager):
 
     def request_to_ping(self):
         try:
-            url_to_ping = f'{self.tm_url}/api/v2/ping-new?key={self.steamclient.tm_apikey}'
+            url_to_ping = f'{self.tm_url}/api/v2/ping-new?key={self.tm_apikey}'
             json_data = {
                 'access_token': self.steamclient.access_token
             }
@@ -48,7 +48,7 @@ class TMOnline(ThreadManager):
                 self.update_account_data_info()
                 active_session = self.take_session(acc_info, tg_info)
                 if active_session:
-                    url = f'{self.tm_url}/api/v2/go-offline?key={self.steamclient.tm_apikey}'
+                    url = f'{self.tm_url}/api/v2/go-offline?key={self.tm_apikey}'
                     try:
                         response = requests.get(url, timeout=5).json()
                     except:
@@ -70,7 +70,7 @@ class TMOnline(ThreadManager):
                 active_session = self.take_session(acc_info, tg_info)
                 if active_session:
                     try:
-                        my_inventory_url = f'{self.tm_url}/api/v2/my-inventory/?key={self.steamclient.tm_apikey}'
+                        my_inventory_url = f'{self.tm_url}/api/v2/my-inventory/?key={self.tm_apikey}'
                         my_inventory_response = requests.get(my_inventory_url, timeout=30).json()
                         my_inventory = my_inventory_response['items']
                     except:
@@ -85,7 +85,7 @@ class TMOnline(ThreadManager):
                         raise ExitException
 
                     try:
-                        items_url = f'{self.tm_url}/api/v2/items?key={self.steamclient.tm_apikey}'
+                        items_url = f'{self.tm_url}/api/v2/items?key={self.tm_apikey}'
                         response = requests.get(items_url, timeout=30).json()
                         items_on_sale = response['items']
                     except:

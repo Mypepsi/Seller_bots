@@ -34,7 +34,7 @@ class TMHistory(ThreadManager):
             current_timestamp_unique = int(time.time())
             try:
                 month_ago = current_timestamp - 30 * 24 * 60 * 60
-                item_history_url = (f'{self.tm_url}/api/v2/history?key={self.steamclient.tm_apikey}'
+                item_history_url = (f'{self.tm_url}/api/v2/history?key={self.tm_apikey}'
                                     f'&date={month_ago}&date_end={current_timestamp}')
                 response = requests.get(item_history_url, timeout=30).json()
                 response_info = response['data']
@@ -201,7 +201,7 @@ class TMHistory(ThreadManager):
         try:
             try:
                 transfer_id = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_transfer_id']
-                money_history_url = f'{self.tm_url}/api/v2/money-send-history/0?key={self.steamclient.tm_apikey}'
+                money_history_url = f'{self.tm_url}/api/v2/money-send-history/0?key={self.tm_apikey}'
                 response = requests.get(money_history_url, timeout=30).json()
             except:
                 transfer_id = None

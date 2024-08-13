@@ -100,10 +100,11 @@ class Logs:
         except:
             pass
 
+        ip_address = 'IP not found'
         if not username:
-            ip_address = Logs.get_server_ip()
-        else:
-            ip_address = 'IP not found'
+            server_ip = Logs.get_server_ip()
+            if server_ip:
+                ip_address = server_ip
 
         result = {'date': date,
                   'file name': file_name,
@@ -113,10 +114,9 @@ class Logs:
 
     @staticmethod
     def get_server_ip():
-        ip_address = 'IP not found'
-        s = None
+        ip_address = None
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.settimeout(0)
             s.connect(('8.8.8.8', 1))
             ip_address = s.getsockname()[0]

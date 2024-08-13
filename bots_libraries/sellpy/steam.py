@@ -12,6 +12,18 @@ class Steam(Mongo):
         self.steamclient = SteamClient('')
         self.steamclient.username = None
 
+        self.steam_inventory_tradable = None
+        self.steam_inventory_full = None
+        self.steam_inventory_phases = None
+        self.tm_apikey = None
+        self.trade_url = None
+        self.waxpeer_apikey = None
+        self.csgoempire_apikey = None
+        self.csgo500_user_id = None
+        self.csgo500_apikey = None
+        self.shadowpay_apikey = None
+        self.buff_cookie = None
+
     def take_session(self, acc, tg_info):
         username = None
         try:
@@ -20,25 +32,49 @@ class Steam(Mongo):
                 if 'steam session' in acc:
                     session = acc['steam session']
                 else:
-                    session = self.content_acc_data_dict[username]['steam session']
+                    if username in self.content_acc_data_dict and 'steam session' in self.content_acc_data_dict[username]:
+                        session = self.content_acc_data_dict[username]['steam session']
+                    else:
+                        return False
                 steam_cookie_file = io.BytesIO(session)
                 self.steamclient = pickle.load(steam_cookie_file)
-                self.steamclient.username = acc['username']
 
-                self.steamclient.steam_inventory_tradable = (
+                # Info from account_settings
+                proxy = self.content_acc_settings_dict[self.steamclient.username]['proxy']
+                if proxy == "proxy":
+                    proxies = {"NoProxy": 1}
+                else:
+                    proxy_list = proxy.split(':')
+                    proxy_ip = proxy_list[0]
+                    proxy_port = proxy_list[1]
+                    proxy_login = proxy_list[2]
+                    proxy_password = proxy_list[3]
+                    proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
+                               'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
+                self.steamclient.proxies = proxies
+                self.tm_apikey = self.content_acc_settings_dict[self.steamclient.username]['tm apikey']
+                self.trade_url = self.content_acc_settings_dict[self.steamclient.username]['trade url']
+                self.waxpeer_apikey = self.content_acc_settings_dict[self.steamclient.username]['waxpeer apikey']
+                self.csgoempire_apikey = self.content_acc_settings_dict[self.steamclient.username]['csgoempire apikey']
+                self.csgo500_user_id = self.content_acc_settings_dict[self.steamclient.username]['csgo500 user id']
+                self.csgo500_apikey = self.content_acc_settings_dict[self.steamclient.username]['csgo500 apikey']
+                self.shadowpay_apikey = self.content_acc_settings_dict[self.steamclient.username]['shadowpay apikey']
+                self.buff_cookie = self.content_acc_settings_dict[self.steamclient.username]['buff cookie']
+
+                # Info from account_data
+                self.steamclient._api_key = self.content_acc_data_dict[username]['steam apikey']
+                self.steam_inventory_tradable = (
                     self.content_acc_data_dict)[self.steamclient.username]['steam inventory tradable']
-                self.steamclient.steam_inventory_full = (
+                self.steam_inventory_full = (
                     self.content_acc_data_dict)[self.steamclient.username]['steam inventory full']
-                self.steamclient.steam_inventory_phases = (
+                self.steam_inventory_phases = (
                     self.content_acc_data_dict)[self.steamclient.username]['steam inventory phases']
 
-                self.steamclient.tm_apikey = self.content_acc_settings_dict[self.steamclient.username]['tm apikey']
                 return True
             else:
                 raise ExitException
         except:
             Logs.notify_except(tg_info, 'MongoDB: Error while taking Account Session', username)
-            self.steamclient.username = None
             return False
 
     def steam_cancel_offers(self, acc_info, tg_info, cancel_offers_sites_name, global_time):
@@ -139,7 +175,7 @@ class Steam(Mongo):
                 pass
 
             try:
-                for item in self.steamclient.steam_inventory_phases.values():
+                for item in self.steam_inventory_phases.values():
                     if str(document['asset id']) == item['asset_id']:
                         launch_price = item['launch_price']
                         service_launch_price = item['service_launch_price']

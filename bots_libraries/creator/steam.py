@@ -29,12 +29,12 @@ class CreatorSteam(ThreadManager):
             self.update_account_settings_info()
             for acc in self.content_acc_settings_list:
                 try:
-                    self.take_session(acc, tg_info)
-                    try:
-                        self.user_agent = self.steamclient.user_agent
-                    except:
-                        self.user_agent = self.ua.random
-                    self.steamclient = SteamClient('', user_agent=self.user_agent)
+                    active_session = self.take_session(acc, tg_info)
+                    if active_session:
+                        user_agent = self.steamclient.user_agent
+                    else:
+                        user_agent = self.ua.random
+                    self.steamclient = SteamClient('', user_agent=user_agent)
                     username = acc['username']
                     password = acc['password']
                     steam_id = acc['steam id']
@@ -48,24 +48,23 @@ class CreatorSteam(ThreadManager):
 
                     proxy = acc['proxy']
                     if proxy == "proxy":
-                        self.steamclient.proxies = {"NoProxy": 1}
+                        proxies = {"NoProxy": 1}
                     else:
                         proxy_list = proxy.split(':')
                         proxy_ip = proxy_list[0]
                         proxy_port = proxy_list[1]
                         proxy_login = proxy_list[2]
                         proxy_password = proxy_list[3]
-                        self.steamclient.proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
+                        proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
                                                     'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
-                        requests.proxies = self.steamclient.proxies
 
-                    self.make_steam_login(tg_info, username, password, steam_guard)
+                    self.make_steam_login(tg_info, username, password, steam_guard, proxies)
 
                 except Exception as e:
                     Logs.notify_except(tg_info, f"Steam Login Global Error: {e}", self.steamclient.username)
             time.sleep(global_time)
 
-    def make_steam_login(self, tg_info, username, password, steam_guard):
+    def make_steam_login(self, tg_info, username, password, steam_guard, proxies):
         number_of_try = 1
         while True:
             try:
@@ -74,12 +73,12 @@ class CreatorSteam(ThreadManager):
                     last_update_time = self.content_acc_data_dict[self.steamclient.username].get('time steam session', 0)
                     difference_to_update = current_timestamp - int(last_update_time)
                     if difference_to_update > self.creator_steam_session_validity_time:
-                        self.steamclient.login_steam(username, password, steam_guard, self.steamclient.proxies)
+                        self.steamclient.login_steam(username, password, steam_guard, proxies)
                         Logs.log(f"Steam Login: Authorization was successful", self.steamclient.username)
                         self.handle_doc_in_account_data()
                         self.create_history_doc()
                 elif self.steamclient.username not in self.content_acc_data_dict:
-                    self.steamclient.login_steam(username, password, steam_guard, self.steamclient.proxies)
+                    self.steamclient.login_steam(username, password, steam_guard, proxies)
                     Logs.log(f"Steam Login: Authorization was successful", self.steamclient.username)
                     self.handle_doc_in_account_data()
                     self.create_history_doc()
@@ -204,10 +203,10 @@ class CreatorSteam(ThreadManager):
                                         "time": current_timestamp
                                     }
 
-                            if self.steamclient.steam_inventory_phases:
+                            if self.steam_inventory_phases:
                                 for item_id, item_info in filtered_items_phases.items():
-                                    if item_id not in self.steamclient.steam_inventory_phases:
-                                        self.steamclient.steam_inventory_phases[item_id] = {
+                                    if item_id not in self.steam_inventory_phases:
+                                        self.steam_inventory_phases[item_id] = {
                                             "asset_id": item_id,
                                             "market_hash_name": item_info["market_hash_name"],
                                             "launch_price": item_info["launch_price"],
@@ -217,15 +216,15 @@ class CreatorSteam(ThreadManager):
 
                                 items_to_remove = [
                                     item_id
-                                    for item_id, item_info in self.steamclient.steam_inventory_phases.items()
+                                    for item_id, item_info in self.steam_inventory_phases.items()
                                     if item_id not in filtered_items_phases and current_timestamp - item_info["time"] >= self.creator_steam_inventory_hashname_validity_time
                                 ]
                                 for item_id in items_to_remove:
-                                    del self.steamclient.steam_inventory_phases[item_id]
+                                    del self.steam_inventory_phases[item_id]
                                 try:
                                     self.acc_data_collection.update_one({"username": self.steamclient.username},
                                                                         {"$set": {"steam inventory phases":
-                                                                                      self.steamclient.steam_inventory_phases}})
+                                                                                      self.steam_inventory_phases}})
                                 except:
                                     pass
                 except Exception as e:
