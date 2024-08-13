@@ -1,13 +1,12 @@
 import time
-import socket
 import requests
 from bots_libraries.sellpy.logs import Logs
 from bots_libraries.sellpy.mongo import Mongo
 
 
-class DataBase(Mongo):
-    def __init__(self, name):
-        super().__init__(name)
+class CreatorDataBase(Mongo):
+    def __init__(self, main_tg_info):
+        super().__init__(main_tg_info)
 
     def database_prices(self, tg_info, validity_time, global_time):
         Logs.log(f"Database Prices: thread are running", '')
@@ -147,8 +146,6 @@ class DataBase(Mongo):
                 Logs.notify_except(tg_info, f"Database Prices Global Error: {e}", '')
             time.sleep(global_time)
 
-
-    # region Database Settings
     def database_settings(self, tg_info, validity_time, global_time):
         Logs.log(f"Database Settings: thread are running", '')
         while True:
@@ -187,38 +184,6 @@ class DataBase(Mongo):
                         except Exception as e:
                             Logs.notify_except(tg_info, f"Database Settings: MongoDB critical request failed: {e}", '')
 
-
-                try:
-                    ip_doc = self.database_ip_collection.find_one()
-                except:
-                    ip_doc = None
-                if ip_doc:
-                    ip_mongo = ip_doc.get("ip_address")
-                    if not ip_mongo:
-                        ip = DataBase.database_ip()
-                        ip_doc = {"ip_address": ip}
-                        try:
-                            self.database_ip_collection.replace_one({}, ip_doc, upsert=True)
-
-                            Logs.log(f"Database IP: DB IP has been updated in MongoDB", '')
-                        except Exception as e:
-                            Logs.notify_except(tg_info, f"Database IP: MongoDB critical request failed: {e}", '')
-
             except Exception as e:
                 Logs.notify_except(tg_info, f"Database Settings Global Error: {e}", '')
             time.sleep(global_time)
-
-    @staticmethod
-    def database_ip():
-        s = None
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.settimeout(0)
-            s.connect(('8.8.8.8', 1))
-            ip_address = s.getsockname()[0]
-        except:
-            ip_address = None
-        finally:
-            s.close()
-        return ip_address
-    # endregion

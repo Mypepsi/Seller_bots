@@ -5,10 +5,10 @@ from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
 class TMGeneral(ThreadManager):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, main_tg_info):
+        super().__init__(main_tg_info)
 
-    def validity_tm_apikey(self, tg_info, global_time):
+    def site_apikey(self, tg_info, global_time):
         Logs.log(f"Site Apikey: thread are running", '')
         while True:
             self.update_account_settings_info()
@@ -30,7 +30,7 @@ class TMGeneral(ThreadManager):
                 username = ''
             time.sleep(global_time)
 
-    def transfer_balance(self, tg_info, global_time):
+    def balance_transfer(self, tg_info, global_time):
         Logs.log(f"Balance Transfer: thread are running", '')
         while True:
             self.update_account_settings_info()

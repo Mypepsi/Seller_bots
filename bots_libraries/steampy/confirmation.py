@@ -15,6 +15,7 @@ class Confirmation:
         self.data_key = data_key
         self.trade_id = trade_id
 
+
 class Tag(enum.Enum):
     CONF = 'conf'
     DETAILS = 'details'
@@ -69,7 +70,6 @@ class ConfirmationExecutor:
         return self._session.get(self.CONF_URL + '/ajaxop', params=params, headers=headers, timeout=15).json()
 
     def get_cookies(self):
-
         dictri = self._session.cookies.get_dict()
         str = ''
         for key in dictri:
@@ -104,8 +104,7 @@ class ConfirmationExecutor:
     def _fetch_confirmations_page(self) -> requests.Response:
         tag = Tag.CONF.value
         params = self._create_confirmation_params(tag)
-        headers = {#"Cookie": self.get_cookies(),
-                   'X-Requested-With': 'com.valvesoftware.android.steam.community'}
+        headers = {'X-Requested-With': 'com.valvesoftware.android.steam.community'}
         response = self._session.get(self.CONF_URL + '/getlist', params=params, headers=headers, timeout=15).json()
         return response
 

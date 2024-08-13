@@ -8,8 +8,8 @@ from bots_libraries.sellpy.mongo import Mongo
 
 
 class Restarter(Mongo):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, main_tg_info):
+        super().__init__(main_tg_info)
 
 
     # region Restart Server

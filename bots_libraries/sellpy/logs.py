@@ -1,10 +1,10 @@
 import os
 import sys
 import time
+import socket
 import inspect
 import traceback
 from datetime import datetime
-from pymongo import MongoClient
 
 
 class Logs:
@@ -25,8 +25,8 @@ class Logs:
     @staticmethod
     def notify(tg_bot_dict, text, username):
         try:
-            sellers_name = tg_bot_dict['bot name']
             Logs.log(text, username)
+            sellers_name = tg_bot_dict['bot name']
             r = Logs.get_logs_info(False, username)
             tg_message = f"[{sellers_name}] [{r['file name']}: {r['line number']}] "
             if username:
@@ -39,7 +39,6 @@ class Logs:
             pass
         time.sleep(3)
     #endregion
-
 
     # region Send Info Except
     @staticmethod
@@ -60,8 +59,8 @@ class Logs:
     @staticmethod
     def notify_except(tg_bot_dict, text, username):
         try:
-            sellers_name = tg_bot_dict['bot name']
             r = Logs.get_logs_info(True, username)
+            sellers_name = tg_bot_dict['bot name']
             Logs.log_except(text, username, info=r)
             tg_message = f"[{sellers_name}] [traceback: {r['file name']}: {r['line number']}] "
             if username:
@@ -75,7 +74,7 @@ class Logs:
         time.sleep(3)
     #endregion
 
-
+    # region Get Info
     @staticmethod
     def get_logs_info(except_bool: bool, username):
         try:
@@ -101,31 +100,32 @@ class Logs:
         except:
             pass
 
-        ip_address = 'IP not found'
-        try:
-            if not username:
-                client = MongoClient(
-                    "mongodb://127.0.0.1:27017",
-                    serverSelectionTimeoutMS=30000,  # Server selection timeout.
-                    connectTimeoutMS=30000,  # Connection timeout.
-                    socketTimeoutMS=30000,  # Read/write timeout.
-                    wtimeoutMS=30000,  # Write acknowledgment timeout.
-                    minPoolSize=0,  # Minimum connections in pool.
-                    maxPoolSize=10  # Maximum connections in pool.
-                )
-                db_client = client['Seller_DataBases']
-                collection_name = db_client['database_ip']
-                doc_ip_address = collection_name.find_one()
-                ip_address = doc_ip_address['ip_address']
-                client.close()
-        except:
-            pass
+        if not username:
+            ip_address = Logs.get_server_ip()
+        else:
+            ip_address = 'IP not found'
 
         result = {'date': date,
                   'file name': file_name,
                   'line number': line_number,
                   'ip address': ip_address}
         return result
+
+    @staticmethod
+    def get_server_ip():
+        ip_address = 'IP not found'
+        s = None
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(0)
+            s.connect(('8.8.8.8', 1))
+            ip_address = s.getsockname()[0]
+        except:
+            pass
+        finally:
+            s.close()
+        return ip_address
+    #endregion
 
 class ExitException(Exception):
     pass

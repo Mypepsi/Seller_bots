@@ -5,8 +5,8 @@ from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
 class CreatorGeneral(ThreadManager):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, main_tg_info):
+        super().__init__(main_tg_info)
         self.questionable_proxies = {}
         self.mongo_tg_alert = False
 

@@ -16,8 +16,8 @@ from bots_libraries.steampy.confirmation import ConfirmationExecutor
 
 
 class CreatorSteam(ThreadManager):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, main_tg_info):
+        super().__init__(main_tg_info)
         self.ua = UserAgent()
 
 
@@ -29,38 +29,37 @@ class CreatorSteam(ThreadManager):
             self.update_account_settings_info()
             for acc in self.content_acc_settings_list:
                 try:
-                    active_session = self.take_session(acc, tg_info)
-                    if active_session:
-                        try:
-                            self.user_agent = self.steamclient.user_agent
-                        except:
-                            self.user_agent = self.ua.random
-                        self.steamclient = SteamClient('', user_agent=self.user_agent)
-                        username = acc['username']
-                        password = acc['password']
-                        steam_id = acc['steam id']
-                        shared_secret = acc['shared secret']
-                        identity_secret = acc['identity secret']
-                        steam_guard = {
-                            "steamid": steam_id,
-                            "shared_secret": shared_secret,
-                            "identity_secret": identity_secret
-                        }
+                    self.take_session(acc, tg_info)
+                    try:
+                        self.user_agent = self.steamclient.user_agent
+                    except:
+                        self.user_agent = self.ua.random
+                    self.steamclient = SteamClient('', user_agent=self.user_agent)
+                    username = acc['username']
+                    password = acc['password']
+                    steam_id = acc['steam id']
+                    shared_secret = acc['shared secret']
+                    identity_secret = acc['identity secret']
+                    steam_guard = {
+                        "steamid": steam_id,
+                        "shared_secret": shared_secret,
+                        "identity_secret": identity_secret
+                    }
 
-                        proxy = acc['proxy']
-                        if proxy == "proxy":
-                            self.steamclient.proxies = {"NoProxy": 1}
-                        else:
-                            proxy_list = proxy.split(':')
-                            proxy_ip = proxy_list[0]
-                            proxy_port = proxy_list[1]
-                            proxy_login = proxy_list[2]
-                            proxy_password = proxy_list[3]
-                            self.steamclient.proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
-                                                        'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
-                            requests.proxies = self.steamclient.proxies
+                    proxy = acc['proxy']
+                    if proxy == "proxy":
+                        self.steamclient.proxies = {"NoProxy": 1}
+                    else:
+                        proxy_list = proxy.split(':')
+                        proxy_ip = proxy_list[0]
+                        proxy_port = proxy_list[1]
+                        proxy_login = proxy_list[2]
+                        proxy_password = proxy_list[3]
+                        self.steamclient.proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
+                                                    'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
+                        requests.proxies = self.steamclient.proxies
 
-                        self.make_steam_login(tg_info, username, password, steam_guard)
+                    self.make_steam_login(tg_info, username, password, steam_guard)
 
                 except Exception as e:
                     Logs.notify_except(tg_info, f"Steam Login Global Error: {e}", self.steamclient.username)
@@ -124,7 +123,7 @@ class CreatorSteam(ThreadManager):
                 "time steam session": current_timestamp,
                 "steam session": pickle.dumps(self.steamclient),
                 "steam session data": accounts_data,
-                "steam apikey": "",
+                "steam apikey": None,
                 "steam inventory tradable": {},
                 "steam inventory full": {},
                 "steam inventory phases": {}
@@ -205,14 +204,10 @@ class CreatorSteam(ThreadManager):
                                         "time": current_timestamp
                                     }
 
-                            try:
-                                inventory_from_mongo = self.content_acc_data_dict[self.steamclient.username]['steam inventory phases']
-                            except:
-                                inventory_from_mongo = None
-                            if inventory_from_mongo:
+                            if self.steamclient.steam_inventory_phases:
                                 for item_id, item_info in filtered_items_phases.items():
-                                    if item_id not in inventory_from_mongo:
-                                        inventory_from_mongo[item_id] = {
+                                    if item_id not in self.steamclient.steam_inventory_phases:
+                                        self.steamclient.steam_inventory_phases[item_id] = {
                                             "asset_id": item_id,
                                             "market_hash_name": item_info["market_hash_name"],
                                             "launch_price": item_info["launch_price"],
@@ -222,15 +217,15 @@ class CreatorSteam(ThreadManager):
 
                                 items_to_remove = [
                                     item_id
-                                    for item_id, item_info in inventory_from_mongo.items()
+                                    for item_id, item_info in self.steamclient.steam_inventory_phases.items()
                                     if item_id not in filtered_items_phases and current_timestamp - item_info["time"] >= self.creator_steam_inventory_hashname_validity_time
                                 ]
                                 for item_id in items_to_remove:
-                                    del inventory_from_mongo[item_id]
+                                    del self.steamclient.steam_inventory_phases[item_id]
                                 try:
                                     self.acc_data_collection.update_one({"username": self.steamclient.username},
                                                                         {"$set": {"steam inventory phases":
-                                                                                      inventory_from_mongo}})
+                                                                                      self.steamclient.steam_inventory_phases}})
                                 except:
                                     pass
                 except Exception as e:

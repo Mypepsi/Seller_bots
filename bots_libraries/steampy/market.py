@@ -13,6 +13,7 @@ from bots_libraries.steampy.confirmation import ConfirmationExecutor
 from bots_libraries.steampy.models import Currency, SteamUrl, GameOptions
 from bots_libraries.steampy.exceptions import ApiException, TooManyRequests, LoginRequired
 
+
 def login_required(func):
     def func_wrapper(self, *args, **kwargs):
         if not self.was_login_executed:

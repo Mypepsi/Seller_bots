@@ -40,6 +40,7 @@ class Currency(enum.IntEnum):
     RUB = 5
     UAH = 18
 
+
 class TradeOfferState(enum.IntEnum):
     Invalid = 1
     Active = 2

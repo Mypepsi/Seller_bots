@@ -7,8 +7,8 @@ from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
 class TMOnline(ThreadManager):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, main_tg_info):
+        super().__init__(main_tg_info)
         self.ping_alert = False
 
     def ping(self, acc_info, tg_info, global_time):
@@ -31,7 +31,7 @@ class TMOnline(ThreadManager):
 
     def request_to_ping(self):
         try:
-            url_to_ping = f'{self.tm_url}/api/v2/ping-new?key={self.steamclient.tm_api}'
+            url_to_ping = f'{self.tm_url}/api/v2/ping-new?key={self.steamclient.tm_apikey}'
             json_data = {
                 'access_token': self.steamclient.access_token
             }
@@ -48,7 +48,7 @@ class TMOnline(ThreadManager):
                 self.update_account_data_info()
                 active_session = self.take_session(acc_info, tg_info)
                 if active_session:
-                    url = f'{self.tm_url}/api/v2/go-offline?key={self.steamclient.tm_api}'
+                    url = f'{self.tm_url}/api/v2/go-offline?key={self.steamclient.tm_apikey}'
                     try:
                         response = requests.get(url, timeout=5).json()
                     except:
@@ -61,7 +61,7 @@ class TMOnline(ThreadManager):
                 Logs.notify_except(tg_info, f"Restart Store Global Error: {e}", self.steamclient.username)
             time.sleep(global_time)
 
-    def store_items_visible(self, acc_info, tg_info, global_time):
+    def visible_store(self, acc_info, tg_info, global_time):
         while True:
             try:
                 time.sleep(global_time)
@@ -70,7 +70,7 @@ class TMOnline(ThreadManager):
                 active_session = self.take_session(acc_info, tg_info)
                 if active_session:
                     try:
-                        my_inventory_url = f'{self.tm_url}/api/v2/my-inventory/?key={self.steamclient.tm_api}'
+                        my_inventory_url = f'{self.tm_url}/api/v2/my-inventory/?key={self.steamclient.tm_apikey}'
                         my_inventory_response = requests.get(my_inventory_url, timeout=30).json()
                         my_inventory = my_inventory_response['items']
                     except:
@@ -85,7 +85,7 @@ class TMOnline(ThreadManager):
                         raise ExitException
 
                     try:
-                        items_url = f'{self.tm_url}/api/v2/items?key={self.steamclient.tm_api}'
+                        items_url = f'{self.tm_url}/api/v2/items?key={self.steamclient.tm_apikey}'
                         response = requests.get(items_url, timeout=30).json()
                         items_on_sale = response['items']
                     except:

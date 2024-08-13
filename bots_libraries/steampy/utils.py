@@ -4,7 +4,6 @@ import copy
 import struct
 import decimal
 import urllib.parse as urlparse
-
 from typing import List
 from bs4 import BeautifulSoup, Tag
 from requests.structures import CaseInsensitiveDict

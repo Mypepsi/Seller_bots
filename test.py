@@ -29,14 +29,14 @@ from bots_libraries.sellpy.logs import Logs
 # # Вивід оновленого списку
 # print(my_list)
 # Приклад словника
+def get_server_ip(bool: bool):
+    if bool:
+        return 'qqqqq'
 
 
-i = 0
+tear = ['asdasdasd', 23123123, 'asdasdasda', 2.5]
+print(tear)
 
-if i:
-    print(1)
-else:
-    print(2)
 # class Test(Mongo):
 #     def __init__(self):
 #         super().__init__()

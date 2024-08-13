@@ -5,7 +5,6 @@ import base64
 import decimal
 import requests
 import urllib.parse as urlparse
-
 from typing import List, Union
 from bots_libraries.steampy import guard
 from bots_libraries.steampy.chat import SteamChat
@@ -16,7 +15,6 @@ from bots_libraries.steampy.steam_auth.auth.schemas import FinalizeLoginStatus
 from bots_libraries.steampy.steam_auth.pb2.enums_pb2 import ESessionPersistence
 from bots_libraries.steampy.models import Asset, TradeOfferState, SteamUrl, GameOptions
 from bots_libraries.steampy.exceptions import SevenDaysHoldException, LoginRequired, ApiException
-
 from bots_libraries.steampy.utils import (
     parse_price,
     text_between,
@@ -27,7 +25,6 @@ from bots_libraries.steampy.utils import (
     merge_items_with_descriptions_from_offer,
     merge_items_with_descriptions_from_inventory,
 )
-
 from bots_libraries.steampy.steam_auth.pb2.steammessages_auth.steamclient_pb2 import (
     EAuthSessionGuardType,
     EAuthTokenPlatformType,
@@ -69,6 +66,10 @@ class SteamClient:
         self.market = SteamMarket(self._session)
         self.chat = SteamChat(self._session)
 
+        self.steam_inventory_tradable = None
+        self.steam_inventory_full = None
+        self.steam_inventory_phases = None
+        self.tm_apikey = None
 
     def login_steam(self, username: str, password: str, steam_guard: dict, proxy: dict):
         self.steam_guard = guard.load_steam_guard(steam_guard)
@@ -149,7 +150,6 @@ class SteamClient:
         self.access_token = access_token
         self.was_login_executed = True
 
-
     @login_required
     def get_my_inventory(self, game: GameOptions, merge: bool = True, count: int = 2000) -> dict:
         steam_id = self.steam_guard['steamid']
@@ -210,6 +210,7 @@ class SteamClient:
             return response
         except:
             return None
+
     def return_partner_steam_id_from_url(self, offer_url):
         partner_account_id = get_key_value_from_url(offer_url, 'partner', True)
         partner_steam_id = account_id_to_steam_id(partner_account_id)
@@ -471,7 +472,6 @@ class SteamClient:
 
     def _get_session_id(self) -> str:
         return self._session.cookies.get('sessionid', domain='steamcommunity.com')
-
 
     def _is_twofactor_required(self, confirmation: CAuthentication_AllowedConfirmation) -> bool:
         return confirmation.confirmation_type == EAuthSessionGuardType.k_EAuthSessionGuardType_DeviceCode

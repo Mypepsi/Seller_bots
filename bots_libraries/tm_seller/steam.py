@@ -7,21 +7,20 @@ from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
 class TMSteam(ThreadManager):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, main_tg_info):
+        super().__init__(main_tg_info)
 
     #region Steam Send Offers
     def steam_send_offers(self, acc_info, tg_info, global_time):
         while True:
             try:
                 self.update_account_data_info()
-                acc_data_inventory_phases = acc_info['steam inventory phases']
                 active_session = self.take_session(acc_info, tg_info)
                 if active_session:
                     collection_name = f'history_{self.steamclient.username}'
                     self.acc_history_collection = self.get_collection(self.history, collection_name)
                     try:
-                        url = f'{self.tm_url}/api/v2/trade-request-give-p2p-all?key={self.steamclient.tm_api}'
+                        url = f'{self.tm_url}/api/v2/trade-request-give-p2p-all?key={self.steamclient.tm_apikey}'
                         request_site_offers = requests.get(url, timeout=30).json()
                     except:
                         request_site_offers = None
@@ -48,7 +47,7 @@ class TMSteam(ThreadManager):
                                 trade_id = latest_offer['trade id']
                                 if trade_id is not None:
                                     trade_ready_url = (f'{self.tm_url}/api/v2/trade-ready?'
-                                                       f'key={self.steamclient.tm_api}&tradeoffer={trade_id}')
+                                                       f'key={self.steamclient.tm_apikey}&tradeoffer={trade_id}')
                                     try:
                                         requests.get(trade_ready_url, timeout=5)
                                     except:
@@ -62,7 +61,7 @@ class TMSteam(ThreadManager):
                                     break
                             if not match_msg:
 
-                                self.make_steam_offer(request_site_offers['offers'][i], send_offers, acc_data_inventory_phases, tg_info)
+                                self.make_steam_offer(request_site_offers['offers'][i], send_offers, self.steamclient.steam_inventory_phases, tg_info)
 
                             for offer in send_offers:  # Resending and sending
                                 if 'site id' in offer and str(msg) == str(offer['site id']) and msg not in unique_msg_in_send_offers:
@@ -92,7 +91,7 @@ class TMSteam(ThreadManager):
                                     if int(offer_status) not in [1, 4, 8, 10]:
                                         break
                                     self.make_steam_offer(request_site_offers['offers'][i], send_offers,
-                                                          acc_data_inventory_phases, tg_info)
+                                                          self.steamclient.steam_inventory_phases, tg_info)
                                     break
 
             except Exception as e:
