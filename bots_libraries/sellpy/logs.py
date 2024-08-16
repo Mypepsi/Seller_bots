@@ -25,9 +25,9 @@ class Logs:
     @staticmethod
     def notify(tg_bot_dict, text, username):
         try:
+            r = Logs.get_logs_info(False, username)
             Logs.log(text, username)
             sellers_name = tg_bot_dict['bot name']
-            r = Logs.get_logs_info(False, username)
             tg_message = f"[{sellers_name}] [{r['file name']}: {r['line number']}] "
             if username:
                 tg_message += f'[{username}]'
@@ -60,8 +60,8 @@ class Logs:
     def notify_except(tg_bot_dict, text, username):
         try:
             r = Logs.get_logs_info(True, username)
-            sellers_name = tg_bot_dict['bot name']
             Logs.log_except(text, username, info=r)
+            sellers_name = tg_bot_dict['bot name']
             tg_message = f"[{sellers_name}] [traceback: {r['file name']}: {r['line number']}] "
             if username:
                 tg_message += f'[{username}]'

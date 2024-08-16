@@ -10,7 +10,7 @@ class TMSteam(ThreadManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
-    #region Steam Send Offers
+    # region Steam Send Offers
     def steam_send_offers(self, acc_info, tg_info, global_time):
         while True:
             try:
@@ -25,8 +25,7 @@ class TMSteam(ThreadManager):
                     except:
                         request_site_offers = None
 
-                    if (self.acc_history_collection is not None and
-                            request_site_offers is not None and 'offers' in request_site_offers
+                    if (request_site_offers and 'offers' in request_site_offers
                             and type(request_site_offers['offers']) == list):
                         send_offers = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
 
@@ -61,7 +60,7 @@ class TMSteam(ThreadManager):
                                     break
                             if not match_msg:
 
-                                self.make_steam_offer(request_site_offers['offers'][i], send_offers, self.steam_inventory_phases, tg_info)
+                                self.make_steam_offer(request_site_offers['offers'][i], send_offers, tg_info)
 
                             for offer in send_offers:  # Resending and sending
                                 if 'site id' in offer and str(msg) == str(offer['site id']) and msg not in unique_msg_in_send_offers:
@@ -90,15 +89,14 @@ class TMSteam(ThreadManager):
 
                                     if int(offer_status) not in [1, 4, 8, 10]:
                                         break
-                                    self.make_steam_offer(request_site_offers['offers'][i], send_offers,
-                                                          self.steam_inventory_phases, tg_info)
+                                    self.make_steam_offer(request_site_offers['offers'][i], send_offers, tg_info)
                                     break
 
             except Exception as e:
                 Logs.notify_except(tg_info, f"Steam Send Offers Global Error: {e}", self.steamclient.username)
             time.sleep(global_time)
 
-    def make_steam_offer(self, response_data_offer, send_offers, inventory_phases, tg_info):
+    def make_steam_offer(self, response_data_offer, send_offers, tg_info):
         try:
             names = []
             assets = []
@@ -129,15 +127,14 @@ class TMSteam(ThreadManager):
                 trade_offer_id = steam_response['tradeofferid']
 
             if trade_offer_id is not None:
-                self.handle_doc_in_history(inventory_phases, send_offers, assets, names, msg,
-                                           steam_response, trade_offer_url, tg_info)
+                self.handle_doc_in_history(send_offers, assets, names, msg, steam_response, trade_offer_url, tg_info)
                 Logs.log(f"Make Steam Offer: Trade sent: {names}", self.steamclient.username)
             else:
-                self.handle_doc_in_history(inventory_phases, send_offers, assets, names, msg, None,
-                                           trade_offer_url, tg_info, success=False)
-                Logs.log(f"Make Steam Offer: Error send trade: {names}",self.steamclient.username)
+                self.handle_doc_in_history(send_offers, assets, names, msg, None, trade_offer_url, tg_info,
+                                           success=False)
+                Logs.log(f"Make Steam Offer: Error send trade: {names}", self.steamclient.username)
         except Exception as e:
-            Logs.log(f"Make Steam Offer Global Error: {e}", self.steamclient.username)
+            Logs.notify_except(tg_info, f"Make Steam Offer Global Error: {e}", self.steamclient.username)
 
     def check_created_steam_offer(self, creating_offer_time, assets, partner):
         trade_offers = self.steamclient.get_trade_offers(self.steamclient.access_token, get_sent_offers=1,
@@ -177,7 +174,7 @@ class TMSteam(ThreadManager):
         else:
             return None
 
-    def handle_doc_in_history(self, inventory_phases, send_offers, assets_list, name_list, msg, steam_response,
+    def handle_doc_in_history(self, send_offers, assets_list, name_list, msg, steam_response,
                               offer_url, tg_info, success=True):
         current_timestamp = int(time.time())
         current_timestamp_unique = int(time.time())
@@ -199,7 +196,7 @@ class TMSteam(ThreadManager):
                     trade_id_in_mongo = entry.get('trade id')
                     doc_exist = True
                     break
-            for item in inventory_phases.values():
+            for item in self.steam_inventory_phases.values():
                 if item['asset_id'] == asset:
                     name = item['market_hash_name']
                     name_list.append(name)
@@ -257,20 +254,20 @@ class TMSteam(ThreadManager):
                 current_timestamp_unique += 1
                 partner_id = self.steamclient.return_partner_steam_id_from_url(offer_url)
                 data_append = {
-                    "transaction": "sale_record",  # str
+                    "transaction": "sale_record",
                     "site": "tm",  # str
                     "time": current_timestamp_unique,  # int
                     "name": name,  # str
                     "steam status": steam_status,  # str
                     "steam status time": current_timestamp_unique,  # int
-                    "site status": 'active_deal',  # str
+                    "site status": 'active_deal',
                     "site status time": current_timestamp_unique,  # int
                     "site id": str(msg),  # str
                     "buyer steam id": partner_id,  # i`m not sure)
                     "asset id": asset,  # str
                     "trade id": trade_id,  # ??? i`m not sure)
                     "sent time": sent_time,  # int
-                    "site item id": None  # NoneType
+                    "site item id": None
                 }
                 try:
                     self.acc_history_collection.insert_one(data_append)

@@ -11,8 +11,8 @@ class TMHistory(ThreadManager):
     # region History
     def history(self, acc_info, tg_info, global_time):
         while True:
+            time.sleep(global_time)
             try:
-                time.sleep(global_time)
                 self.update_account_data_info()
                 self.update_db_prices_and_settings()
                 active_session = self.take_session(acc_info, tg_info)
@@ -61,7 +61,7 @@ class TMHistory(ThreadManager):
                                 stage = str(item_transfer['stage'])
                                 if stage == '1':
                                     if (current_timestamp - int(item_transfer['time'])) >= 86400:
-                                        Logs.notify_except(self.tm_tg_info, f"Site History: "
+                                        Logs.notify(self.tm_tg_info, f"Site History: "
                                                                             f"'Active_deal' status on item with "
                                                                             f"{item_transfer['item_id']} itemID "
                                                                             f"more than 24 hours",
@@ -93,18 +93,15 @@ class TMHistory(ThreadManager):
                                 else:
                                     doc["site status"] = 'unavailable'
                                     doc['site status time'] = current_timestamp
-                                try:
-                                    Logs.notify_except(self.tm_tg_info, f"'Unavailable' status on item with "
-                                                                        f"{item_transfer['item_id']} itemID",
+                                    Logs.notify_except(self.tm_tg_info, f"'Unavailable' status on item with {item_transfer['item_id']} itemID",
                                                        self.steamclient.username)
+                                try:
+                                    self.acc_history_collection.update_one({'_id': doc['_id']},
+                                                                           {'$set': {'site status': doc['site status'],
+                                                                                     'site status time': doc['site status time']}})
                                 except Exception as e:
                                     Logs.notify_except(tg_info, f"Site History: MongoDB critical request failed: {e}",
                                                        self.steamclient.username)
-
-
-                                self.acc_history_collection.update_one({'_id': doc['_id']}, {
-                                    '$set': {'site status': doc['site status'], 'site status time': doc[
-                                        'site status time']}})
                                 time.sleep(1)
                                 break
 
@@ -133,7 +130,7 @@ class TMHistory(ThreadManager):
                                 "site status time": int(item_transfer['time']),
                                 "site id": None,
                                 "buyer steam id": None,
-                                "asset id": None,
+                                "asset id": int(item_transfer['assetid']),
                                 "trade id": None,
                                 "sent time": None,
                                 "site item id": str(item_transfer['item_id'])
@@ -141,7 +138,7 @@ class TMHistory(ThreadManager):
                             stage = str(item_transfer['stage'])
                             if stage == '1':
                                 if (current_timestamp - int(item_transfer['time'])) <= 86400:
-                                    break
+                                    continue
                                 data_append["site status"] = 'active deal'
                             elif stage == '2':
                                 data_append["site status"] = 'accepted'
@@ -151,12 +148,12 @@ class TMHistory(ThreadManager):
                                 data_append["site status"] = 'unavailable'
                             try:
                                 self.acc_history_collection.insert_one(data_append)
-                            except Exception as e:
-                                Logs.notify_except(tg_info, f"Site History: MongoDB critical request failed: {e}",
-                                                   self.steamclient.username)
+                            except:
+                                pass
                             time.sleep(1)
         except Exception as e:
-            Logs.notify_except(tg_info, f"Steam History Global Error: {e}", self.steamclient.username)
+            Logs.notify_except(tg_info, f"Site History Global Error: {e}", self.steamclient.username)
+        time.sleep(3)
 
     def search_site_item_id(self, tg_info, collection_info_sorted, item_history_response_info):
         current_timestamp = int(time.time())
@@ -169,10 +166,10 @@ class TMHistory(ThreadManager):
                         item_transfer
                         for item_transfer in item_history_response_info
                         if all(key in item_transfer for key in ['assetid', 'item_id', 'time'])
+                        and str(doc['asset id']) == str(item_transfer['assetid'])
                         and not any(
                             str(inner_doc['site item id']) == str(item_transfer['item_id'])
                             for inner_doc in collection_info_sorted_by_time)
-                        and str(doc['asset id']) == str(item_transfer['assetid'])
                     ]
                     closest_item_transfer = min(
                         (entry for entry in list_of_matches if int(entry['time']) <= current_timestamp),
@@ -238,10 +235,10 @@ class TMHistory(ThreadManager):
                             }
                             try:
                                 self.acc_history_collection.insert_one(data_append)
-                            except Exception as e:
-                                Logs.notify_except(tg_info, f"Money History: MongoDB critical request failed: {e}",
-                                                   self.steamclient.username)
+                            except:
+                                pass
                             time.sleep(1)
         except Exception as e:
             Logs.notify_except(tg_info, f"Money History Global Error: {e}", self.steamclient.username)
+        time.sleep(3)
     # endregion

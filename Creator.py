@@ -106,8 +106,8 @@ if __name__ == '__main__':
         time.sleep(manager.creator_waiting_start_time)
         manager.start_of_work(manager.creator_tg_info, threads, manager.creator_thread_start_time)
 
-    except ServerSelectionTimeoutError:
-        Logs.notify_except(main_tg_info, "Script has not started: Connecting to MongoDB ERROR: {e}", '')
+    except ServerSelectionTimeoutError as e:
+        Logs.notify_except(main_tg_info, f"Script has not started: Connecting to MongoDB ERROR: {e}", '')
 
     except Exception as e:
         Logs.notify_except(main_tg_info, f"Script has not started: FATAL ERROR: {e}", '')

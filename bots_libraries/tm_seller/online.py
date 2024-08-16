@@ -20,7 +20,7 @@ class TMOnline(ThreadManager):
                     response = self.request_to_ping()
                     if (response is not None and 'success' in response and response['success'] is False
                             and 'message' in response and response['message'] != 'too early for ping'):
-                        Logs.log(f"Ping Error: {response['message']}", self.steamclient.username)
+                        Logs.log(f"Ping: Error to ping: {response['message']}", self.steamclient.username)
                         if not self.ping_alert:
                             Logs.notify(tg_info, f"Ping: Error to ping: {response['message']}",
                                         self.steamclient.username)
@@ -48,12 +48,12 @@ class TMOnline(ThreadManager):
                 self.update_account_data_info()
                 active_session = self.take_session(acc_info, tg_info)
                 if active_session:
-                    url = f'{self.tm_url}/api/v2/go-offline?key={self.tm_apikey}'
                     try:
+                        url = f'{self.tm_url}/api/v2/go-offline?key={self.tm_apikey}'
                         response = requests.get(url, timeout=5).json()
                     except:
                         response = None
-                    if response and 'success' in response and response['success'] is not True:
+                    if response and 'success' in response and response['success'] is not True and len(response) == 1:
                         Logs.log(f'Restart Store: Offline request failed', self.steamclient.username)
                     time.sleep(3)
                     self.request_to_ping()
@@ -63,8 +63,8 @@ class TMOnline(ThreadManager):
 
     def visible_store(self, acc_info, tg_info, global_time):
         while True:
+            time.sleep(global_time)
             try:
-                time.sleep(global_time)
                 search_result = False
                 self.update_account_data_info()
                 active_session = self.take_session(acc_info, tg_info)

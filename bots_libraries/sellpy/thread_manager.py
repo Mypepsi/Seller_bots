@@ -31,7 +31,7 @@ class ThreadManager(Steam):
         counter = 0
         row_modified_function_name = func.replace("_", " ").title()
         modified_function_name = ' '.join(row_modified_function_name.split()[:-1])
-        username = ''
+        username = None
         for i in self.content_acc_data_list:
             try:
                 username = str(i['username'])
