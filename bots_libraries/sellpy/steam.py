@@ -23,7 +23,7 @@ class Steam(Mongo):
         self.steam_inventory_full = {}
         self.steam_inventory_phases = {}
 
-    def take_session(self, acc, tg_info):
+    def take_session(self, acc):
         username = None
         try:
             if 'username' in acc:
@@ -37,6 +37,7 @@ class Steam(Mongo):
                         return False
                 steam_cookie_file = io.BytesIO(session)
                 self.steamclient = pickle.load(steam_cookie_file)
+                self.acc_history_collection = self.get_collection(self.history, f'history_{self.steamclient.username}')
 
                 # Info from account_settings
                 proxy = self.content_acc_settings_dict[self.steamclient.username]['proxy']
@@ -74,19 +75,17 @@ class Steam(Mongo):
             else:
                 raise ExitException
         except:
-            Logs.notify_except(tg_info, 'MongoDB: Error while taking Account Session', username)
+            Logs.notify_except(self.tg_info, 'MongoDB: Error while taking Account Session', username)
             return False
 
-    def steam_cancel_offers(self, acc_info, tg_info, cancel_offers_sites_name, global_time):
+    def steam_cancel_offers(self, acc_info, cancel_offers_sites_name, global_time):
         Logs.log('Steam Cancel Offers: thread are running', '')
         while True:
             try:
                 current_time = int(time.time())
                 self.update_account_data_info()
-                active_session = self.take_session(acc_info, tg_info)
+                active_session = self.take_session(acc_info)
                 if active_session:
-                    collection_name = f'history_{self.steamclient.username}'
-                    self.acc_history_collection = self.get_collection(self.history, collection_name)
                     active_trades = self.steamclient.get_trade_offers(self.steamclient.access_token, get_sent_offers=1,
                                                                       get_received_offers=0, get_descriptions=0, active_only=1,
                                                                       historical_only=0)
@@ -125,11 +124,11 @@ class Steam(Mongo):
                                         Logs.log(f'Steam Cancel Offers: {tradeofferid} tradeID cancelled',
                                                  self.steamclient.username)
             except Exception as e:
-                Logs.notify_except(tg_info, f"Steam Cancel Offers Global Error: {e}",
+                Logs.notify_except(self.tg_info, f"Steam Cancel Offers Global Error: {e}",
                                    self.steamclient.username)
             time.sleep(global_time)
 
-    def steam_history(self, site_name, collection_info, tg_info):
+    def steam_history(self, site_name, collection_info):
         try:
             need_to_work = False
             for doc in collection_info:
@@ -157,7 +156,7 @@ class Steam(Mongo):
                                     tradeofferid_alert = True
 
                                     if not any(doc['asset id'] in item.values() for item in offer['items_to_give']):
-                                        Logs.notify(tg_info, f"Steam History: MongoDB {doc['asset id']} assetID not"
+                                        Logs.notify(self.tg_info, f"Steam History: MongoDB {doc['asset id']} assetID not"
                                                              f" in {offer['tradeofferid']} tradeID on steam history",
                                                     self.steamclient.username)
 
@@ -186,14 +185,14 @@ class Steam(Mongo):
                                     break
 
                             if not tradeofferid_alert:
-                                Logs.notify(tg_info, f'Steam History: MongoDB {doc["trade id"]} tradeID not in steam history',
+                                Logs.notify(self.tg_info, f'Steam History: MongoDB {doc["trade id"]} tradeID not in steam history',
                                             self.steamclient.username)
         except Exception as e:
-            Logs.notify_except(tg_info, f"Steam History Global Error: {e}", self.steamclient.username)
+            Logs.notify_except(self.tg_info, f"Steam History Global Error: {e}", self.steamclient.username)
         time.sleep(3)
 
-    def send_sold_item_info(self, site_name, hash_name, site_price, sold_price, currency,
-                                  currency_symbol, document, history_tg_info, tg_info):
+    def send_sold_item_info(self, saleprice_bot_name, hash_name, site_price, sold_price, currency, currency_symbol,
+                            document, history_tg_info):
         try:
             tg_id = history_tg_info['tg id']
             tg_bot = history_tg_info['tg bot']
@@ -240,7 +239,7 @@ class Steam(Mongo):
                     if str(document['asset id']) == item['asset_id']:
                         launch_price = item['launch_price']
                         service_launch_price = item['service_launch_price']
-                        seller_value = self.get_information_for_price(tg_info, site_name)
+                        seller_value = self.get_information_for_price(saleprice_bot_name)
                         start_sale_time = item['time']
 
                         time_difference = time_difference_ = current_timestamp - item['time']
@@ -315,8 +314,8 @@ class Steam(Mongo):
             try:
                 self.acc_history_collection.update_one({'_id': document['_id']}, {"$set": document})
             except Exception as e:
-                Logs.notify_except(tg_info, f'Send Sold Item Info: MongoDB critical request failed: {e}',
+                Logs.notify_except(self.tg_info, f'Send Sold Item Info: MongoDB critical request failed: {e}',
                                    self.steamclient.username)
         except Exception as e:
-            Logs.notify_except(tg_info, f"Send Sold Item Info Global Error: {e}", self.steamclient.username)
+            Logs.notify_except(self.tg_info, f"Send Sold Item Info Global Error: {e}", self.steamclient.username)
         time.sleep(3)

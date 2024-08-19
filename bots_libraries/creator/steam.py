@@ -13,14 +13,14 @@ from bots_libraries.sellpy.thread_manager import ThreadManager
 from bots_libraries.steampy.confirmation import ConfirmationExecutor
 
 
-class CreatorSteam(ThreadManager):
+class CreatorSteam(Steam):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
         self.ua = UserAgent()
 
 
     # region Steam Login
-    def steam_login(self, tg_info, global_time):
+    def steam_login(self, global_time):
         Logs.log(f"Steam Login: thread are running", '')
         while True:
             self.update_account_data_info()
@@ -28,7 +28,7 @@ class CreatorSteam(ThreadManager):
             username = None
             for acc in self.content_acc_settings_list:
                 try:
-                    active_session = self.take_session(acc, tg_info)
+                    active_session = self.take_session(acc)
                     if active_session:
                         user_agent = self.steamclient.user_agent
                     else:
@@ -57,13 +57,13 @@ class CreatorSteam(ThreadManager):
                         proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
                                                     'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
 
-                    self.make_steam_login(tg_info, username, password, steam_guard, proxies)
+                    self.make_steam_login(username, password, steam_guard, proxies)
 
                 except Exception as e:
-                    Logs.notify_except(tg_info, f"Steam Login Global Error: {e}", username)
+                    Logs.notify_except(self.tg_info, f"Steam Login Global Error: {e}", username)
             time.sleep(global_time)
 
-    def make_steam_login(self, tg_info, username, password, steam_guard, proxies):
+    def make_steam_login(self, username, password, steam_guard, proxies):
         number_of_try = 1
         while True:
             try:
@@ -89,7 +89,7 @@ class CreatorSteam(ThreadManager):
                     number_of_try += 1
                     time.sleep(30)
                 else:
-                    Logs.notify(tg_info, f"Steam Login: Not authorized on Steam", username)
+                    Logs.notify(self.tg_info, f"Steam Login: Not authorized on Steam", username)
                     break
 
     def handle_doc_in_account_data(self):
@@ -140,14 +140,14 @@ class CreatorSteam(ThreadManager):
             pass
     # endregion
 
-    def steam_inventory(self, tg_info, global_time):
+    def steam_inventory(self, global_time):
         Logs.log(f"Steam Inventory: thread are running", '')
         while True:
             self.update_account_data_info()
-            self.update_db_prices_and_settings()
+            self.update_database_info()
             for acc in self.content_acc_data_list:
                 try:
-                    active_session = self.take_session(acc, tg_info)
+                    active_session = self.take_session(acc)
                     if active_session:
                         try:
                             my_items = self.steamclient.get_inventory_from_link_with_session(
@@ -228,18 +228,18 @@ class CreatorSteam(ThreadManager):
                             except:
                                 pass
                 except Exception as e:
-                    Logs.notify_except(tg_info, f"Steam Inventory Global Error: {e}", self.steamclient.username)
+                    Logs.notify_except(self.tg_info, f"Steam Inventory Global Error: {e}", self.steamclient.username)
                 time.sleep(10)
             time.sleep(global_time)
 
-    def steam_access_token(self, tg_info, global_time):
+    def steam_access_token(self, global_time):
         Logs.log(f"Steam Access Token: thread are running", '')
         while True:
             time.sleep(global_time)
             self.update_account_data_info()
             for acc in self.content_acc_data_list:
                 try:
-                    active_session = self.take_session(acc, tg_info)
+                    active_session = self.take_session(acc)
                     if active_session:
                         try:
                             url = 'https://steamcommunity.com/pointssummary/ajaxgetasyncconfig'
@@ -249,7 +249,7 @@ class CreatorSteam(ThreadManager):
                         if reply and 'data' in reply:
                             if ('webapi_token' in reply['data'] and not reply['data']['webapi_token'] or
                                     str(self.steamclient.access_token) != reply['data']['webapi_token']):
-                                Logs.notify(tg_info, "Steam Access Token: Invalid access token",
+                                Logs.notify(self.tg_info, "Steam Access Token: Invalid access token",
                                             self.steamclient.username)
                                 try:
                                     self.acc_data_collection.update_one(
@@ -260,17 +260,17 @@ class CreatorSteam(ThreadManager):
                                     pass
 
                 except Exception as e:
-                    Logs.notify_except(tg_info, f"Steam Access Token Global Error: {e}", self.steamclient.username)
+                    Logs.notify_except(self.tg_info, f"Steam Access Token Global Error: {e}", self.steamclient.username)
                 time.sleep(10)
     # region Steam Apikey
 
-    def steam_apikey(self, tg_info, global_time):
+    def steam_apikey(self, global_time):
         Logs.log(f"Steam Apikey: thread are running", '')
         while True:
             self.update_account_data_info()
             for acc in self.content_acc_data_list:
                 try:
-                    active_session = self.take_session(acc, tg_info)
+                    active_session = self.take_session(acc)
                     if active_session:
                         try:
                             response = self.steamclient._session.get('https://steamcommunity.com/dev/apikey', timeout=15)
@@ -291,7 +291,7 @@ class CreatorSteam(ThreadManager):
                                 except:
                                     pass
                 except Exception as e:
-                    Logs.notify_except(tg_info, f"Steam Apikey Global Error: {e}", self.steamclient.username)
+                    Logs.notify_except(self.tg_info, f"Steam Apikey Global Error: {e}", self.steamclient.username)
                 time.sleep(10)
             time.sleep(global_time)
 

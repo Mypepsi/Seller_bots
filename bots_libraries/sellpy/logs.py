@@ -93,10 +93,9 @@ class Logs:
                 line_number = last_frame.lineno
             else:
                 stack = inspect.stack()
-                frame = stack[2]
-                file_path = frame.filename
-                file_name = os.path.basename(file_path)
-                line_number = frame.lineno
+                second_frame = stack[2]
+                file_name = os.path.basename(second_frame.filename)
+                line_number = second_frame.lineno
         except:
             pass
 
@@ -125,7 +124,24 @@ class Logs:
         finally:
             s.close()
         return ip_address
+
+
+    @staticmethod
+    def get_bot_name():
+        file_name = 'File not found'
+        try:
+            stack = inspect.stack()
+            caller_frame = stack[-1]
+            file_path = caller_frame.filename
+            file_name = os.path.splitext(os.path.basename(file_path))[0].replace("_", " ")
+        except:
+            pass
+
+        return file_name
     #endregion
+
+
+
 
 class ExitException(Exception):
     pass

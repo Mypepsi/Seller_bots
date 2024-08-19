@@ -8,7 +8,7 @@ class CreatorDataBase(Mongo):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
-    def database_prices(self, tg_info, validity_time, global_time):
+    def database_prices(self, validity_time, global_time):
         Logs.log(f"Database Prices: thread are running", '')
         while True:
             try:
@@ -141,12 +141,12 @@ class CreatorDataBase(Mongo):
                                     self.database_prices_collection.replace_one({}, db_dict, upsert=True)
                                     Logs.log(f"Database Prices: DB Prices has been updated in MongoDB", '')
                                 except Exception as e:
-                                    Logs.notify_except(tg_info, f"Database Prices: MongoDB critical request failed: {e}", '')
+                                    Logs.notify_except(self.tg_info, f"Database Prices: MongoDB critical request failed: {e}", '')
             except Exception as e:
-                Logs.notify_except(tg_info, f"Database Prices Global Error: {e}", '')
+                Logs.notify_except(self.tg_info, f"Database Prices Global Error: {e}", '')
             time.sleep(global_time)
 
-    def database_settings(self, tg_info, validity_time, global_time):
+    def database_settings(self, validity_time, global_time):
         Logs.log(f"Database Settings: thread are running", '')
         while True:
             try:
@@ -182,8 +182,8 @@ class CreatorDataBase(Mongo):
                             self.database_settings_collection.replace_one({}, settings_dict, upsert=True)
                             Logs.log(f"Database Settings: DB Settings has been updated in MongoDB", '')
                         except Exception as e:
-                            Logs.notify_except(tg_info, f"Database Settings: MongoDB critical request failed: {e}", '')
+                            Logs.notify_except(self.tg_info, f"Database Settings: MongoDB critical request failed: {e}", '')
 
             except Exception as e:
-                Logs.notify_except(tg_info, f"Database Settings Global Error: {e}", '')
+                Logs.notify_except(self.tg_info, f"Database Settings Global Error: {e}", '')
             time.sleep(global_time)
