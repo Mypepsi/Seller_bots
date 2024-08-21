@@ -53,11 +53,6 @@ class Mongo:
             self.creator_settings_collection = self.get_collection(self.settings, 'creator_settings')
             self.content_creator_settings = self.get_first_doc_from_mongo_collection(self.creator_settings_collection)
 
-            self.creator_settings_telegram = self.get_key(self.content_creator_settings, 'telegram')
-            self.creator_tg_token = self.get_key(self.creator_settings_telegram, 'tg token')
-            self.creator_tg_id = self.get_key(self.creator_settings_telegram, 'tg id')
-            self.creator_tg_bot_name = self.get_key(self.creator_settings_telegram, 'tg bot name')
-
             self.creator_settings_general = self.get_key(self.content_creator_settings, 'general')
             self.creator_waiting_start_time = self.get_key(self.creator_settings_general, 'waiting start time')
             self.creator_thread_start_time = self.get_key(self.creator_settings_general, 'thread start time')
@@ -92,11 +87,6 @@ class Mongo:
         elif self.tg_info["bot name"] == 'TM Seller':
             self.tm_settings_collection = self.get_collection(self.settings, 'tm_seller_settings')
             self.content_tm_settings = self.get_first_doc_from_mongo_collection(self.tm_settings_collection)
-
-            self.tm_settings_telegram = self.get_key(self.content_tm_settings, 'telegram')
-            self.tm_tg_token = self.get_key(self.tm_settings_telegram, 'tg token')
-            self.tm_tg_id = self.get_key(self.tm_settings_telegram, 'tg id')
-            self.tm_tg_bot_name = self.get_key(self.tm_settings_telegram, 'tg bot name')
 
             self.tm_settings_general = self.get_key(self.content_tm_settings, 'general')
             self.tm_waiting_start_time = self.get_key(self.tm_settings_general, 'waiting start time')
@@ -147,11 +137,6 @@ class Mongo:
             self.waxpeer_settings_collection = self.get_collection(self.settings, 'waxpeer_seller_settings')
             self.content_waxpeer_settings = self.get_first_doc_from_mongo_collection(self.waxpeer_settings_collection)
 
-            self.waxpeer_settings_telegram = self.get_key(self.content_waxpeer_settings, 'telegram')
-            self.waxpeer_tg_token = self.get_key(self.waxpeer_settings_telegram, 'tg token')
-            self.waxpeer_tg_id = self.get_key(self.waxpeer_settings_telegram, 'tg id')
-            self.waxpeer_tg_bot_name = self.get_key(self.waxpeer_settings_telegram, 'tg bot name')
-
             self.waxpeer_settings_general = self.get_key(self.content_waxpeer_settings, 'general')
             self.waxpeer_waiting_start_time = self.get_key(self.waxpeer_settings_general, 'waiting start time')
             self.waxpeer_thread_start_time = self.get_key(self.waxpeer_settings_general, 'thread start time')
@@ -200,11 +185,6 @@ class Mongo:
         elif self.tg_info["bot name"] == 'CSGOEmpire Seller':
             self.csgoempire_settings_collection = self.get_collection(self.settings, 'csgoempire_seller_settings')
             self.content_csgoempire_settings = self.get_first_doc_from_mongo_collection(self.csgoempire_settings_collection)
-
-            self.csgoempire_settings_telegram = self.get_key(self.content_csgoempire_settings, 'telegram')
-            self.csgoempire_tg_token = self.get_key(self.csgoempire_settings_telegram, 'tg token')
-            self.csgoempire_tg_id = self.get_key(self.csgoempire_settings_telegram, 'tg id')
-            self.csgoempire_tg_bot_name = self.get_key(self.csgoempire_settings_telegram, 'tg bot name')
 
             self.csgoempire_settings_general = self.get_key(self.content_csgoempire_settings, 'general')
             self.csgoempire_waiting_start_time = self.get_key(self.csgoempire_settings_general, 'waiting start time')
@@ -255,11 +235,6 @@ class Mongo:
             self.csgo500_settings_collection = self.get_collection(self.settings, 'csgo500_seller_settings')
             self.content_csgo500_settings = self.get_first_doc_from_mongo_collection(self.csgo500_settings_collection)
 
-            self.csgo500_settings_telegram = self.get_key(self.content_csgo500_settings, 'telegram')
-            self.csgo500_tg_token = self.get_key(self.csgo500_settings_telegram, 'tg token')
-            self.csgo500_tg_id = self.get_key(self.csgo500_settings_telegram, 'tg id')
-            self.csgo500_tg_bot_name = self.get_key(self.csgo500_settings_telegram, 'tg bot name')
-
             self.csgo500_settings_general = self.get_key(self.content_csgo500_settings, 'general')
             self.csgo500_waiting_start_time = self.get_key(self.csgo500_settings_general, 'waiting start time')
             self.csgo500_thread_start_time = self.get_key(self.csgo500_settings_general, 'thread start time')
@@ -309,11 +284,6 @@ class Mongo:
             self.shadowpay_settings_collection = self.get_collection(self.settings, 'shadowpay_seller_settings')
             self.content_shadowpay_settings = self.get_first_doc_from_mongo_collection(self.shadowpay_settings_collection)
 
-            self.shadowpay_settings_telegram = self.get_key(self.content_shadowpay_settings, 'telegram')
-            self.shadowpay_tg_token = self.get_key(self.shadowpay_settings_telegram, 'tg token')
-            self.shadowpay_tg_id = self.get_key(self.shadowpay_settings_telegram, 'tg id')
-            self.shadowpay_tg_bot_name = self.get_key(self.shadowpay_settings_telegram, 'tg bot name')
-
             self.shadowpay_settings_general = self.get_key(self.content_shadowpay_settings, 'general')
             self.shadowpay_waiting_start_time = self.get_key(self.shadowpay_settings_general, 'waiting start time')
             self.shadowpay_thread_start_time = self.get_key(self.shadowpay_settings_general, 'thread start time')
@@ -362,11 +332,6 @@ class Mongo:
         elif self.tg_info["bot name"] == 'Buff Seller':
             self.buff_settings_collection = self.get_collection(self.settings, 'buff_seller_settings')
             self.content_buff_settings = self.get_first_doc_from_mongo_collection(self.buff_settings_collection)
-
-            self.buff_settings_telegram = self.get_key(self.content_buff_settings, 'telegram')
-            self.buff_tg_token = self.get_key(self.buff_settings_telegram, 'tg token')
-            self.buff_tg_id = self.get_key(self.buff_settings_telegram, 'tg id')
-            self.buff_tg_bot_name = self.get_key(self.buff_settings_telegram, 'tg bot name')
 
             self.buff_settings_general = self.get_key(self.content_buff_settings, 'general')
             self.buff_waiting_start_time = self.get_key(self.buff_settings_general, 'waiting start time')

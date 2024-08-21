@@ -10,70 +10,47 @@ from bots_libraries.creator.database import CreatorDataBase
 from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
-class MAIN(CreatorSteam, CreatorGeneral, CreatorDataBase, ThreadManager):
+class Creator(CreatorSteam, CreatorGeneral, CreatorDataBase, Restarter):
     def __init__(self, tg_info):
         super().__init__(tg_info)
 
+    @staticmethod
+    def collect_work_functions(tg_info):
+        functions_info = []
+        if manager.creator_restart_server_global_time != 0:  # Restart Server
+            functions_info.append({"func": "restart_server", "class_per_functions": Creator})
 
+        if manager.creator_restart_bots_global_time != 0:  # Restart Bots
+            functions_info.append({"func": "restart_bots", "class_per_functions": Creator})
 
-def add_threads():
-    threads_list = []
+        if manager.creator_db_prices_global_time != 0:  # Database Prices
+            functions_info.append({"func": "database_prices", "class_per_functions": Creator})
 
-    if manager.creator_restart_server_global_time != 0:  # Restart Server
-        restart_server_thread = threading.Thread(target=restarter.restart_server,
-                                                 args=(restarter.creator_restart_server_validity_time,
-                                                       restarter.creator_restart_server_global_time))
-        threads_list.append(restart_server_thread)
+        if manager.creator_db_settings_global_time != 0:  # Database Settings
+            functions_info.append({"func": "database_settings", "class_per_functions": Creator})
 
-    if manager.creator_restart_bots_global_time != 0:  # Restart Bots
-        restart_bots_thread = threading.Thread(target=restarter.restart_bots,
-                                               args=(restarter.creator_restart_bots_name,
-                                                     restarter.creator_restart_bots_global_time))
-        threads_list.append(restart_bots_thread)
+        if manager.creator_steam_session_global_time != 0:  # Steam Login
+            functions_info.append({"func": "steam_login", "class_name": CreatorSteam})
 
-    if manager.creator_db_prices_global_time != 0:  # Database Prices
-        database_prices_thread = threading.Thread(target=db_price.database_prices,
-                                                  args=(db_price.creator_db_prices_validity_time,
-                                                        db_price.creator_db_prices_global_time))
-        threads_list.append(database_prices_thread)
+        if manager.creator_steam_inventory_global_time != 0:  # Steam Inventory
+            functions_info.append({"func": "steam_inventory", "class_name": CreatorSteam})
 
-    if manager.creator_db_settings_global_time != 0:  # Database Settings
-        database_settings_thread = threading.Thread(target=db_settings.database_settings,
-                                                    args=(db_settings.creator_db_settings_validity_time,
-                                                          db_settings.creator_db_settings_global_time))
-        threads_list.append(database_settings_thread)
+        if manager.creator_steam_access_token_global_time != 0:  # Steam Access Token
+            functions_info.append({"func": "steam_access_token", "class_name": CreatorSteam})
 
-    if manager.creator_steam_session_global_time != 0:  # Steam Login
-        steam_login_thread = threading.Thread(target=steam_aut.steam_login,
-                                              args=steam_aut.creator_steam_session_global_time)
-        threads_list.append(steam_login_thread)
+        if manager.creator_steam_apikey_global_time != 0:  # Steam Apikey
+            functions_info.append({"func": "steam_apikey", "class_name": CreatorSteam})
 
-    if manager.creator_steam_inventory_global_time != 0:  # Steam Inventory
-        steam_inventory_thread = threading.Thread(target=steam_inv.steam_inventory,
-                                                  args=steam_inv.creator_steam_inventory_global_time)
-        threads_list.append(steam_inventory_thread)
+        if manager.creator_proxy_global_time != 0:  # Proxy
+            functions_info.append({"func": "proxy", "class_name": CreatorGeneral})
 
-    if manager.creator_steam_apikey_global_time != 0:  # Steam Apikey
-        steam_apikey_thread = threading.Thread(target=steam_api.steam_apikey,
-                                               args=steam_api.creator_steam_apikey_global_time)
-        threads_list.append(steam_apikey_thread)
+        if manager.creator_mongodb_global_time != 0:  # Mongodb Checker
+            functions_info.append({"func": "mongodb", "class_per_functions": Creator})
 
-    if manager.creator_proxy_global_time != 0:  # Proxy
-        proxy_thread = threading.Thread(target=steam_prx.proxy,
-                                                args=steam_prx.creator_proxy_global_time)
-        threads_list.append(proxy_thread)
+        for function in functions_info:
+            function["tg_info"] = tg_info
 
-    if manager.creator_steam_access_token_global_time != 0:  # Steam Access Token
-        steam_access_token_thread = threading.Thread(target=steam_acs.steam_access_token,
-                                                     args=steam_acs.creator_steam_access_token_global_time)
-        threads_list.append(steam_access_token_thread)
-
-    if manager.creator_mongodb_global_time != 0:  # Mongodb Checker
-        mongodb_thread = threading.Thread(target=mng_checker.mongodb,
-                                                  args=mng_checker.creator_mongodb_global_time)
-        threads_list.append(mongodb_thread)
-
-    return threads_list
+        return functions_info
 
 
 if __name__ == '__main__':
@@ -88,22 +65,12 @@ if __name__ == '__main__':
 
     try:
         manager = ThreadManager(main_tg_info)
-        restarter = Restarter(main_tg_info)
-        db_price = CreatorDataBase(main_tg_info)
-        db_settings = CreatorDataBase(main_tg_info)
-        steam_aut = CreatorSteam(main_tg_info)
-        steam_inv = CreatorSteam(main_tg_info)
-        steam_api = CreatorSteam(main_tg_info)
-        steam_prx = CreatorGeneral(main_tg_info)
-        steam_acs = CreatorSteam(main_tg_info)
-        mng_checker = CreatorGeneral(main_tg_info)
-
-        threads = add_threads()
+        functions = Creator.collect_work_functions(main_tg_info)
 
         Logs.log(f'{main_tg_info["bot name"]} STARTED ({len(manager.content_acc_data_list)} in Account Data '
                  f'and {len(manager.content_acc_settings_list)} in Account Settings)', '')
-        time.sleep(manager.creator_waiting_start_time)
-        manager.start_of_work(threads, manager.creator_thread_start_time)
+        # time.sleep(manager.creator_waiting_start_time)
+        manager.start_of_work(functions)
 
     except ServerSelectionTimeoutError as e:
         Logs.notify_except(main_tg_info, f"Script has not started: Connecting to MongoDB ERROR: {e}", '')

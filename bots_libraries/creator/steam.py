@@ -9,7 +9,7 @@ from bots_libraries.sellpy.logs import Logs
 from bots_libraries.steampy.client import SteamClient
 from bots_libraries.steampy.models import GameOptions
 from bots_libraries.steampy.confirmation import Confirmation
-from bots_libraries.sellpy.thread_manager import ThreadManager
+from bots_libraries.sellpy.steam import Steam
 from bots_libraries.steampy.confirmation import ConfirmationExecutor
 
 

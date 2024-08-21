@@ -12,105 +12,54 @@ from pymongo.errors import ServerSelectionTimeoutError
 from bots_libraries.tm_seller.history import TMHistory
 from bots_libraries.sellpy.thread_manager import ThreadManager
 
-def add_threads(tg_info):
-    threads_list = []
 
-    if manager.tm_restart_server_global_time != 0:  # Restart Server
-        restart_server_thread = threading.Thread(target=restarter.restart_server,
-                                                 args=(restarter.tm_restart_server_validity_time,
-                                                       restarter.tm_restart_server_global_time))
-        threads_list.append(restart_server_thread)
+class TMSeller(TMGeneral, TMOnline, TMItems, TMSteam, TMHistory, Restarter):
+    def __init__(self, tg_info):
+        super().__init__(tg_info)
 
-    if manager.tm_restart_bots_global_time != 0:  # Restart Bots
-        restart_bots_thread = threading.Thread(target=restarter.restart_bots,
-                                               args=(restarter.tm_restart_bots_name,
-                                                     restarter.tm_restart_bots_global_time))
-        threads_list.append(restart_bots_thread)
+    @staticmethod
+    def collect_work_functions(tg_info):
+        functions_info = []
+        if manager.tm_restart_server_global_time != 0:  # Restart Server
+            functions_info.append({"func": "restart_server", "class_per_functions": TMSeller})
 
-    if manager.tm_steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
-        steam_cancel_offers_thread = threading.Thread(target=manager.create_threads,
-                                                      args=('_chk_trd',
-                                                            Steam(tg_info),
-                                                            'steam_cancel_offers',
-                                                            'tm_steam_cancel_offers_global_time',
-                                                            'tm_thread_function_time',
-                                                            'tm_steam_cancel_offers_sites_name'))
-        threads_list.append(steam_cancel_offers_thread)
+        if manager.tm_restart_bots_global_time != 0:    # Restart Bots
+            functions_info.append({"func": "restart_bots", "class_per_functions": TMSeller})
 
-    if manager.tm_restart_store_global_time != 0:  # Restart Store
-        restart_store_thread = threading.Thread(target=manager.create_threads,
-                                                args=('_str_png',
-                                                      TMOnline(tg_info),
-                                                      'restart_store',
-                                                      'tm_restart_store_global_time',
-                                                      'tm_thread_function_time'))
-        threads_list.append(restart_store_thread)
+        if manager.tm_steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
+            functions_info.append({"func": "steam_cancel_offers", "class_per_functions_and_account": TMSeller})
 
-    if manager.tm_site_apikey_global_time != 0:  # Site Apikey
-        site_apikey_thread = threading.Thread(target=api_chk.site_apikey,
-                                              args=api_chk.tm_site_apikey_global_time)
-        threads_list.append(site_apikey_thread)
+        if manager.tm_restart_store_global_time != 0:  # Restart Store
+            functions_info.append({"func": "restart_store", "class_per_functions_and_account": TMSeller})
 
-    if manager.tm_ping_global_time != 0:  # Ping
-        ping_thread = threading.Thread(target=manager.create_threads,
-                                       args=('_onl_thd',
-                                             TMOnline(tg_info),
-                                             'ping',
-                                             'tm_ping_global_time',
-                                             'tm_thread_function_time'))
-        threads_list.append(ping_thread)
+        if manager.tm_site_apikey_global_time != 0:  # Site Apikey
+            functions_info.append({"func": "site_apikey", "class_per_functions": TMSeller})
 
-    if manager.tm_steam_send_offers_global_time != 0:  # Steam Send Offers
-        steam_send_offers_thread = threading.Thread(target=manager.create_threads,
-                                                    args=('_tm_trd',
-                                                          TMSteam(tg_info),
-                                                          'steam_send_offers',
-                                                          'tm_steam_send_offers_global_time',
-                                                          'tm_thread_function_time'))
-        threads_list.append(steam_send_offers_thread)
+        if manager.tm_ping_global_time != 0:  # Ping
+            functions_info.append({"func": "ping", "class_per_functions_and_account": TMSeller})
 
-    if manager.tm_add_to_sale_global_time != 0:  # Add To Sale
-        add_to_sale_thread = threading.Thread(target=manager.create_threads,
-                                              args=('_add_sale',
-                                                    TMItems(tg_info),
-                                                    'add_to_sale',
-                                                    'tm_add_to_sale_global_time',
-                                                    'tm_thread_function_time'))
-        threads_list.append(add_to_sale_thread)
+        if manager.tm_steam_send_offers_global_time != 0:  # Steam Send Offers
+            functions_info.append({"func": "steam_send_offers", "class_per_functions_and_account": TMSeller})
 
-    if manager.tm_change_price_global_time != 0:  # Change Price
-        change_price_thread = threading.Thread(target=manager.create_threads,
-                                               args=('_chg_prc',
-                                                     TMItems(tg_info),
-                                                     'change_price',
-                                                     'tm_change_price_global_time',
-                                                     'tm_thread_function_time'))
-        threads_list.append(change_price_thread)
+        if manager.tm_add_to_sale_global_time != 0:  # Add To Sale
+            functions_info.append({"func": "add_to_sale", "class_per_functions_and_account": TMSeller})
 
-    if manager.tm_balance_transfer_global_time != 0:  # Balance Transfer
-        balance_transfer_thread = threading.Thread(target=blc_trf.balance_transfer,
-                                                   args=blc_trf.tm_balance_transfer_global_time)
-        threads_list.append(balance_transfer_thread)
+        if manager.tm_change_price_global_time != 0:  # Change Price
+            functions_info.append({"func": "change_price", "class_per_functions_and_account": TMSeller})
 
-    if manager.tm_history_global_time != 0:  # History
-        history_thread = threading.Thread(target=manager.create_threads,
-                                          args=('_hstr_thd',
-                                                TMHistory(tg_info),
-                                                'history',
-                                                'tm_history_global_time',
-                                                'tm_thread_function_time'))
-        threads_list.append(history_thread)
+        if manager.tm_balance_transfer_global_time != 0:  # Balance Transfer
+            functions_info.append({"func": "balance_transfer", "class_per_functions": TMSeller})
 
-    if manager.tm_visible_store_global_time != 0:  # Visible Store
-        visible_store_thread = threading.Thread(target=manager.create_threads,
-                                                args=('_str_vsb',
-                                                      TMOnline(tg_info),
-                                                      'visible_store',
-                                                      'tm_visible_store_global_time',
-                                                      'tm_thread_function_time'))
-        threads_list.append(visible_store_thread)
+        if manager.tm_history_global_time != 0:  # History
+            functions_info.append({"func": "history", "class_per_functions_and_account": TMSeller})
 
-    return threads_list
+        if manager.tm_visible_store_global_time != 0:  # Visible Store
+            functions_info.append({"func": "visible_store", "class_per_functions_and_account": TMSeller})
+
+        for funk in functions_info:
+            funk["tg_info"] = tg_info
+
+        return functions_info
 
 
 if __name__ == '__main__':
@@ -125,16 +74,13 @@ if __name__ == '__main__':
 
     try:
         manager = ThreadManager(main_tg_info)
-        restarter = Restarter(main_tg_info)
-        api_chk = TMGeneral(main_tg_info)
-        blc_trf = TMGeneral(main_tg_info)
 
-        threads = add_threads(main_tg_info)
+        threads = TMSeller.collect_work_functions(main_tg_info)
 
         Logs.log(f'{main_tg_info["bot name"]} STARTED ({len(manager.content_acc_data_list)} in Account Data '
                  f'and {len(manager.content_acc_settings_list)} in Account Settings)', '')
-        time.sleep(manager.tm_waiting_start_time)
-        manager.start_of_work(threads, manager.tm_thread_start_time)
+        #time.sleep(manager.tm_waiting_start_time)
+        manager.start_of_work(threads)
 
     except ServerSelectionTimeoutError as e:
         Logs.notify_except(main_tg_info, f"Script has not started: Connecting to MongoDB ERROR: {e}", '')
