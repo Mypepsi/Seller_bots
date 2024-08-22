@@ -1,10 +1,10 @@
 import time
 import requests
 from bots_libraries.sellpy.logs import Logs
-from bots_libraries.sellpy.thread_manager import ThreadManager
+from bots_libraries.sellpy.steam import Steam
 
 
-class TMHistory(ThreadManager):
+class TMHistory(Steam):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
@@ -19,7 +19,7 @@ class TMHistory(ThreadManager):
                 if active_session:
                     collection_info = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
                     if collection_info:
-                        self.steam_history(self.tm_site_name, collection_info)
+                        self.steam_history(self.site_name, collection_info)
                         self.site_history(collection_info)
                         self.money_history(collection_info)
             except Exception as e:
@@ -32,7 +32,7 @@ class TMHistory(ThreadManager):
             current_timestamp_unique = int(time.time())
             try:
                 month_ago = current_timestamp - 30 * 24 * 60 * 60
-                item_history_url = (f'{self.tm_site_url}/api/v2/history?key={self.tm_apikey}'
+                item_history_url = (f'{self.site_url}/api/v2/history?key={self.tm_apikey}'
                                     f'&date={month_ago}&date_end={current_timestamp}')
                 response = requests.get(item_history_url, timeout=30).json()
                 response_info = response['data']
@@ -42,7 +42,7 @@ class TMHistory(ThreadManager):
             if response_info and isinstance(response_info, list):
                 collection_info_sorted = [
                     doc for doc in collection_info
-                    if doc.get('site') == self.tm_site_name
+                    if doc.get('site') == self.site_name
                     and doc.get('transaction') == 'sale_record'
                     and all(key in doc for key in ['site item id', 'site status', 'asset id'])
                 ]
@@ -81,9 +81,9 @@ class TMHistory(ThreadManager):
                                         sold_price = round((site_price / rate * commission), 3)
                                         currency = item_transfer["currency"]
 
-                                        self.send_sold_item_info(self.tm_saleprice_bot_name, hash_name, site_price, sold_price,
+                                        self.send_sold_item_info(self.saleprice_bot_name, hash_name, site_price, sold_price,
                                                                  currency, '₽', doc,
-                                                                 self.tm_history_tg_info)
+                                                                 self.history_tg_info)
 
                                 elif stage == '5':
                                     doc["site status"] = 'cancelled'
@@ -119,7 +119,7 @@ class TMHistory(ThreadManager):
                             current_timestamp_unique += 1
                             data_append = {
                                 "transaction": "sale_record",
-                                "site": self.tm_site_name,
+                                "site": self.site_name,
                                 "time": current_timestamp_unique,
                                 "name": item_transfer['market_hash_name'],
                                 "steam status": None,
@@ -196,7 +196,7 @@ class TMHistory(ThreadManager):
         try:
             try:
                 transfer_id = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_transfer_id']
-                money_history_url = f'{self.tm_site_url}/api/v2/money-send-history/0?key={self.tm_apikey}'
+                money_history_url = f'{self.site_url}/api/v2/money-send-history/0?key={self.tm_apikey}'
                 response = requests.get(money_history_url, timeout=30).json()
             except:
                 transfer_id = None
@@ -223,7 +223,7 @@ class TMHistory(ThreadManager):
                             current_timestamp = int(time.time())
                             data_append = {
                                 'transaction': 'money_record',
-                                'site': self.tm_site_name,
+                                'site': self.site_name,
                                 'time': current_timestamp,
                                 'money status': money_status,
                                 'money': money,

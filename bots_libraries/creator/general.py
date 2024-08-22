@@ -32,7 +32,7 @@ class CreatorGeneral(Steam):
                     except:
                         proxy_ip = proxy
                     try:
-                        response = requests.get(self.creator_proxy_url, proxies=proxy, timeout=15)
+                        response = requests.get(self.proxy_url, proxies=proxy, timeout=15)
                         if response.status_code == 200:
                             try:
                                 del self.questionable_proxies[proxy_ip]

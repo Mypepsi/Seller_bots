@@ -33,13 +33,13 @@ class CreatorDataBase(Mongo):
                 difference_to_update = current_timestamp - last_update_time
                 if difference_to_update > validity_time:
                     try:
-                        db = requests.get(self.creator_db_prices_url, timeout=30).json()
+                        db = requests.get(self.db_prices_url, timeout=30).json()
                     except:
                         db = None
                     if db and len(db) > 15000:
                         Logs.log(f"Database Prices: Pricing data is uploaded", '')
                         try:
-                            currency_rs = requests.get(self.creator_db_settings_url, timeout=30).json()
+                            currency_rs = requests.get(self.db_settings_url, timeout=30).json()
                         except:
                             currency_rs = None
                         if currency_rs and len(currency_rs) > 3:
@@ -171,7 +171,7 @@ class CreatorDataBase(Mongo):
                 difference_to_update = current_timestamp - last_update_time
                 if difference_to_update > validity_time:
                     try:
-                        currency_rs = requests.get(self.creator_db_settings_url, timeout=30).json()
+                        currency_rs = requests.get(self.db_settings_url, timeout=30).json()
                     except:
                         currency_rs = None
                     if currency_rs and len(currency_rs) > 3:

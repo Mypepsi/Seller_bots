@@ -71,7 +71,7 @@ class CreatorSteam(Steam):
                 if username in self.content_acc_data_dict:
                     last_update_time = self.content_acc_data_dict[username].get('time steam session', 0)
                     difference_to_update = current_timestamp - int(last_update_time)
-                    if difference_to_update > self.creator_steam_session_validity_time:
+                    if difference_to_update > self.steam_session_validity_time:
                         self.steamclient.login_steam(username, password, steam_guard, proxies)
                         Logs.log(f"Steam Login: Authorization was successful", username)
                         self.handle_doc_in_account_data()
@@ -217,7 +217,7 @@ class CreatorSteam(Steam):
                             items_to_remove = [
                                 item_id
                                 for item_id, item_info in self.steam_inventory_phases.items()
-                                if item_id not in filtered_items_phases and current_timestamp - item_info["time"] >= self.creator_steam_inventory_hashname_validity_time
+                                if item_id not in filtered_items_phases and current_timestamp - item_info["time"] >= self.steam_inventory_hashname_validity_time
                             ]
                             for item_id_ in items_to_remove:
                                 del self.steam_inventory_phases[item_id_]

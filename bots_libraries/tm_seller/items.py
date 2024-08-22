@@ -20,13 +20,13 @@ class TMItems(ThreadManager):
                 active_session = self.take_session(acc_info)
                 if active_session:
                     filtered_inventory = self.add_to_sale_inventory()
-                    seller_value = self.get_information_for_price(self.tm_saleprice_bot_name)
+                    seller_value = self.get_information_for_price(self.saleprice_bot_name)
                     if filtered_inventory and seller_value:
                         for asset_id in filtered_inventory:
                             site_price = self.get_site_price(self.steam_inventory_phases[asset_id], seller_value, 'max')
                             if site_price is not None and site_price != 0:
                                 try:
-                                    add_to_sale_url = (f'{self.tm_site_url}/api/v2/add-to-sale?key={self.tm_apikey}'
+                                    add_to_sale_url = (f'{self.site_url}/api/v2/add-to-sale?key={self.tm_apikey}'
                                                        f'&cur=RUB&id={asset_id}&price={site_price}')
                                     requests.get(add_to_sale_url, timeout=5)
                                 except:
@@ -42,13 +42,13 @@ class TMItems(ThreadManager):
 
     def add_to_sale_inventory(self):
         try:
-            update_inventory_url = f'{self.tm_site_url}/api/v2/update-inventory/?key={self.tm_apikey}'
+            update_inventory_url = f'{self.site_url}/api/v2/update-inventory/?key={self.tm_apikey}'
             requests.get(update_inventory_url, timeout=5)
         except:
             pass
         time.sleep(10)
         try:
-            my_inventory_url = f'{self.tm_site_url}/api/v2/my-inventory/?key={self.tm_apikey}'
+            my_inventory_url = f'{self.site_url}/api/v2/my-inventory/?key={self.tm_apikey}'
             my_inventory = requests.get(my_inventory_url, timeout=30).json()
             my_inventory_items = my_inventory['items']
             my_inventory_list = [item['id'] for item in my_inventory_items]
@@ -100,7 +100,7 @@ class TMItems(ThreadManager):
                 active_session = self.take_session(acc_info)
                 if active_session:
                     try:
-                        items_url = f'{self.tm_site_url}/api/v2/items?key={self.tm_apikey}'
+                        items_url = f'{self.site_url}/api/v2/items?key={self.tm_apikey}'
                         listed_items = requests.get(items_url, timeout=30).json()
                     except:
                         listed_items = None
@@ -112,7 +112,7 @@ class TMItems(ThreadManager):
                                 items_with_status_one.append(item)
                         if items_with_status_one:
                             new_listed_items = self.change_price_delete_items(items_with_status_one)
-                            seller_value = self.get_information_for_price(self.tm_saleprice_bot_name)
+                            seller_value = self.get_information_for_price(self.saleprice_bot_name)
                             if seller_value:
                                 try:
                                     another_tm_apis_list = self.search_in_merges_by_username(self.steamclient.username)['tm apikey']
@@ -200,7 +200,7 @@ class TMItems(ThreadManager):
             params = {'key': self.tm_apikey}
             data = {f'list[{ui_id}]': price for ui_id, price in items.items()}
             try:
-                url_change_price = f'{self.tm_site_url}/api/MassSetPriceById/'
+                url_change_price = f'{self.site_url}/api/MassSetPriceById/'
                 requests.post(url_change_price, params=params, data=data, timeout=5)
             except:
                 pass
@@ -247,7 +247,7 @@ class TMItems(ThreadManager):
     def request_parsing_prices(self, api_key, hash_names, results, results_lock, threads):
         try:
             list_hash_names = '&list_hash_name[]=' + '&list_hash_name[]='.join(hash_names)
-            search_hash_name_url = (f'{self.tm_site_url}/api/v2/search-list-items-by-hash-name-all?'
+            search_hash_name_url = (f'{self.site_url}/api/v2/search-list-items-by-hash-name-all?'
                                     f'key={api_key}{list_hash_names}')
             parsed_info = requests.get(search_hash_name_url, timeout=30).json()
             if parsed_info['success'] and parsed_info['currency'] == 'RUB':

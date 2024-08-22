@@ -18,7 +18,7 @@ class TMSteam(ThreadManager):
                 active_session = self.take_session(acc_info)
                 if active_session:
                     try:
-                        url = f'{self.tm_site_url}/api/v2/trade-request-give-p2p-all?key={self.tm_apikey}'
+                        url = f'{self.site_url}/api/v2/trade-request-give-p2p-all?key={self.tm_apikey}'
                         request_site_offers = requests.get(url, timeout=30).json()
                     except:
                         request_site_offers = None
@@ -43,7 +43,7 @@ class TMSteam(ThreadManager):
                                 latest_offer = max(trade_ready_list, key=lambda t: t['time'])
                                 trade_id = latest_offer['trade id']
                                 if trade_id is not None:
-                                    trade_ready_url = (f'{self.tm_site_url}/api/v2/trade-ready?'
+                                    trade_ready_url = (f'{self.site_url}/api/v2/trade-ready?'
                                                        f'key={self.tm_apikey}&tradeoffer={trade_id}')
                                     try:
                                         requests.get(trade_ready_url, timeout=5)
@@ -253,7 +253,7 @@ class TMSteam(ThreadManager):
                 partner_id = self.steamclient.return_partner_steam_id_from_url(offer_url)
                 data_append = {
                     "transaction": "sale_record",
-                    "site": self.tm_site_name,  # str
+                    "site": self.site_name,  # str
                     "time": current_timestamp_unique,  # int
                     "name": name,  # str
                     "steam status": steam_status,  # str

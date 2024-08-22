@@ -18,7 +18,7 @@ class TMGeneral(ThreadManager):
                     username = acc_info['username']
                     tm_apikey = acc_info['tm apikey']
                     try:
-                        balance_url = f'{self.tm_site_url}/api/v2/get-money?key={tm_apikey}'
+                        balance_url = f'{self.site_url}/api/v2/get-money?key={tm_apikey}'
                         search_response = requests.get(balance_url, timeout=30).json()
                     except:
                         search_response = None
@@ -46,7 +46,7 @@ class TMGeneral(ThreadManager):
                         username = acc['username']
                         tm_apikey = acc['tm apikey']
                         try:
-                            current_balance_url = f'{self.tm_site_url}/api/v2/get-money?key={tm_apikey}'
+                            current_balance_url = f'{self.site_url}/api/v2/get-money?key={tm_apikey}'
                             response = requests.get(current_balance_url, timeout=30).json()
                         except:
                             response = None
@@ -54,14 +54,14 @@ class TMGeneral(ThreadManager):
                             time.sleep(3)
                             new_value = round(response['money'] * 100)
                             try:
-                                withdrawing_tm_url = (f'{self.tm_site_url}/api/v2/money-send/{new_value}/{api_to_withdraw}?'
+                                withdrawing_tm_url = (f'{self.site_url}/api/v2/money-send/{new_value}/{api_to_withdraw}?'
                                                       f'pay_pass=34368&key={tm_apikey}')
                                 data = requests.get(withdrawing_tm_url, timeout=30).json()
                             except:
                                 data = None
                             if data and 'error' in data and data['error'] == 'need_payment_password':
                                 try:
-                                    set_pay_password_url = (f'{self.tm_site_url}/api/v2/set-pay-password?'
+                                    set_pay_password_url = (f'{self.site_url}/api/v2/set-pay-password?'
                                                             f'new_password=34368&key={tm_apikey}')
                                     data_ = requests.get(set_pay_password_url, timeout=30).json()
                                 except:
