@@ -1,19 +1,19 @@
 import time
 import requests
 from bots_libraries.sellpy.logs import Logs
-from bots_libraries.sellpy.thread_manager import ThreadManager
+from bots_libraries.sellpy.steam import Steam
 
 
-class TMGeneral(ThreadManager):
+class TMGeneral(Steam):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
-    def site_apikey(self, global_time):
+    def site_apikey(self):
         Logs.log(f"Site Apikey: thread are running", '')
         while True:
             self.update_account_settings_info()
+            username = None
             for acc_info in self.content_acc_settings_list:
-                username = None
                 try:
                     username = acc_info['username']
                     tm_apikey = acc_info['tm apikey']
@@ -27,12 +27,12 @@ class TMGeneral(ThreadManager):
                 except Exception as e:
                     Logs.notify_except(self.tg_info, f"Site Apikey Global Error: {e}", username)
                 time.sleep(10)
-            time.sleep(global_time)
+            time.sleep(self.site_apikey_global_time)
 
-    def balance_transfer(self, global_time):
+    def balance_transfer(self):
         Logs.log(f"Balance Transfer: thread are running", '')
         while True:
-            time.sleep(global_time)
+            time.sleep(self.balance_transfer_global_time)
             self.update_account_settings_info()
             self.update_database_info(prices=False)
             try:
@@ -40,8 +40,8 @@ class TMGeneral(ThreadManager):
             except:
                 api_to_withdraw = None
             if api_to_withdraw:
+                username = None
                 for acc in self.content_acc_settings_list:
-                    username = None
                     try:
                         username = acc['username']
                         tm_apikey = acc['tm apikey']
@@ -70,9 +70,8 @@ class TMGeneral(ThreadManager):
                                     Logs.log(f'Balance Transfer: Payment password has been successfully set', username)
                                 elif data_:
                                     Logs.notify(self.tg_info, 'Balance Transfer: Error to set payment password', username)
-                            else:
+                            elif data:
                                 Logs.notify(self.tg_info, 'Balance Transfer: Wrong payment password', username)
                     except Exception as e:
-                        Logs.log_except(f"Balance Transfer Global Error: {e}", username)
+                        Logs.notify_except(self.tg_info, f"Balance Transfer Global Error: {e}", username)
                     time.sleep(10)
-

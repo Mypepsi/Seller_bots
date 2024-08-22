@@ -1,17 +1,17 @@
 import time
 import requests
 from bots_libraries.sellpy.logs import Logs
+from bots_libraries.sellpy.steam import Steam
 from bots_libraries.steampy.client import Asset
 from bots_libraries.steampy.models import GameOptions
-from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
-class TMSteam(ThreadManager):
+class TMSteam(Steam):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
     # region Steam Send Offers
-    def steam_send_offers(self, acc_info, global_time):
+    def steam_send_offers(self, acc_info):
         while True:
             try:
                 self.update_account_data_info()
@@ -92,7 +92,7 @@ class TMSteam(ThreadManager):
 
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Steam Send Offers Global Error: {e}", self.steamclient.username)
-            time.sleep(global_time)
+            time.sleep(self.steam_send_offers_global_time)
 
     def make_steam_offer(self, response_data_offer, send_offers):
         try:
@@ -263,7 +263,7 @@ class TMSteam(ThreadManager):
                     "site id": str(msg),  # str
                     "buyer steam id": partner_id,  # i`m not sure)
                     "asset id": asset,  # str
-                    "trade id": trade_id,  # ??? i`m not sure)
+                    "trade id": trade_id,  # str
                     "sent time": sent_time,  # int
                     "site item id": None
                 }

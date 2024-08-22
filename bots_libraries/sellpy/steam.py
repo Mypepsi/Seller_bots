@@ -19,17 +19,15 @@ class Steam(Mongo):
         self.shadowpay_apikey = None
         self.buff_cookie = None
 
-        self.steam_inventory_tradable = {}
-        self.steam_inventory_full = {}
-        self.steam_inventory_phases = {}
+        self.steam_inventory_tradable = self.steam_inventory_full = self.steam_inventory_phases = {}
 
-    def take_session(self, acc):
+    def take_session(self, acc_info):
         username = None
         try:
-            if 'username' in acc:
-                username = acc['username']
-                if 'steam session' in acc:
-                    session = acc['steam session']
+            if 'username' in acc_info:
+                username = acc_info['username']
+                if 'steam session' in acc_info:
+                    session = acc_info['steam session']
                 else:
                     if username in self.content_acc_data_dict and 'steam session' in self.content_acc_data_dict[username]:
                         session = self.content_acc_data_dict[username]['steam session']
@@ -52,7 +50,7 @@ class Steam(Mongo):
                     proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
                                'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
                 self.steamclient.proxies = proxies
-                self.steamclient._session.proxies.update(self.steamclient.proxies)
+                self.steamclient.session.proxies.update(self.steamclient.proxies)
                 self.trade_url = self.content_acc_settings_dict[self.steamclient.username]['trade url']
                 self.tm_apikey = self.content_acc_settings_dict[self.steamclient.username]['tm apikey']
                 self.waxpeer_apikey = self.content_acc_settings_dict[self.steamclient.username]['waxpeer apikey']
@@ -78,7 +76,7 @@ class Steam(Mongo):
             Logs.notify_except(self.tg_info, 'MongoDB: Error while taking Account Session', username)
             return False
 
-    def steam_cancel_offers(self, acc_info, cancel_offers_sites_name, global_time):
+    def steam_cancel_offers(self, acc_info):
         Logs.log('Steam Cancel Offers: thread are running', '')
         while True:
             try:
@@ -91,10 +89,10 @@ class Steam(Mongo):
                                                                       historical_only=0)
                     if active_trades and 'response' in active_trades and 'trade_offers_sent' in active_trades['response']:
                         sites_name = []
-                        for setting_offer in cancel_offers_sites_name:
+                        for setting_offer in self.steam_cancel_offers_sites_name:
                             if "site" in setting_offer:
                                 sites_name.append(setting_offer["site"])
-                        for offer in active_trades.get('response', {}).get('trade_offers_sent', []):
+                        for offer in active_trades['response']['trade_offers_sent']:
                             tradeofferid = offer['tradeofferid']
                             time_created = offer['time_created']
                             try:
@@ -112,7 +110,7 @@ class Steam(Mongo):
 
                             if site in sites_name:
                                 validity_time = None
-                                for item in cancel_offers_sites_name:
+                                for item in self.steam_cancel_offers_sites_name:
                                     if item['site'] == site:
                                         validity_time = item['offers validity time']
                                         break
@@ -126,9 +124,9 @@ class Steam(Mongo):
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Steam Cancel Offers Global Error: {e}",
                                    self.steamclient.username)
-            time.sleep(global_time)
+            time.sleep(self.steam_cancel_offers_global_time)
 
-    def steam_history(self, site_name, collection_info):
+    def steam_history(self, collection_info):
         try:
             need_to_work = False
             for doc in collection_info:
@@ -147,7 +145,7 @@ class Steam(Mongo):
                         if ('steam status' in doc and doc['steam status'] in ['sent', 'again_sent', 'error_again_send']
                                 and 'transaction' in doc and doc['transaction'] == 'sale_record'
                                 and all(key in doc for key in ['site', 'trade id', 'asset id'])
-                                and doc['site'] == site_name):
+                                and doc['site'] == self.site_name):
                             tradeofferid_alert = False
 
                             for offer in trade_offers:
@@ -191,13 +189,8 @@ class Steam(Mongo):
             Logs.notify_except(self.tg_info, f"Steam History Global Error: {e}", self.steamclient.username)
         time.sleep(3)
 
-    def send_sold_item_info(self, saleprice_bot_name, hash_name, site_price, sold_price, currency, currency_symbol,
-                            document, history_tg_info):
+    def send_sold_item_info(self, hash_name, site_price, sold_price, currency, currency_symbol, document):
         try:
-            tg_id = history_tg_info['tg id']
-            tg_bot = history_tg_info['tg bot']
-            bot_name = history_tg_info['bot name']
-
             current_timestamp = int(time.time())
 
             buff_full_price = 0
@@ -239,7 +232,7 @@ class Steam(Mongo):
                     if str(document['asset id']) == item['asset_id']:
                         launch_price = item['launch_price']
                         service_launch_price = item['service_launch_price']
-                        seller_value = self.get_information_for_price(saleprice_bot_name)
+                        seller_value = self.get_information_for_price()
                         start_sale_time = item['time']
 
                         time_difference = time_difference_ = current_timestamp - item['time']
@@ -278,7 +271,7 @@ class Steam(Mongo):
                 pass
 
             message = (
-                f'{bot_name}\n'
+                f'{self.history_tg_info["bot name"]}\n'
                 f'{self.steamclient.username}\n'
                 f'{hash_name}\n'
                 f'Site Price: {site_price}{currency_symbol} (Diapason: {min_limits_site_price}{currency_symbol} '
@@ -294,7 +287,7 @@ class Steam(Mongo):
             )
 
             try:
-                tg_bot.send_message(tg_id, message)
+                self.history_tg_info['tg bot'].send_message(self.history_tg_info['tg id'], message)
             except:
                 pass
 

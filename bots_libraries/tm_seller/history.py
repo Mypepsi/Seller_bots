@@ -9,9 +9,9 @@ class TMHistory(Steam):
         super().__init__(main_tg_info)
 
     # region History
-    def history(self, acc_info, global_time):
+    def history(self, acc_info):
         while True:
-            time.sleep(global_time)
+            time.sleep(self.history_global_time)
             try:
                 self.update_account_data_info()
                 self.update_database_info()
@@ -19,7 +19,7 @@ class TMHistory(Steam):
                 if active_session:
                     collection_info = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
                     if collection_info:
-                        self.steam_history(self.site_name, collection_info)
+                        self.steam_history(collection_info)
                         self.site_history(collection_info)
                         self.money_history(collection_info)
             except Exception as e:
@@ -81,9 +81,8 @@ class TMHistory(Steam):
                                         sold_price = round((site_price / rate * commission), 3)
                                         currency = item_transfer["currency"]
 
-                                        self.send_sold_item_info(self.saleprice_bot_name, hash_name, site_price, sold_price,
-                                                                 currency, '₽', doc,
-                                                                 self.history_tg_info)
+                                        self.send_sold_item_info(hash_name, site_price, sold_price,
+                                                                 currency, '₽', doc)
 
                                 elif stage == '5':
                                     doc["site status"] = 'cancelled'
@@ -91,21 +90,22 @@ class TMHistory(Steam):
                                 else:
                                     doc["site status"] = 'unavailable'
                                     doc['site status time'] = current_timestamp
-                                    Logs.notify_except(self.tg_info, f"'Unavailable' status on item with {item_transfer['item_id']} itemID",
+                                    Logs.notify_except(self.tg_info,
+                                                       f"'Unavailable' status on item with {item_transfer['item_id']} itemID",
                                                        self.steamclient.username)
                                 try:
                                     self.acc_history_collection.update_one({'_id': doc['_id']},
                                                                            {'$set': {'site status': doc['site status'],
                                                                                      'site status time': doc['site status time']}})
-                                except Exception as e:
-                                    Logs.notify_except(self.tg_info, f"Site History: MongoDB critical request failed: {e}",
-                                                       self.steamclient.username)
+                                except:
+                                    pass
                                 time.sleep(1)
                                 break
 
                         if not match_for_alert:
-                            Logs.notify_except(self.tg_info, f"Site History: MongoDB {doc['site item id']} "
-                                                        f"siteItemID not in site history", self.steamclient.username)
+                            Logs.notify(self.tg_info,
+                                        f"Site History: MongoDB {doc['site item id']} siteItemID not in site history",
+                                        self.steamclient.username)
                 for item_transfer in response_info:
                     if all(key in item_transfer for key in ['item_id', 'stage', 'time', 'market_hash_name', 'assetid']):
 
@@ -135,7 +135,7 @@ class TMHistory(Steam):
                             }
                             stage = str(item_transfer['stage'])
                             if stage == '1':
-                                if (current_timestamp - int(item_transfer['time'])) <= 86400:
+                                if (current_timestamp - int(item_transfer['time'])) < 86400:
                                     continue
                                 data_append["site status"] = 'active deal'
                             elif stage == '2':
@@ -179,9 +179,8 @@ class TMHistory(Steam):
                         try:
                             self.acc_history_collection.update_one({'_id': doc['_id']},
                                                                    {'$set': {'site item id': doc['site item id']}})
-                        except Exception as e:
-                            Logs.notify_except(self.tg_info, f"Site History: MongoDB critical request failed: {e}",
-                                               self.steamclient.username)
+                        except:
+                            pass
                         time.sleep(1)
                         for index, element in enumerate(collection_info_sorted_by_time):
                             if element.get('_id') == doc['_id']:

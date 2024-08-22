@@ -4,15 +4,15 @@ import threading
 import urllib.parse
 from queue import Queue, Empty
 from bots_libraries.sellpy.logs import Logs
-from bots_libraries.sellpy.thread_manager import ThreadManager
+from bots_libraries.sellpy.steam import Steam
 
 
-class TMItems(ThreadManager):
+class TMItems(Steam):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
     # region Add To Sale
-    def add_to_sale(self, acc_info, global_time):
+    def add_to_sale(self, acc_info):
         while True:
             try:
                 self.update_account_data_info()
@@ -20,7 +20,7 @@ class TMItems(ThreadManager):
                 active_session = self.take_session(acc_info)
                 if active_session:
                     filtered_inventory = self.add_to_sale_inventory()
-                    seller_value = self.get_information_for_price(self.saleprice_bot_name)
+                    seller_value = self.get_information_for_price()
                     if filtered_inventory and seller_value:
                         for asset_id in filtered_inventory:
                             site_price = self.get_site_price(self.steam_inventory_phases[asset_id], seller_value, 'max')
@@ -38,7 +38,7 @@ class TMItems(ThreadManager):
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Add To Sale Global Error: {e}", self.steamclient.username)
 
-            time.sleep(global_time)
+            time.sleep(self.add_to_sale_global_time)
 
     def add_to_sale_inventory(self):
         try:
@@ -92,7 +92,7 @@ class TMItems(ThreadManager):
         return None
 
     # region Change Price
-    def change_price(self, acc_info, global_time):
+    def change_price(self, acc_info):
         while True:
             try:
                 self.update_account_data_info()
@@ -112,7 +112,7 @@ class TMItems(ThreadManager):
                                 items_with_status_one.append(item)
                         if items_with_status_one:
                             new_listed_items = self.change_price_delete_items(items_with_status_one)
-                            seller_value = self.get_information_for_price(self.saleprice_bot_name)
+                            seller_value = self.get_information_for_price()
                             if seller_value:
                                 try:
                                     another_tm_apis_list = self.search_in_merges_by_username(self.steamclient.username)['tm apikey']
@@ -171,7 +171,7 @@ class TMItems(ThreadManager):
 
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Change Price Global Error: {e}", self.steamclient.username)
-            time.sleep(global_time)
+            time.sleep(self.change_price_global_time)
 
     def change_price_delete_items(self, items_on_sale):
         asset_id_to_delete = []
@@ -205,7 +205,6 @@ class TMItems(ThreadManager):
             except:
                 pass
             time.sleep(65)
-
 
     # region Parsing Info for change price
     def threads_parsing_prices(self, items, api_keys):

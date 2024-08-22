@@ -13,13 +13,13 @@ class Restarter(Mongo):
 
 
     # region Restart Server
-    def restart_server(self, validity_time, global_time):
+    def restart_server(self):
         Logs.log(f"Restart Server: thread are running", '')
         while True:
             try:
-                time.sleep(global_time)
+                time.sleep(self.restart_server_global_time)
                 server_uptime = uptime.uptime()
-                if server_uptime > validity_time:
+                if server_uptime > self.restart_server_validity_time:
                     self.restart_server_command()
             except Exception as e:
                 self.restart_server_command()
@@ -36,11 +36,11 @@ class Restarter(Mongo):
 
 
     # region Restart Bots
-    def restart_bots(self, restart_info_bots, global_time):
+    def restart_bots(self):
         Logs.log(f"Restart Bots: thread are running", '')
         while True:
             try:
-                time.sleep(global_time)
+                time.sleep(self.restart_bots_global_time)
                 command_json = "pm2 jlist"
                 process_list = []
                 result = subprocess.run(command_json, shell=True, check=True, stdout=subprocess.PIPE,
@@ -50,7 +50,7 @@ class Restarter(Mongo):
                     if start_index != -1:
                         process_list = json.loads(result.stdout[start_index:])
 
-                for bot_info in restart_info_bots:
+                for bot_info in self.restart_bots_name:
                     bot_name = bot_info['name']
                     bot_validity_time = bot_info['restart validity time']
                     if process_list:

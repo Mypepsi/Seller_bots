@@ -38,7 +38,7 @@ class ThreadManager(Mongo):
                             else:
                                 class_obj = instances_per_functions[username]
                             func_to_call = getattr(class_obj, funct)
-                            thread = threading.Thread(target=func_to_call)
+                            thread = threading.Thread(target=func_to_call, args=i)
                             thread.start()
                             time.sleep(thread_function_time)
                         except Exception as e:

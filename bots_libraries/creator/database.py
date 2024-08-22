@@ -8,7 +8,7 @@ class CreatorDataBase(Mongo):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
-    def database_prices(self, validity_time, global_time):
+    def database_prices(self):
         Logs.log(f"Database Prices: thread are running", '')
         while True:
             try:
@@ -31,7 +31,7 @@ class CreatorDataBase(Mongo):
                     last_update_time = db_doc["Time"]
 
                 difference_to_update = current_timestamp - last_update_time
-                if difference_to_update > validity_time:
+                if difference_to_update > self.db_prices_validity_time:
                     try:
                         db = requests.get(self.db_prices_url, timeout=30).json()
                     except:
@@ -144,9 +144,9 @@ class CreatorDataBase(Mongo):
                                     Logs.notify_except(self.tg_info, f"Database Prices: MongoDB critical request failed: {e}", '')
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Database Prices Global Error: {e}", '')
-            time.sleep(global_time)
+            time.sleep(self.db_prices_global_time)
 
-    def database_settings(self, validity_time, global_time):
+    def database_settings(self):
         Logs.log(f"Database Settings: thread are running", '')
         while True:
             try:
@@ -169,7 +169,7 @@ class CreatorDataBase(Mongo):
                     last_update_time = settings_doc["Time"]
 
                 difference_to_update = current_timestamp - last_update_time
-                if difference_to_update > validity_time:
+                if difference_to_update > self.db_settings_validity_time:
                     try:
                         currency_rs = requests.get(self.db_settings_url, timeout=30).json()
                     except:
@@ -186,4 +186,4 @@ class CreatorDataBase(Mongo):
 
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Database Settings Global Error: {e}", '')
-            time.sleep(global_time)
+            time.sleep(self.db_settings_global_time)

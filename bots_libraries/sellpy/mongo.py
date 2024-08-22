@@ -57,9 +57,9 @@ class Mongo:
             self.waiting_start_time = self.get_key(self.creator_settings_general, 'waiting start time')
             self.thread_start_time = self.get_key(self.creator_settings_general, 'thread start time')
             self.thread_function_time = self.get_key(self.creator_settings_general, 'thread function time')
-            self.mongodb_global_time = self.get_key(self.creator_settings_general, 'mongodb global time')
             self.proxy_url = f"https://{self.get_key(self.creator_settings_general, 'proxy url')}"
             self.proxy_global_time = self.get_key(self.creator_settings_general, 'proxy global time')
+            self.mongodb_global_time = self.get_key(self.creator_settings_general, 'mongodb global time')
 
             self.creator_settings_database = self.get_key(self.content_creator_settings, 'database')
             self.db_prices_url = f"http://{self.get_key(self.creator_settings_database, 'db prices url')}"
@@ -390,103 +390,6 @@ class Mongo:
             raise ExitException
         # endregion
 
-    # region Update Info
-    def update_database_info(self, prices=True, settings=True):
-        try:
-            database_prices = self.get_first_doc_from_mongo_collection(self.database_prices_collection)
-            if database_prices and prices:
-                self.content_database_prices = database_prices
-            database_settings = self.get_first_doc_from_mongo_collection(self.database_settings_collection)
-            if database_settings and settings:
-                self.content_database_settings = database_settings
-        except:
-            pass
-
-    def update_account_settings_info(self):
-        try:
-            acc_settings_list = self.get_all_docs_from_mongo_collection(self.acc_settings_collection)
-            if acc_settings_list:
-                self.content_acc_settings_list = acc_settings_list
-            acc_settings_dict = self.get_dict_from_collection_list(self.content_acc_settings_list, 'username')
-            if acc_settings_dict:
-                self.content_acc_settings_dict = acc_settings_dict
-        except:
-            pass
-
-    def update_account_data_info(self):
-        try:
-            acc_data_list = self.get_all_docs_from_mongo_collection(self.acc_data_collection)
-            if acc_data_list:
-                self.content_acc_data_list = acc_data_list
-            acc_data_dict = self.get_dict_from_collection_list(self.content_acc_data_list, 'username')
-            if acc_data_dict:
-                self.content_acc_data_dict = acc_data_dict
-        except:
-            pass
-
-    # endregion
-
-
-    # region Merge Info
-    def create_merge_info_for_parsing(self):
-        result = []
-        try:
-            unique_iterator = itertools.cycle(self.content_acc_for_parsing_list)
-            for acc in self.content_acc_data_list:
-                unique_acc = next(unique_iterator)
-                result.append([acc, unique_acc])
-        except Exception as e:
-            Logs.notify_except(self.tg_info, f"MongoDB: Error while creating Merge Info for Parsing: {e}", '')
-        return result
-
-    def search_in_merges_by_username(self, username):
-        try:
-            for sublist in self.content_merges:
-                if sublist[0]['username'] == username:
-                    return sublist[1]
-        except Exception as e:
-            Logs.notify_except(self.tg_info, f"MongoDB: Error searching in Merges Info by username: {e}", '')
-        return None
-    # endregion
-
-
-    # region Price Info
-    def get_information_for_price(self, name_of_seller):
-        try:
-            database_setting_bots = self.content_database_settings['DataBaseSettings']['Sellers_SalePrice']['bots']
-            seller_value = None
-            for key, value in database_setting_bots.items():
-                if name_of_seller in key:
-                    seller_value = value
-                    break
-            return seller_value
-        except Exception as e:
-            Logs.notify_except(self.tg_info, f"MongoDB: Error during receiving Sellers_SalePrice: {e}", '')
-            return None
-
-    @staticmethod
-    def find_matching_key(wanted, dictionary):
-        try:
-            keys = sorted([float(k) for k in dictionary.keys()])
-            found_key = None
-            for i in range(len(keys) - 1):
-                if keys[i] <= wanted < keys[i + 1]:
-                    if keys[i].is_integer():
-                        found_key = str(int(keys[i]))
-                    else:
-                        found_key = str(keys[i])
-                    break
-            if found_key is None and wanted >= keys[-1]:
-                if keys[-1].is_integer():
-                    found_key = str(int(keys[-1]))
-                else:
-                    found_key = str(keys[-1])
-            return found_key
-        except:
-            return None
-    # endregion
-
-
     # region Mongo Info
     def get_database(self, db_name):
         try:
@@ -546,3 +449,96 @@ class Mongo:
         return None
     # endregion
 
+    # region Merge Info
+    def create_merge_info_for_parsing(self):
+        result = []
+        try:
+            unique_iterator = itertools.cycle(self.content_acc_for_parsing_list)
+            for acc in self.content_acc_data_list:
+                unique_acc = next(unique_iterator)
+                result.append([acc, unique_acc])
+        except Exception as e:
+            Logs.notify_except(self.tg_info, f"MongoDB: Error while creating Merge Info for Parsing: {e}", '')
+        return result
+
+    def search_in_merges_by_username(self, username):
+        try:
+            for sublist in self.content_merges:
+                if sublist[0]['username'] == username:
+                    return sublist[1]
+        except Exception as e:
+            Logs.notify_except(self.tg_info, f"MongoDB: Error searching in Merges Info by username: {e}", '')
+        return None
+    # endregion
+
+    # region Price Info
+    def get_information_for_price(self):
+        try:
+            database_setting_bots = self.content_database_settings['DataBaseSettings']['Sellers_SalePrice']['bots']
+            seller_value = None
+            for key, value in database_setting_bots.items():
+                if self.saleprice_bot_name in key:
+                    seller_value = value
+                    break
+            return seller_value
+        except Exception as e:
+            Logs.notify_except(self.tg_info, f"MongoDB: Error during receiving Sellers_SalePrice: {e}", '')
+            return None
+
+    @staticmethod
+    def find_matching_key(wanted, dictionary):
+        try:
+            keys = sorted([float(k) for k in dictionary.keys()])
+            found_key = None
+            for i in range(len(keys) - 1):
+                if keys[i] <= wanted < keys[i + 1]:
+                    if keys[i].is_integer():
+                        found_key = str(int(keys[i]))
+                    else:
+                        found_key = str(keys[i])
+                    break
+            if found_key is None and wanted >= keys[-1]:
+                if keys[-1].is_integer():
+                    found_key = str(int(keys[-1]))
+                else:
+                    found_key = str(keys[-1])
+            return found_key
+        except:
+            return None
+    # endregion
+
+    # region Update Info
+    def update_database_info(self, prices=True, settings=True):
+        try:
+            database_prices = self.get_first_doc_from_mongo_collection(self.database_prices_collection)
+            if database_prices and prices:
+                self.content_database_prices = database_prices
+            database_settings = self.get_first_doc_from_mongo_collection(self.database_settings_collection)
+            if database_settings and settings:
+                self.content_database_settings = database_settings
+        except:
+            pass
+
+    def update_account_settings_info(self):
+        try:
+            acc_settings_list = self.get_all_docs_from_mongo_collection(self.acc_settings_collection)
+            if acc_settings_list:
+                self.content_acc_settings_list = acc_settings_list
+            acc_settings_dict = self.get_dict_from_collection_list(self.content_acc_settings_list, 'username')
+            if acc_settings_dict:
+                self.content_acc_settings_dict = acc_settings_dict
+        except:
+            pass
+
+    def update_account_data_info(self):
+        try:
+            acc_data_list = self.get_all_docs_from_mongo_collection(self.acc_data_collection)
+            if acc_data_list:
+                self.content_acc_data_list = acc_data_list
+            acc_data_dict = self.get_dict_from_collection_list(self.content_acc_data_list, 'username')
+            if acc_data_dict:
+                self.content_acc_data_dict = acc_data_dict
+        except:
+            pass
+
+    # endregion

@@ -10,7 +10,7 @@ class CreatorGeneral(Steam):
         self.questionable_proxies = {}
         self.mongo_tg_alert = False
 
-    def proxy(self, global_time):
+    def proxy(self):
         Logs.log(f"Proxy: thread are running", '')
         while True:
             try:
@@ -22,7 +22,7 @@ class CreatorGeneral(Steam):
                         proxy_list.append(self.steamclient.proxies)
                 unique_proxy_list = []
                 for proxy in proxy_list:
-                    if proxy not in unique_proxy_list and proxy is not None:
+                    if proxy not in unique_proxy_list:
                         unique_proxy_list.append(proxy)
                 proxy_for_check = unique_proxy_list
 
@@ -51,9 +51,9 @@ class CreatorGeneral(Steam):
                     time.sleep(10)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Proxy Global Error: {e}", '')
-            time.sleep(global_time)
+            time.sleep(self.proxy_global_time)
 
-    def mongodb(self, global_time):
+    def mongodb(self):
         Logs.log(f"MongoDB: thread are running", '')
         while True:
             try:
@@ -63,4 +63,4 @@ class CreatorGeneral(Steam):
                     raise ExitException
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"MongoDB: MongoDB did not answered: {e}", '')
-            time.sleep(global_time)
+            time.sleep(self.mongodb_global_time)

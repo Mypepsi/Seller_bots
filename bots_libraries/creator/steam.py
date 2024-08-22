@@ -20,7 +20,7 @@ class CreatorSteam(Steam):
 
 
     # region Steam Login
-    def steam_login(self, global_time):
+    def steam_login(self):
         Logs.log(f"Steam Login: thread are running", '')
         while True:
             self.update_account_data_info()
@@ -61,7 +61,7 @@ class CreatorSteam(Steam):
 
                 except Exception as e:
                     Logs.notify_except(self.tg_info, f"Steam Login Global Error: {e}", username)
-            time.sleep(global_time)
+            time.sleep(self.steam_session_global_time)
 
     def make_steam_login(self, username, password, steam_guard, proxies):
         number_of_try = 1
@@ -140,7 +140,7 @@ class CreatorSteam(Steam):
             pass
     # endregion
 
-    def steam_inventory(self, global_time):
+    def steam_inventory(self):
         Logs.log(f"Steam Inventory: thread are running", '')
         while True:
             self.update_account_data_info()
@@ -230,12 +230,12 @@ class CreatorSteam(Steam):
                 except Exception as e:
                     Logs.notify_except(self.tg_info, f"Steam Inventory Global Error: {e}", self.steamclient.username)
                 time.sleep(10)
-            time.sleep(global_time)
+            time.sleep(self.steam_inventory_global_time)
 
-    def steam_access_token(self, global_time):
+    def steam_access_token(self):
         Logs.log(f"Steam Access Token: thread are running", '')
         while True:
-            time.sleep(global_time)
+            time.sleep(self.steam_access_token_global_time)
             self.update_account_data_info()
             for acc in self.content_acc_data_list:
                 try:
@@ -248,7 +248,9 @@ class CreatorSteam(Steam):
                             reply = None
                         if reply and 'data' in reply:
                             if ('webapi_token' in reply['data'] and not reply['data']['webapi_token'] or
-                                    str(self.steamclient.access_token) != reply['data']['webapi_token']):
+                                    ('webapi_token' in reply['data']
+                                     and str(self.steamclient.access_token) != reply['data']['webapi_token']) or
+                                    isinstance(reply['data'], list)):
                                 Logs.notify(self.tg_info, "Steam Access Token: Invalid access token",
                                             self.steamclient.username)
                                 try:
@@ -264,7 +266,7 @@ class CreatorSteam(Steam):
                 time.sleep(10)
     # region Steam Apikey
 
-    def steam_apikey(self, global_time):
+    def steam_apikey(self):
         Logs.log(f"Steam Apikey: thread are running", '')
         while True:
             self.update_account_data_info()
@@ -273,7 +275,7 @@ class CreatorSteam(Steam):
                     active_session = self.take_session(acc)
                     if active_session:
                         try:
-                            response = self.steamclient._session.get('https://steamcommunity.com/dev/apikey', timeout=15)
+                            response = self.steamclient.session.get('https://steamcommunity.com/dev/apikey', timeout=15)
                         except:
                             response = None
                         if response and response.status_code == 200:
@@ -293,7 +295,7 @@ class CreatorSteam(Steam):
                 except Exception as e:
                     Logs.notify_except(self.tg_info, f"Steam Apikey Global Error: {e}", self.steamclient.username)
                 time.sleep(10)
-            time.sleep(global_time)
+            time.sleep(self.steam_apikey_global_time)
 
     def get_steam_apikey(self, text):
         parsed_body = html.fromstring(text)
@@ -386,7 +388,7 @@ class CreatorSteam(Steam):
 
     def get_steam_comm_cookie(self):
         str = ''
-        for cookie in self.steamclient._session.cookies:
+        for cookie in self.steamclient.session.cookies:
             if cookie.domain == 'steamcommunity.com':
                 str += cookie.name + '=' + cookie.value + '; '
         return str[0: len(str) - 2]

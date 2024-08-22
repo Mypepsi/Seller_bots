@@ -2,16 +2,16 @@ import time
 import random
 import requests
 import urllib.parse
+from bots_libraries.sellpy.steam import Steam
 from bots_libraries.sellpy.logs import Logs, ExitException
-from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
-class TMOnline(ThreadManager):
+class TMOnline(Steam):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
         self.ping_alert = False
 
-    def ping(self, acc_info, global_time):
+    def ping(self, acc_info):
         while True:
             try:
                 self.update_account_data_info()
@@ -27,7 +27,7 @@ class TMOnline(ThreadManager):
                             self.ping_alert = True
             except Exception as e:
                 Logs.notify_except(self.tg_info, f'Ping Global Error: {e}', self.steamclient.username)
-            time.sleep(global_time)
+            time.sleep(self.ping_global_time)
 
     def request_to_ping(self):
         try:
@@ -42,7 +42,7 @@ class TMOnline(ThreadManager):
         except:
             return None
 
-    def restart_store(self, acc_info, global_time):
+    def restart_store(self, acc_info):
         while True:
             try:
                 self.update_account_data_info()
@@ -59,11 +59,11 @@ class TMOnline(ThreadManager):
                     self.request_to_ping()
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Restart Store Global Error: {e}", self.steamclient.username)
-            time.sleep(global_time)
+            time.sleep(self.restart_store_global_time)
 
-    def visible_store(self, acc_info, global_time):
+    def visible_store(self, acc_info):
         while True:
-            time.sleep(global_time)
+            time.sleep(self.visible_store_global_time)
             try:
                 search_result = False
                 self.update_account_data_info()
@@ -123,7 +123,3 @@ class TMOnline(ThreadManager):
                 break
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Visible Store Global Error: {e}", self.steamclient.username)
-
-
-
-
