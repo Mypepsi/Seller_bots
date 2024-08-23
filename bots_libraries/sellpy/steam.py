@@ -84,9 +84,7 @@ class Steam(Mongo):
                 self.update_account_data_info()
                 active_session = self.take_session(acc_info)
                 if active_session:
-                    active_trades = self.steamclient.get_trade_offers(self.steamclient.access_token, get_sent_offers=1,
-                                                                      get_received_offers=0, get_descriptions=0, active_only=1,
-                                                                      historical_only=0)
+                    active_trades = self.steamclient.get_trade_offers(get_sent_offers=1, active_only=1)
                     if active_trades and 'response' in active_trades and 'trade_offers_sent' in active_trades['response']:
                         sites_name = []
                         for setting_offer in self.steam_cancel_offers_sites_name:
@@ -126,6 +124,41 @@ class Steam(Mongo):
                                    self.steamclient.username)
             time.sleep(self.steam_cancel_offers_global_time)
 
+    def check_created_steam_offer(self, creating_offer_time, assets_list, partner):
+        trade_offers = self.steamclient.get_trade_offers(get_sent_offers=1)
+        if trade_offers and 'response' in trade_offers and 'trade_offers_sent' in trade_offers['response']:
+            trade_offers_sent = trade_offers['response']['trade_offers_sent']
+            history_docs = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
+            matched_trades = []
+            for offer in trade_offers_sent:
+                try:
+                    time_created = offer['time_created']
+                    match = False
+                    for doc in history_docs:
+                        if "trade id" in doc and doc["trade id"] == offer['tradeofferid']:
+                            match = True
+                            break
+                    if match:
+                        continue
+                    if time_created > creating_offer_time - 15:
+                        asset_id_from_trade_offers = [item['assetid'] for item in offer['items_to_give']]
+                        if set(asset_id_from_trade_offers) == set(assets_list) and offer['accountid_other'] == partner:
+                            matched_trades.append(offer)
+                except:
+                    pass
+            if matched_trades:
+                latest_trade_steam = max(matched_trades, key=lambda t: t['time_created'])
+                if latest_trade_steam['trade_offer_state'] == 9:
+                    try:
+                        self.steamclient.confirm_offer({'tradeofferid': latest_trade_steam['tradeofferid']})
+                    except:
+                        pass
+                return latest_trade_steam['tradeofferid']
+            else:
+                return None
+        else:
+            return None
+
     def steam_history(self, collection_info):
         try:
             need_to_work = False
@@ -135,9 +168,7 @@ class Steam(Mongo):
                     break
 
             if need_to_work:
-                response = self.steamclient.get_trade_offers(self.steamclient.access_token, get_sent_offers=1,
-                                                             get_received_offers=0, get_descriptions=0, active_only=0,
-                                                             historical_only=0)
+                response = self.steamclient.get_trade_offers(get_sent_offers=1)
 
                 if response and 'response' in response and 'trade_offers_sent' in response['response']:
                     trade_offers = response['response']['trade_offers_sent']

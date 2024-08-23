@@ -80,7 +80,7 @@ class TMSteam(Steam):
 
                                     if int(offer_status) == 9:
                                         try:
-                                            self.steamclient.confirm_offer_via_tradeofferid({'tradeofferid': trade_id})
+                                            self.steamclient.confirm_offer({'tradeofferid': trade_id})
                                         except:
                                             pass
                                         break
@@ -110,16 +110,16 @@ class TMSteam(Steam):
 
             trade_offer_url = f'https://steamcommunity.com/tradeoffer/new/?partner={partner}&token={token}'
             creating_offer_time = int(time.time())
-            steam_response = self.steamclient.make_offer_with_url(assets_for_offer, [], trade_offer_url, '')
+            steam_response = self.steamclient.make_offer(assets_for_offer, [], trade_offer_url)
             time.sleep(1)
 
             if steam_response is None or 'tradeofferid' not in steam_response:
                 trade_offer_id = self.check_created_steam_offer(creating_offer_time, assets, partner)
                 steam_response = {'tradeofferid': trade_offer_id}
             else:
+                time.sleep(1)
                 try:
-                    self.steamclient.confirm_offer_via_tradeofferid(steam_response)
-                    time.sleep(1)
+                    self.steamclient.confirm_offer(steam_response)
                 except:
                     pass
                 trade_offer_id = steam_response['tradeofferid']
@@ -133,44 +133,6 @@ class TMSteam(Steam):
                 Logs.log(f"Make Steam Offer: Error send trade: {names}", self.steamclient.username)
         except Exception as e:
             Logs.notify_except(self.tg_info, f"Make Steam Offer Global Error: {e}", self.steamclient.username)
-
-    def check_created_steam_offer(self, creating_offer_time, assets, partner):
-        trade_offers = self.steamclient.get_trade_offers(self.steamclient.access_token, get_sent_offers=1,
-                                                         get_received_offers=0, get_descriptions=0, active_only=0,
-                                                         historical_only=0)
-        if (trade_offers
-                and trade_offers and 'response' in trade_offers and 'trade_offers_sent' in trade_offers['response']):
-            trade_offers_sent = trade_offers['response']['trade_offers_sent']
-            history_docs = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
-            matched_trades = []
-            for offer in trade_offers_sent:
-                try:
-                    time_created = offer['time_created']
-                    match = False
-                    for doc in history_docs:
-                        if "trade id" in doc and doc["trade id"] == offer['tradeofferid']:
-                            match = True
-                            break
-                    if match:
-                        continue
-                    if time_created > creating_offer_time - 15:
-                        asset_id_from_trade_offers = [item['assetid'] for item in offer['items_to_give']]
-                        if set(asset_id_from_trade_offers) == set(assets) and offer['accountid_other'] == partner:
-                            matched_trades.append(offer)
-                except:
-                    pass
-            if matched_trades:
-                latest_trade_steam = max(matched_trades, key=lambda t: t['time_created'])
-                if latest_trade_steam['trade_offer_state'] == 9:
-                    try:
-                        self.steamclient.confirm_offer_via_tradeofferid({'tradeofferid': latest_trade_steam['tradeofferid']})
-                    except:
-                        pass
-                return latest_trade_steam['tradeofferid']
-            else:
-                return None
-        else:
-            return None
 
     def handle_doc_in_history(self, send_offers, assets_list, name_list, msg, steam_response,
                               offer_url, success=True):
@@ -250,7 +212,7 @@ class TMSteam(Steam):
                 if sent_time is not None:
                     sent_time += 1
                 current_timestamp_unique += 1
-                partner_id = self.steamclient.return_partner_steam_id_from_url(offer_url)
+                partner_id = self.steamclient.get_steamid_from_url(offer_url)
                 data_append = {
                     "transaction": "sale_record",
                     "site": self.site_name,  # str

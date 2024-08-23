@@ -72,12 +72,12 @@ class CreatorSteam(Steam):
                     last_update_time = self.content_acc_data_dict[username].get('time steam session', 0)
                     difference_to_update = current_timestamp - int(last_update_time)
                     if difference_to_update > self.steam_session_validity_time:
-                        self.steamclient.login_steam(username, password, steam_guard, proxies)
+                        self.steamclient.make_login(username, password, steam_guard, proxies)
                         Logs.log(f"Steam Login: Authorization was successful", username)
                         self.handle_doc_in_account_data()
                         self.create_history_doc()
                 elif username not in self.content_acc_data_dict:
-                    self.steamclient.login_steam(username, password, steam_guard, proxies)
+                    self.steamclient.make_login(username, password, steam_guard, proxies)
                     Logs.log(f"Steam Login: Authorization was successful", username)
                     self.handle_doc_in_account_data()
                     self.create_history_doc()
@@ -144,13 +144,13 @@ class CreatorSteam(Steam):
         Logs.log(f"Steam Inventory: thread are running", '')
         while True:
             self.update_account_data_info()
-            self.update_database_info()
+            self.update_database_info(settings=False)
             for acc in self.content_acc_data_list:
                 try:
                     active_session = self.take_session(acc)
                     if active_session:
                         try:
-                            my_items = self.steamclient.get_inventory_from_link_with_session(
+                            my_items = self.steamclient.get_inventory(
                                 self.steamclient.steam_guard['steamid'],
                                 GameOptions.CS
                             )

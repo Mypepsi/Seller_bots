@@ -16,8 +16,7 @@ class Mongo:
             maxPoolSize=10  # Maximum connections in pool.
         )
 
-        self.tg_info = main_tg_info
-
+        self.tg_info = main_tg_info  # Initialization TG Info
 
         # region MongoDB
         self.database = self.get_database('Seller_DataBases')
@@ -47,7 +46,6 @@ class Mongo:
         self.acc_history_collection = None
         # endregion
 
-        # region Initialization Params Error
         # region Collection creator_settings
         if self.tg_info["bot name"] == 'Creator':
             self.creator_settings_collection = self.get_collection(self.settings, 'creator_settings')
@@ -88,11 +86,6 @@ class Mongo:
         elif self.tg_info["bot name"] == 'TM Seller':
             self.tm_settings_collection = self.get_collection(self.settings, 'tm_seller_settings')
             self.content_tm_settings = self.get_first_doc_from_mongo_collection(self.tm_settings_collection)
-
-            self.tm_settings_telegram = self.get_key(self.content_tm_settings, 'telegram')
-            self.tg_token = self.get_key(self.tm_settings_telegram, 'tg token')
-            self.tg_id = self.get_key(self.tm_settings_telegram, 'tg id')
-            self.tg_bot_name = self.get_key(self.tm_settings_telegram, 'tg bot name')
 
             self.tm_settings_general = self.get_key(self.content_tm_settings, 'general')
             self.waiting_start_time = self.get_key(self.tm_settings_general, 'waiting start time')
@@ -386,9 +379,8 @@ class Mongo:
             self.restart_bots_global_time = self.get_key(self.buff_settings_restart, 'restart bots global time')
         # endregion
 
-        else:
+        else: # Initialization Parameters Error
             raise ExitException
-        # endregion
 
     # region Mongo Info
     def get_database(self, db_name):
@@ -510,12 +502,14 @@ class Mongo:
     # region Update Info
     def update_database_info(self, prices=True, settings=True):
         try:
-            database_prices = self.get_first_doc_from_mongo_collection(self.database_prices_collection)
-            if database_prices and prices:
-                self.content_database_prices = database_prices
-            database_settings = self.get_first_doc_from_mongo_collection(self.database_settings_collection)
-            if database_settings and settings:
-                self.content_database_settings = database_settings
+            if prices:
+                database_prices = self.get_first_doc_from_mongo_collection(self.database_prices_collection)
+                if database_prices:
+                    self.content_database_prices = database_prices
+            if settings:
+                database_settings = self.get_first_doc_from_mongo_collection(self.database_settings_collection)
+                if database_settings:
+                    self.content_database_settings = database_settings
         except:
             pass
 

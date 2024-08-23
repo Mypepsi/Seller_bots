@@ -128,16 +128,15 @@ class Logs:
 
     @staticmethod
     def get_bot_name():
-        file_name = 'File not found'
+        bot_name = 'Bot  not found'
         try:
             stack = inspect.stack()
-            caller_frame = stack[-1]
-            file_path = caller_frame.filename
-            file_name = os.path.splitext(os.path.basename(file_path))[0].replace("_", " ")
+            last_frame = stack[-1]
+            bot_name = os.path.splitext(os.path.basename(last_frame.filename))[0].replace("_", " ")
         except:
             pass
 
-        return file_name
+        return bot_name
     #endregion
 
 

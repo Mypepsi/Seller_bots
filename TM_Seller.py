@@ -65,19 +65,19 @@ class TMSeller(TMGeneral, TMOnline, TMItems, TMSteam, TMHistory, Restarter):
 if __name__ == '__main__':
     tg_token = '6710866120:AAElhQPr-4PkOnZvvLDSnYA163Ez0td4KzQ'
     tg_id = -1001807211917
-
-    main_tg_bot = telebot.TeleBot(tg_token)
+    bot_name = Logs.get_bot_name()
+    tg_bot = telebot.TeleBot(tg_token)
     main_tg_info = {
         'tg id': tg_id,
-        'tg bot': main_tg_bot,
-        'bot name': Logs.get_bot_name()}
+        'tg bot': tg_bot,
+        'bot name': bot_name}
 
     try:
         manager = ThreadManager(main_tg_info)
 
         threads = TMSeller.collect_work_functions(main_tg_info)
 
-        Logs.log(f'{main_tg_info["bot name"]} STARTED ({len(manager.content_acc_data_list)} in Account Data '
+        Logs.log(f'{bot_name} STARTED ({len(manager.content_acc_data_list)} in Account Data '
                  f'and {len(manager.content_acc_settings_list)} in Account Settings)', '')
         #time.sleep(manager.waiting_start_time)
         manager.start_of_work(threads, manager.thread_function_time, manager.thread_start_time)

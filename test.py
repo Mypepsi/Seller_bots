@@ -74,10 +74,10 @@ class Creator(CreatorSteam, CreatorGeneral, CreatorDataBase, Restarter):
 tg_token = '6710866120:AAElhQPr-4PkOnZvvLDSnYA163Ez0td4KzQ'
 tg_id = -1001807211917
 
-main_tg_bot = telebot.TeleBot(tg_token)
+tg_bot = telebot.TeleBot(tg_token)
 main_tg_info = {
     'tg id': tg_id,
-    'tg bot': main_tg_bot,
+    'tg bot': tg_bot,
     'bot name': Logs.get_bot_name()}
 
 Creator.collect_work_functions(main_tg_info)
