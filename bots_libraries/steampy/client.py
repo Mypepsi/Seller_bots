@@ -352,7 +352,7 @@ class SteamClient:
                 response = requests.get(url, params=params, proxies=self.proxies, timeout=15)
         else:
             if self.proxies == None:
-                response = requests.post(url, params=params, timeout=15)
+                response = requests.post(url, data=params, timeout=15)
             else:
                 response = requests.post(url, data=params, proxies=self.proxies, timeout=15)
 
