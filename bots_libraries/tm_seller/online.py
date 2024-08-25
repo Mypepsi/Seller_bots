@@ -11,12 +11,11 @@ class TMOnline(Steam):
         super().__init__(main_tg_info)
         self.ping_alert = False
 
-    def ping(self, acc_info):
+    def ping(self):
         while True:
             try:
                 self.update_account_data_info()
-                active_session = self.take_session(acc_info)
-                if active_session:
+                if self.active_session:
                     response = self.request_to_ping()
                     if (response is not None and 'success' in response and response['success'] is False
                             and 'message' in response and response['message'] != 'too early for ping'):
@@ -42,12 +41,11 @@ class TMOnline(Steam):
         except:
             return None
 
-    def restart_store(self, acc_info):
+    def restart_store(self):
         while True:
             try:
                 self.update_account_data_info()
-                active_session = self.take_session(acc_info)
-                if active_session:
+                if self.active_session:
                     try:
                         url = f'{self.site_url}/api/v2/go-offline?key={self.tm_apikey}'
                         response = requests.get(url, timeout=5).json()
@@ -61,14 +59,13 @@ class TMOnline(Steam):
                 Logs.notify_except(self.tg_info, f"Restart Store Global Error: {e}", self.steamclient.username)
             time.sleep(self.restart_store_global_time)
 
-    def visible_store(self, acc_info):
+    def visible_store(self):
         while True:
             time.sleep(self.visible_store_global_time)
             try:
                 search_result = False
                 self.update_account_data_info()
-                active_session = self.take_session(acc_info)
-                if active_session:
+                if self.active_session:
                     try:
                         my_inventory_url = f'{self.site_url}/api/v2/my-inventory/?key={self.tm_apikey}'
                         my_inventory_response = requests.get(my_inventory_url, timeout=30).json()

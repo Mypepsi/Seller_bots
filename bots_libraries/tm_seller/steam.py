@@ -11,12 +11,11 @@ class TMSteam(Steam):
         super().__init__(main_tg_info)
 
     # region Steam Send Offers
-    def steam_send_offers(self, acc_info):
+    def steam_send_offers(self):
         while True:
             try:
                 self.update_account_data_info()
-                active_session = self.take_session(acc_info)
-                if active_session:
+                if self.active_session:
                     try:
                         url = f'{self.site_url}/api/v2/trade-request-give-p2p-all?key={self.tm_apikey}'
                         request_site_offers = requests.get(url, timeout=30).json()

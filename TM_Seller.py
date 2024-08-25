@@ -19,47 +19,50 @@ class TMSeller(TMGeneral, TMOnline, TMItems, TMSteam, TMHistory, Restarter):
 
     @staticmethod
     def collect_work_functions(tg_info):
-        functions_info = []
+        functions_list = []
         if manager.restart_server_global_time != 0:  # Restart Server
-            functions_info.append({"func": "restart_server", "class_per_functions": TMSeller})
+            functions_list.append({"func": "restart_server", "class_per_functions": TMSeller})
 
         if manager.restart_bots_global_time != 0:    # Restart Bots
-            functions_info.append({"func": "restart_bots", "class_per_functions": TMSeller})
+            functions_list.append({"func": "restart_bots", "class_per_functions": TMSeller})
 
         if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
-            functions_info.append({"func": "steam_cancel_offers", "class_per_functions_and_account": TMSeller})
+            functions_list.append({"func": "steam_cancel_offers", "class_per_functions_and_account": TMSeller})
 
         if manager.restart_store_global_time != 0:  # Restart Store
-            functions_info.append({"func": "restart_store", "class_per_functions_and_account": TMSeller})
+            functions_list.append({"func": "restart_store", "class_per_functions_and_account": TMSeller})
 
         if manager.site_apikey_global_time != 0:  # Site Apikey
-            functions_info.append({"func": "site_apikey", "class_per_functions": TMSeller})
+            functions_list.append({"func": "site_apikey", "class_per_functions": TMSeller})
 
         if manager.ping_global_time != 0:  # Ping
-            functions_info.append({"func": "ping", "class_per_functions_and_account": TMSeller})
+            functions_list.append({"func": "ping", "class_per_functions_and_account": TMSeller})
 
         if manager.steam_send_offers_global_time != 0:  # Steam Send Offers
-            functions_info.append({"func": "steam_send_offers", "class_per_functions_and_account": TMSeller})
+            functions_list.append({"func": "steam_send_offers", "class_per_functions_and_account": TMSeller})
 
         if manager.add_to_sale_global_time != 0:  # Add To Sale
-            functions_info.append({"func": "add_to_sale", "class_per_functions_and_account": TMSeller})
+            functions_list.append({"func": "add_to_sale", "class_per_functions_and_account": TMSeller})
 
         if manager.change_price_global_time != 0:  # Change Price
-            functions_info.append({"func": "change_price", "class_per_functions_and_account": TMSeller})
+            functions_list.append({"func": "change_price", "class_per_functions_and_account": TMSeller})
 
         if manager.balance_transfer_global_time != 0:  # Balance Transfer
-            functions_info.append({"func": "balance_transfer", "class_per_functions": TMSeller})
+            functions_list.append({"func": "balance_transfer", "class_per_functions": TMSeller})
 
         if manager.history_global_time != 0:  # History
-            functions_info.append({"func": "history", "class_per_functions_and_account": TMSeller})
+            functions_list.append({"func": "history", "class_per_functions_and_account": TMSeller})
 
         if manager.visible_store_global_time != 0:  # Visible Store
-            functions_info.append({"func": "visible_store", "class_per_functions_and_account": TMSeller})
+            functions_list.append({"func": "visible_store", "class_per_functions_and_account": TMSeller})
 
-        for funk in functions_info:
-            funk["tg_info"] = tg_info
+        if any('class_per_functions_and_account' in function for function in functions_list):
+            functions_list.insert(0, {"func": "update_session", "class_per_functions_and_account": TMSeller})
 
-        return functions_info
+        for function in functions_list:
+            function["tg_info"] = tg_info
+
+        return functions_list
 
 
 if __name__ == '__main__':

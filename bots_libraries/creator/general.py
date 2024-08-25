@@ -17,8 +17,7 @@ class CreatorGeneral(Steam):
                 self.update_account_data_info()
                 proxy_list = []
                 for acc in self.content_acc_data_list:
-                    active_session = self.take_session(acc)
-                    if active_session and self.steamclient.proxies:
+                    if self.take_session(acc) and self.steamclient.proxies:
                         proxy_list.append(self.steamclient.proxies)
                 unique_proxy_list = []
                 for proxy in proxy_list:
@@ -56,11 +55,12 @@ class CreatorGeneral(Steam):
     def mongodb(self):
         Logs.log(f"MongoDB: thread are running", '')
         while True:
-            try:
-                response = self.client.admin.command('ping')
-                if response.get('ok') != 1 and not self.mongo_tg_alert:
+            if not self.mongo_tg_alert:
+                try:
+                    response = self.client.admin.command('ping')
+                    if response['ok'] != 1:
+                        raise ExitException
+                except Exception as e:
                     self.mongo_tg_alert = True
-                    raise ExitException
-            except Exception as e:
-                Logs.notify_except(self.tg_info, f"MongoDB: MongoDB did not answered: {e}", '')
+                    Logs.notify_except(self.tg_info, f"MongoDB: MongoDB critical request failed: {e}", '')
             time.sleep(self.mongodb_global_time)

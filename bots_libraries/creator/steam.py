@@ -28,8 +28,7 @@ class CreatorSteam(Steam):
             username = None
             for acc in self.content_acc_settings_list:
                 try:
-                    active_session = self.take_session(acc)
-                    if active_session:
+                    if self.take_session(acc):
                         user_agent = self.steamclient.user_agent
                     else:
                         user_agent = self.ua.random
@@ -128,8 +127,9 @@ class CreatorSteam(Steam):
                     "steam inventory phases": {}
                 }
                 self.acc_data_collection.insert_one(new_doc)
-        except:
-            pass
+        except Exception as e:
+            Logs.notify_except(self.tg_info, f"Steam Login: MongoDB critical request failed: {e}",
+                               self.steamclient.username)
 
     def create_history_doc(self):
         try:
@@ -147,8 +147,7 @@ class CreatorSteam(Steam):
             self.update_database_info(settings=False)
             for acc in self.content_acc_data_list:
                 try:
-                    active_session = self.take_session(acc)
-                    if active_session:
+                    if self.take_session(acc):
                         try:
                             my_items = self.steamclient.get_inventory(
                                 self.steamclient.steam_guard['steamid'],
@@ -239,8 +238,7 @@ class CreatorSteam(Steam):
             self.update_account_data_info()
             for acc in self.content_acc_data_list:
                 try:
-                    active_session = self.take_session(acc)
-                    if active_session:
+                    if self.take_session(acc):
                         try:
                             url = 'https://steamcommunity.com/pointssummary/ajaxgetasyncconfig'
                             reply = self.steamclient.session.get(url, timeout=15).json()
@@ -272,8 +270,7 @@ class CreatorSteam(Steam):
             self.update_account_data_info()
             for acc in self.content_acc_data_list:
                 try:
-                    active_session = self.take_session(acc)
-                    if active_session:
+                    if self.take_session(acc):
                         try:
                             response = self.steamclient.session.get('https://steamcommunity.com/dev/apikey', timeout=15)
                         except:

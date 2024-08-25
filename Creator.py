@@ -47,6 +47,9 @@ class Creator(CreatorSteam, CreatorGeneral, CreatorDataBase, Restarter):
         if manager.mongodb_global_time != 0:  # Mongodb Checker
             functions_list.append({"func": "mongodb", "class_per_functions": Creator})
 
+        if any('class_per_functions_and_account' in function for function in functions_list):
+            functions_list.insert(0, {"func": "update_session", "class_per_functions_and_account": Creator})
+
         for function in functions_list:
             function["tg_info"] = tg_info
 
@@ -69,7 +72,7 @@ if __name__ == '__main__':
 
         Logs.log(f'{bot_name} STARTED ({len(manager.content_acc_data_list)} in Account Data '
                  f'and {len(manager.content_acc_settings_list)} in Account Settings)', '')
-        # time.sleep(manager.waiting_start_time)
+        time.sleep(manager.waiting_start_time)
         manager.start_of_work(functions)
 
     except ServerSelectionTimeoutError as e:

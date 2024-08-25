@@ -1,4 +1,3 @@
-import re
 import time
 import threading
 from bots_libraries.sellpy.logs import Logs, ExitException
@@ -9,7 +8,7 @@ class ThreadManager(Mongo):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
-    def start_of_work(self, functions, thread_function_time, thread_start_time):
+    def start_of_work(self, functions):
         instances_per_functions = {}
         instances_per_functions_and_account = {}
         modified_desired_key = ''
@@ -38,9 +37,12 @@ class ThreadManager(Mongo):
                             else:
                                 class_obj = instances_per_functions[username]
                             func_to_call = getattr(class_obj, funct)
-                            thread = threading.Thread(target=func_to_call, args=i)
+                            if funct == "update_session":
+                                thread = threading.Thread(target=func_to_call, args=i)
+                            else:
+                                thread = threading.Thread(target=func_to_call)
                             thread.start()
-                            time.sleep(thread_function_time)
+                            time.sleep(self.thread_function_time)
                         except Exception as e:
                             Logs.notify_except(self.tg_info,
                                                f"{modified_desired_key}: Thread for Account has not created: {e}",
@@ -51,7 +53,7 @@ class ThreadManager(Mongo):
                 func_to_call = getattr(function[class_key], func)
                 thread = threading.Thread(target=func_to_call)
                 thread.start()
-                time.sleep(thread_start_time)
+                time.sleep(self.thread_start_time)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"{modified_desired_key}: Thread has not started: {e}", '')
 

@@ -9,6 +9,7 @@ from bots_libraries.sellpy.logs import Logs, ExitException
 class Steam(Mongo):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
+        self.active_session = False
         self.steamclient = SteamClient('')
 
         self.trade_url = None
@@ -20,6 +21,11 @@ class Steam(Mongo):
         self.buff_cookie = None
 
         self.steam_inventory_tradable = self.steam_inventory_full = self.steam_inventory_phases = {}
+
+    def update_session(self, acc_info):
+        while True:
+            self.active_session = self.take_session(acc_info)
+            time.sleep(self.update_session_global_time)
 
     def take_session(self, acc_info):
         username = None
@@ -63,11 +69,11 @@ class Steam(Mongo):
                 # Info from account_data
                 self.steamclient._api_key = self.content_acc_data_dict[self.steamclient.username]['steam apikey']
                 self.steam_inventory_tradable = (
-                    self.content_acc_data_dict)[self.steamclient.username]['steam inventory tradable']
+                                    self.content_acc_data_dict)[self.steamclient.username]['steam inventory tradable']
                 self.steam_inventory_full = (
-                    self.content_acc_data_dict)[self.steamclient.username]['steam inventory full']
+                                    self.content_acc_data_dict)[self.steamclient.username]['steam inventory full']
                 self.steam_inventory_phases = (
-                    self.content_acc_data_dict)[self.steamclient.username]['steam inventory phases']
+                                    self.content_acc_data_dict)[self.steamclient.username]['steam inventory phases']
 
                 return True
             else:
@@ -76,14 +82,13 @@ class Steam(Mongo):
             Logs.notify_except(self.tg_info, 'MongoDB: Error while taking Account Session', username)
             return False
 
-    def steam_cancel_offers(self, acc_info):
+    def steam_cancel_offers(self):
         Logs.log('Steam Cancel Offers: thread are running', '')
         while True:
             try:
                 current_time = int(time.time())
                 self.update_account_data_info()
-                active_session = self.take_session(acc_info)
-                if active_session:
+                if self.active_session:
                     active_trades = self.steamclient.get_trade_offers(get_sent_offers=1, active_only=1)
                     if active_trades and 'response' in active_trades and 'trade_offers_sent' in active_trades['response']:
                         sites_name = []

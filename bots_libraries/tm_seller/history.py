@@ -9,14 +9,13 @@ class TMHistory(Steam):
         super().__init__(main_tg_info)
 
     # region History
-    def history(self, acc_info):
+    def history(self):
         while True:
             time.sleep(self.history_global_time)
             try:
                 self.update_account_data_info()
                 self.update_database_info()
-                active_session = self.take_session(acc_info)
-                if active_session:
+                if self.active_session:
                     collection_info = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
                     if collection_info:
                         self.steam_history(collection_info)
@@ -111,7 +110,7 @@ class TMHistory(Steam):
 
                         availability = False
                         for doc in collection_info_with_new_id:
-                            if str(item_transfer['item_id']) == str(doc.get('site item id')):
+                            if str(item_transfer['item_id']) == str(doc['site item id']):
                                 availability = True
                                 break
 

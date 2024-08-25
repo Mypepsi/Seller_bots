@@ -12,13 +12,12 @@ class TMItems(Steam):
         super().__init__(main_tg_info)
 
     # region Add To Sale
-    def add_to_sale(self, acc_info):
+    def add_to_sale(self):
         while True:
             try:
                 self.update_account_data_info()
                 self.update_database_info()
-                active_session = self.take_session(acc_info)
-                if active_session:
+                if self.active_session:
                     filtered_inventory = self.add_to_sale_inventory()
                     seller_value = self.get_information_for_price()
                     if filtered_inventory and seller_value:
@@ -92,13 +91,12 @@ class TMItems(Steam):
         return None
 
     # region Change Price
-    def change_price(self, acc_info):
+    def change_price(self):
         while True:
             try:
                 self.update_account_data_info()
                 self.update_database_info()
-                active_session = self.take_session(acc_info)
-                if active_session:
+                if self.active_session:
                     try:
                         items_url = f'{self.site_url}/api/v2/items?key={self.tm_apikey}'
                         listed_items = requests.get(items_url, timeout=30).json()
