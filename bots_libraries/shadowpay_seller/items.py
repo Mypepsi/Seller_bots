@@ -4,9 +4,9 @@ import threading
 import urllib.parse
 from queue import Queue, Empty
 from bots_libraries.sellpy.logs import Logs
-from bots_libraries.sellpy.thread_manager import ThreadManager
+from bots_libraries.sellpy.steam import Steam
 
 
-class ShadowPayItems(ThreadManager):
+class ShadowPayItems(Steam):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)

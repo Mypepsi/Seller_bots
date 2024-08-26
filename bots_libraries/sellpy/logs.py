@@ -128,7 +128,7 @@ class Logs:
 
     @staticmethod
     def get_bot_name():
-        bot_name = 'Bot  not found'
+        bot_name = 'Bot not found'
         try:
             stack = inspect.stack()
             last_frame = stack[-1]

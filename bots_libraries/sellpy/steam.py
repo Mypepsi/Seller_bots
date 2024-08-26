@@ -155,7 +155,7 @@ class Steam(Mongo):
                 latest_trade_steam = max(matched_trades, key=lambda t: t['time_created'])
                 if latest_trade_steam['trade_offer_state'] == 9:
                     try:
-                        self.steamclient.confirm_offer({'tradeofferid': latest_trade_steam['tradeofferid']})
+                        self.steamclient.confirm_trade_offer({'tradeofferid': latest_trade_steam['tradeofferid']})
                     except:
                         pass
                 return latest_trade_steam['tradeofferid']
@@ -241,7 +241,7 @@ class Steam(Mongo):
             max_price_with_margin = 0
             max_limits_site_price = 0
             min_limits_site_price = 0
-            middle_message = 'none price'
+            middle_message = 'none price\n'
             profit = 0
 
             try:
@@ -323,7 +323,7 @@ class Steam(Mongo):
             )
 
             try:
-                self.history_tg_info['tg bot'].send_message(self.history_tg_info['tg id'], message)
+                self.history_tg_info['tg bot'].send_message(self.history_tg_info['tg id'], message, timeout=5)
             except:
                 pass
 

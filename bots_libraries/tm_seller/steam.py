@@ -67,7 +67,7 @@ class TMSteam(Steam):
                                         break
 
                                     response_steam_trade_offer = self.steamclient.get_trade_offer_state(trade_id)
-                                    time.sleep(3)
+                                    time.sleep(1)
 
                                     if not isinstance(response_steam_trade_offer, dict):
                                         break
@@ -79,7 +79,7 @@ class TMSteam(Steam):
 
                                     if int(offer_status) == 9:
                                         try:
-                                            self.steamclient.confirm_offer({'tradeofferid': trade_id})
+                                            self.steamclient.confirm_trade_offer({'tradeofferid': trade_id})
                                         except:
                                             pass
                                         break
@@ -109,16 +109,14 @@ class TMSteam(Steam):
 
             trade_offer_url = f'https://steamcommunity.com/tradeoffer/new/?partner={partner}&token={token}'
             creating_offer_time = int(time.time())
-            steam_response = self.steamclient.make_offer(assets_for_offer, [], trade_offer_url)
+            steam_response = self.steamclient.make_trade_offer(assets_for_offer, [], trade_offer_url)
             time.sleep(1)
-
             if steam_response is None or 'tradeofferid' not in steam_response:
                 trade_offer_id = self.check_created_steam_offer(creating_offer_time, assets, partner)
                 steam_response = {'tradeofferid': trade_offer_id}
             else:
-                time.sleep(1)
                 try:
-                    self.steamclient.confirm_offer(steam_response)
+                    self.steamclient.confirm_trade_offer(steam_response)
                 except:
                     pass
                 trade_offer_id = steam_response['tradeofferid']
@@ -127,7 +125,7 @@ class TMSteam(Steam):
                 self.handle_doc_in_history(send_offers, assets, names, msg, steam_response, trade_offer_url)
                 Logs.log(f"Make Steam Offer: Trade sent: {names}", self.steamclient.username)
             else:
-                self.handle_doc_in_history(send_offers, assets, names, msg, None, trade_offer_url,
+                self.handle_doc_in_history(send_offers, assets, names, msg, steam_response, trade_offer_url,
                                            success=False)
                 Logs.log(f"Make Steam Offer: Error send trade: {names}", self.steamclient.username)
         except Exception as e:

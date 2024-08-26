@@ -224,8 +224,8 @@ class TMItems(Steam):
             for api_key in api_keys:
                 if api_key not in threads and not hash_queue.empty():
                     hash_names = []
-                    item_to_parce = 50
-                    for _ in range(min(item_to_parce, hash_queue.qsize())):
+                    items_for_parse = 50
+                    for _ in range(min(items_for_parse, hash_queue.qsize())):
                         try:
                             hash_names.append(hash_queue.get_nowait())
                         except Empty:

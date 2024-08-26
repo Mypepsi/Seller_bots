@@ -60,7 +60,7 @@ class CreatorSteam(Steam):
 
                 except Exception as e:
                     Logs.notify_except(self.tg_info, f"Steam Login Global Error: {e}", username)
-            time.sleep(self.steam_session_global_time)
+            time.sleep(self.steam_login_global_time)
 
     def make_steam_login(self, username, password, steam_guard, proxies):
         number_of_try = 1

@@ -99,7 +99,7 @@ class SteamClient:
         steam_id = response.steamid
         if response.allowed_confirmations:
             if self._is_twofactor_required(response.allowed_confirmations[0]):
-                server_time = self.get_server_time()
+                self.get_server_time()
                 one_time_code = guard.generate_one_time_code(steam_guard['shared_secret'])
 
                 message = CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request(
@@ -163,8 +163,8 @@ class SteamClient:
         return partner_steam_id
 
     @login_required
-    def make_offer(self, items_from_me: List[Asset], items_from_them: List[Asset],
-                   trade_offer_url: str, message: str = '', case_sensitive: bool = True):
+    def make_trade_offer(self, items_from_me: List[Asset], items_from_them: List[Asset],
+                         trade_offer_url: str, message: str = '', case_sensitive: bool = True):
         token = get_key_value_from_url(trade_offer_url, 'token', case_sensitive)
         partner_account_id = get_key_value_from_url(trade_offer_url, 'partner', case_sensitive)
         partner_steam_id = account_id_to_steam_id(partner_account_id)
@@ -195,7 +195,7 @@ class SteamClient:
             return None
 
     @login_required
-    def confirm_offer(self, response):
+    def confirm_trade_offer(self, response):
         if response is not None and 'tradeofferid' in response:
             response.update(self._confirm_transaction(response['tradeofferid']))
         return response
@@ -315,6 +315,7 @@ class SteamClient:
             pass
         return response
 
+    @login_required
     def decline_trade_offer(self, trade_offer_id: str) -> dict:
         url = 'https://steamcommunity.com/tradeoffer/' + trade_offer_id + '/decline'
         response = self._session.post(url, data={'sessionid': self._get_session_id()}, timeout=15).json()
@@ -346,12 +347,12 @@ class SteamClient:
                  params: dict = None) -> requests.Response:
         url = '/'.join([SteamUrl.API_URL, interface, api_method, version])
         if request_method == 'GET':
-            if self.proxies == None:
+            if self.proxies is None:
                 response = requests.get(url, params=params, timeout=15)
             else:
                 response = requests.get(url, params=params, proxies=self.proxies, timeout=15)
         else:
-            if self.proxies == None:
+            if self.proxies is None:
                 response = requests.post(url, data=params, timeout=15)
             else:
                 response = requests.post(url, data=params, proxies=self.proxies, timeout=15)
@@ -436,7 +437,7 @@ class SteamClient:
         return SteamUrl.COMMUNITY_URL + '/tradeoffer/' + trade_offer_id
 
     def _set_token(self, url: str, data) -> None:
-        response = self._session.post(url, data=data)
+        self._session.post(url, data=data)
 
     def _finalize_login(self, data) -> FinalizeLoginStatus:
         response = self._session.post('https://login.steampowered.com/jwt/finalizelogin', data=data, timeout=15)
@@ -447,7 +448,7 @@ class SteamClient:
         return CAuthentication_PollAuthSessionStatus_Response.FromString(response.content)
 
     def _update_auth_session(self, data) -> None:
-        response = self._session.post('https://api.steampowered.com/IAuthenticationService/UpdateAuthSessionWithSteamGuardCode/v1', data=data, timeout=15)
+        self._session.post('https://api.steampowered.com/IAuthenticationService/UpdateAuthSessionWithSteamGuardCode/v1', data=data, timeout=15)
 
     def _get_session_id(self) -> str:
         return self._session.cookies.get('sessionid', domain='steamcommunity.com')

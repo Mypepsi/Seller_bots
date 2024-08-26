@@ -89,9 +89,9 @@ class TMHistory(Steam):
                                 else:
                                     doc["site status"] = 'unavailable'
                                     doc['site status time'] = current_timestamp
-                                    Logs.notify_except(self.tg_info,
-                                                       f"'Unavailable' status on item with {item_transfer['item_id']} itemID",
-                                                       self.steamclient.username)
+                                    Logs.notify(self.tg_info,
+                                                f"'Unavailable' status on item with {item_transfer['item_id']} itemID",
+                                                self.steamclient.username)
                                 try:
                                     self.acc_history_collection.update_one({'_id': doc['_id']},
                                                                            {'$set': {'site status': doc['site status'],
@@ -127,7 +127,7 @@ class TMHistory(Steam):
                                 "site status time": int(item_transfer['time']),
                                 "site id": None,
                                 "buyer steam id": None,
-                                "asset id": int(item_transfer['assetid']),
+                                "asset id": str(item_transfer['assetid']),
                                 "trade id": None,
                                 "sent time": None,
                                 "site item id": str(item_transfer['item_id'])
