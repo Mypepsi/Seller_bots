@@ -2,8 +2,8 @@ import time
 import random
 import requests
 import urllib.parse
-from bots_libraries.sellpy.logs import Logs, ExitException
 from bots_libraries.sellpy.steam import Steam
+from bots_libraries.sellpy.logs import Logs, ExitException
 
 
 class WaxpeerOnline(Steam):

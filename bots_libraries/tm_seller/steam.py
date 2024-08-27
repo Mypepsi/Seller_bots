@@ -3,6 +3,7 @@ import requests
 from bots_libraries.sellpy.logs import Logs
 from bots_libraries.sellpy.steam import Steam
 from bots_libraries.steampy.client import Asset
+from bots_libraries.steampy.client import SteamClient
 from bots_libraries.steampy.models import GameOptions
 
 
@@ -111,14 +112,14 @@ class TMSteam(Steam):
             creating_offer_time = int(time.time())
             steam_response = self.steamclient.make_trade_offer(assets_for_offer, [], trade_offer_url)
             time.sleep(1)
+            try:
+                self.steamclient.confirm_trade_offer(steam_response)
+            except:
+                pass
             if steam_response is None or 'tradeofferid' not in steam_response:
                 trade_offer_id = self.check_created_steam_offer(creating_offer_time, assets, partner)
                 steam_response = {'tradeofferid': trade_offer_id}
             else:
-                try:
-                    self.steamclient.confirm_trade_offer(steam_response)
-                except:
-                    pass
                 trade_offer_id = steam_response['tradeofferid']
 
             if trade_offer_id is not None:
@@ -209,7 +210,7 @@ class TMSteam(Steam):
                 if sent_time is not None:
                     sent_time += 1
                 current_timestamp_unique += 1
-                partner_id = self.steamclient.get_steamid_from_url(offer_url)
+                partner_id = SteamClient.get_steamid_from_url(offer_url)
                 data_append = {
                     "transaction": "sale_record",
                     "site": self.site_name,  # str

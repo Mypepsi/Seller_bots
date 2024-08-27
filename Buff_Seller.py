@@ -1,8 +1,6 @@
 import time
 import telebot
-import threading
 from bots_libraries.sellpy.logs import Logs
-from bots_libraries.sellpy.steam import Steam
 from bots_libraries.sellpy.restart import Restarter
 from bots_libraries.buff_seller.items import BuffItems
 from bots_libraries.buff_seller.steam import BuffSteam
@@ -13,63 +11,47 @@ from bots_libraries.buff_seller.history import BuffHistory
 from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
-def add_threads(tg_info):
-    threads_list = []
+class BuffSeller(BuffGeneral, BuffOnline, BuffItems, BuffSteam, BuffHistory, Restarter):
+    def __init__(self, main_tg_info):
+        super().__init__(main_tg_info)
 
-    if manager.buff_restart_server_global_time != 0:  # Restart Server
-        restart_server_thread = threading.Thread(target=restarter.restart_server,
-                                                 args=(restarter.buff_restart_server_validity_time,
-                                                       restarter.buff_restart_server_global_time))
-        threads_list.append(restart_server_thread)
+    @staticmethod
+    def collect_work_functions():
+        functions_list = []
+        if manager.restart_server_global_time != 0:  # Restart Server
+            functions_list.append({"func": "restart_server", "class_for_many_functions": BuffSeller})
 
-    if manager.buff_restart_bots_global_time != 0:  # Restart Bots
-        restart_bots_thread = threading.Thread(target=restarter.restart_bots,
-                                               args=(restarter.buff_restart_bots_name,
-                                                     restarter.buff_restart_bots_global_time))
-        threads_list.append(restart_bots_thread)
+        if manager.restart_bots_global_time != 0:    # Restart Bots
+            functions_list.append({"func": "restart_bots", "class_for_many_functions": BuffSeller})
 
-    if manager.buff_steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
-        steam_cancel_offers_thread = threading.Thread(target=manager.create_threads,
-                                                      args=('_chk_trd',
-                                                            Steam(tg_info),
-                                                            'steam_cancel_offers',
-                                                            'buff_steam_cancel_offers_global_time',
-                                                            'buff_thread_function_time',
-                                                            'buff_steam_cancel_offers_sites_name'))
-        threads_list.append(steam_cancel_offers_thread)
+        if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
+            functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": BuffSeller})
 
-
-
-    return threads_list
+        return functions_list
 
 
 if __name__ == '__main__':
-    tg_token = '6710866120:AAElhQPr-4PkOnZvvLDSnYA163Ez0td4KzQ'
-    tg_id = -1001807211917
+    tg_token = '6710866120:AAElhQPr-4PkOnZvvLDSnYA163Ez0td4KzQ'  # Input your Telegram bot token here
+    tg_id = -1001807211917  # Input your Telegram chat ID here
+
     bot_name = Logs.get_bot_name()
     tg_bot = telebot.TeleBot(tg_token)
-    main_tg_info = {
+    tg_info = {
         'tg id': tg_id,
         'tg bot': tg_bot,
         'bot name': bot_name}
 
     try:
-        manager = ThreadManager(main_tg_info)
-        restarter = Restarter(main_tg_info)
-
-        threads = add_threads(main_tg_info)
+        manager = ThreadManager(tg_info)
+        functions = BuffSeller.collect_work_functions()
 
         Logs.log(f'{bot_name} STARTED ({len(manager.content_acc_data_list)} in Account Data '
                  f'and {len(manager.content_acc_settings_list)} in Account Settings)', '')
         time.sleep(manager.waiting_start_time)
-        manager.start_of_work(threads, manager.thread_start_time)
+        manager.start_work_functions(functions)
 
     except ServerSelectionTimeoutError as e:
-        Logs.notify_except(main_tg_info, f"Script has not started: Connecting to MongoDB ERROR: {e}", '')
+        Logs.notify_except(tg_info, f"Script has not started: Connecting to MongoDB ERROR: {e}", '')
 
     except Exception as e:
-        Logs.notify_except(main_tg_info, f"Script has not started: FATAL ERROR: {e}", '')
-
-
-
-
+        Logs.notify_except(tg_info, f"Script has not started: FATAL ERROR: {e}", '')

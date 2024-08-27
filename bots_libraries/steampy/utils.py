@@ -3,8 +3,8 @@ import re
 import copy
 import struct
 import decimal
-import urllib.parse as urlparse
 from typing import List
+import urllib.parse as urlparse
 from bs4 import BeautifulSoup, Tag
 from requests.structures import CaseInsensitiveDict
 from bots_libraries.steampy.models import GameOptions

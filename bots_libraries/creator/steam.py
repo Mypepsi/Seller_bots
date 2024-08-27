@@ -6,10 +6,10 @@ import random
 from lxml import html
 from fake_useragent import UserAgent
 from bots_libraries.sellpy.logs import Logs
+from bots_libraries.sellpy.steam import Steam
 from bots_libraries.steampy.client import SteamClient
 from bots_libraries.steampy.models import GameOptions
 from bots_libraries.steampy.confirmation import Confirmation
-from bots_libraries.sellpy.steam import Steam
 from bots_libraries.steampy.confirmation import ConfirmationExecutor
 
 
@@ -25,8 +25,8 @@ class CreatorSteam(Steam):
         while True:
             self.update_account_data_info()
             self.update_account_settings_info()
-            username = None
             for acc in self.content_acc_settings_list:
+                username = None
                 try:
                     if self.take_session(acc):
                         user_agent = self.steamclient.user_agent

@@ -1,16 +1,16 @@
 import time
 import threading
-from bots_libraries.sellpy.logs import Logs, ExitException
 from bots_libraries.sellpy.mongo import Mongo
+from bots_libraries.sellpy.logs import Logs, ExitException
 
 
 class ThreadManager(Mongo):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
         self.dict_for_accounts = {}
+        self.dict_for_classes = {}
 
-    def start_of_work(self, functions):
-        dict_for_classes = {}
+    def start_work_functions(self, functions):
         for function in functions:
             modified_function_name = 'Function not found'
             try:
@@ -18,55 +18,53 @@ class ThreadManager(Mongo):
                 modified_function_name = func.replace("_", " ").title()
                 if "class_for_single_function" in function:
                     class_obj = function["class_for_single_function"](self.tg_info)
+                    ThreadManager.create_work_threads(class_obj, func)
                 elif "class_for_many_functions" in function:
                     class_name = function["class_for_many_functions"]
-                    if class_name not in dict_for_classes:
-                        dict_for_classes[class_name] = class_name(self.tg_info)
-                    class_obj = dict_for_classes[class_name]
+                    if class_name not in self.dict_for_classes:
+                        self.dict_for_classes[class_name] = class_name(self.tg_info)
+                    class_obj = self.dict_for_classes[class_name]
+                    ThreadManager.create_work_threads(class_obj, func)
                 elif "class_for_account_functions" in function:
-                    account_thread = threading.Thread(target=self.create_threads,
-                                                      args=(function,
-                                                            modified_function_name))
-                    account_thread.start()
-                    continue
+                    class_name = function["class_for_account_functions"]
+                    ThreadManager.create_work_threads(self, 'manage_work_accounts', args=(func,
+                                                                                          class_name,
+                                                                                          modified_function_name))
                 else:
                     raise ExitException
-                func_to_call = getattr(class_obj, func)
-                thread = threading.Thread(target=func_to_call)
-                thread.start()
-                time.sleep(self.thread_start_time)
             except Exception as e:
-                Logs.notify_except(self.tg_info, f"{modified_function_name}: Thread has not started: {e}", '')
+                Logs.notify_except(self.tg_info, f"{modified_function_name}: Function has not started: {e}", '')
+            time.sleep(self.function_start_time)
 
-    def create_threads(self, function, modified_function_name):
+    def manage_work_accounts(self, func, class_name, modified_function_name):
         counter = 0
-        try:
-            username = ''
-            for acc in self.content_acc_data_list:
-                try:
-                    username = str(acc['username'])
-                    funct = function["func"]
-                    class_name = function["class_for_account_functions"]
-                    if username not in self.dict_for_accounts or class_name not in self.dict_for_accounts[username]:
-                        class_obj = class_name(self.tg_info)
-                        self.dict_for_accounts[username][class_name] = class_obj
-                        update_session_to_call = getattr(class_obj, "update_session")
-                        thread = threading.Thread(target=update_session_to_call, args=acc)
-                        thread.start()
-                        time.sleep(1)
-                    else:
-                        class_obj = self.dict_for_accounts[username][class_name]
+        for acc in self.content_acc_data_list:
+            username = None
+            try:
+                username = acc['username']
+                if username not in self.dict_for_accounts or class_name not in self.dict_for_accounts[username]:
+                    class_obj = class_name(self.tg_info)
+                    self.dict_for_accounts[username] = {}
+                    self.dict_for_accounts[username][class_name] = class_obj
+                    ThreadManager.create_work_threads(class_obj, "update_session", args=acc)
                     time.sleep(1)
-                    func_to_call = getattr(class_obj, funct)
-                    thread = threading.Thread(target=func_to_call)
-                    thread.start()
-                    counter += 1
-                    time.sleep(self.thread_function_time)
-                except Exception as e:
-                    Logs.notify_except(self.tg_info,
-                                       f"{modified_function_name}: Function for Account has not created: {e}",
-                                       username)
-        except Exception as e:
-            Logs.notify_except(self.tg_info,
-                               f"{modified_function_name}: Error in handling account functions: {e}", '')
+                else:
+                    class_obj = self.dict_for_accounts[username][class_name]
+                ThreadManager.create_work_threads(class_obj, func)
+                counter += 1
+            except Exception as e:
+                Logs.notify_except(self.tg_info,
+                                   f"{modified_function_name}: Function for Account has not started: {e}",
+                                   username)
+            time.sleep(self.account_start_time)
         Logs.log(f"{modified_function_name}: {counter} threads are running", '')
+
+    @staticmethod
+    def create_work_threads(class_obj, func: str, args=None):
+        func_to_call = getattr(class_obj, func)
+        print(args)
+        if args:
+            thread = threading.Thread(target=func_to_call, args=args)
+        else:
+            thread = threading.Thread(target=func_to_call)
+        thread.start()

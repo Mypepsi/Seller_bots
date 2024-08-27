@@ -53,8 +53,8 @@ class Mongo:
 
             self.creator_settings_general = self.get_key(self.content_creator_settings, 'general')
             self.waiting_start_time = self.get_key(self.creator_settings_general, 'waiting start time')
-            self.thread_start_time = self.get_key(self.creator_settings_general, 'thread start time')
-            self.thread_function_time = self.get_key(self.creator_settings_general, 'thread function time')
+            self.function_start_time = self.get_key(self.creator_settings_general, 'function start time')
+            self.account_start_time = self.get_key(self.creator_settings_general, 'account start time')
             self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
             self.proxy_url = f"https://{self.get_key(self.creator_settings_general, 'proxy url')}"
             self.proxy_global_time = self.get_key(self.creator_settings_general, 'proxy global time')
@@ -90,9 +90,9 @@ class Mongo:
 
             self.tm_settings_general = self.get_key(self.content_tm_settings, 'general')
             self.waiting_start_time = self.get_key(self.tm_settings_general, 'waiting start time')
-            self.thread_start_time = self.get_key(self.tm_settings_general, 'thread start time')
-            self.thread_function_time = self.get_key(self.tm_settings_general, 'thread function time')
-            self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
+            self.function_start_time = self.get_key(self.tm_settings_general, 'function start time')
+            self.account_start_time = self.get_key(self.tm_settings_general, 'account start time')
+            self.update_session_global_time = self.get_key(self.tm_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.tm_settings_general, 'site url')}"
             self.site_apikey_global_time = self.get_key(self.tm_settings_general, 'site apikey global time')
             self.balance_transfer_global_time = self.get_key(self.tm_settings_general, 'balance transfer global time')
@@ -140,8 +140,8 @@ class Mongo:
 
             self.waxpeer_settings_general = self.get_key(self.content_waxpeer_settings, 'general')
             self.waiting_start_time = self.get_key(self.waxpeer_settings_general, 'waiting start time')
-            self.thread_start_time = self.get_key(self.waxpeer_settings_general, 'thread start time')
-            self.thread_function_time = self.get_key(self.waxpeer_settings_general, 'thread function time')
+            self.function_start_time = self.get_key(self.waxpeer_settings_general, 'function start time')
+            self.account_start_time = self.get_key(self.waxpeer_settings_general, 'account start time')
             self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.waxpeer_settings_general, 'site url')}"
             self.site_cookie_global_time = self.get_key(self.waxpeer_settings_general, 'site cookie global time')
@@ -190,8 +190,8 @@ class Mongo:
 
             self.csgoempire_settings_general = self.get_key(self.content_csgoempire_settings, 'general')
             self.waiting_start_time = self.get_key(self.csgoempire_settings_general, 'waiting start time')
-            self.thread_start_time = self.get_key(self.csgoempire_settings_general, 'thread start time')
-            self.thread_function_time = self.get_key(self.csgoempire_settings_general, 'thread function time')
+            self.function_start_time = self.get_key(self.csgoempire_settings_general, 'function start time')
+            self.account_start_time = self.get_key(self.csgoempire_settings_general, 'account start time')
             self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.csgoempire_settings_general, 'site url')}"
             self.site_cookie_global_time = self.get_key(self.csgoempire_settings_general, 'site cookie global time')
@@ -240,8 +240,8 @@ class Mongo:
 
             self.csgo500_settings_general = self.get_key(self.content_csgo500_settings, 'general')
             self.waiting_start_time = self.get_key(self.csgo500_settings_general, 'waiting start time')
-            self.thread_start_time = self.get_key(self.csgo500_settings_general, 'thread start time')
-            self.thread_function_time = self.get_key(self.csgo500_settings_general, 'thread function time')
+            self.function_start_time = self.get_key(self.csgo500_settings_general, 'function start time')
+            self.account_start_time = self.get_key(self.csgo500_settings_general, 'account start time')
             self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.csgo500_settings_general, 'site url')}"
             self.site_cookie_global_time = self.get_key(self.csgo500_settings_general, 'site cookie global time')
@@ -290,8 +290,8 @@ class Mongo:
 
             self.shadowpay_settings_general = self.get_key(self.content_shadowpay_settings, 'general')
             self.waiting_start_time = self.get_key(self.shadowpay_settings_general, 'waiting start time')
-            self.thread_start_time = self.get_key(self.shadowpay_settings_general, 'thread start time')
-            self.thread_function_time = self.get_key(self.shadowpay_settings_general, 'thread function time')
+            self.function_start_time = self.get_key(self.shadowpay_settings_general, 'function start time')
+            self.account_start_time = self.get_key(self.shadowpay_settings_general, 'account start time')
             self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.shadowpay_settings_general, 'site url')}"
             self.site_cookie_global_time = self.get_key(self.shadowpay_settings_general, 'site cookie global time')
@@ -343,8 +343,8 @@ class Mongo:
 
             self.buff_settings_general = self.get_key(self.content_buff_settings, 'general')
             self.waiting_start_time = self.get_key(self.buff_settings_general, 'waiting start time')
-            self.thread_start_time = self.get_key(self.buff_settings_general, 'thread start time')
-            self.thread_function_time = self.get_key(self.buff_settings_general, 'thread function time')
+            self.function_start_time = self.get_key(self.buff_settings_general, 'function start time')
+            self.account_start_time = self.get_key(self.buff_settings_general, 'account start time')
             self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.buff_settings_general, 'site url')}"
             self.site_cookie_global_time = self.get_key(self.buff_settings_general, 'site cookie global time')

@@ -157,7 +157,8 @@ class SteamClient:
             return merge_items_with_descriptions_from_inventory(response_dict, game)
         return response_dict
 
-    def get_steamid_from_url(self, trade_offer_url):
+    @staticmethod
+    def get_steamid_from_url(trade_offer_url):
         partner_account_id = get_key_value_from_url(trade_offer_url, 'partner', True)
         partner_steam_id = account_id_to_steam_id(partner_account_id)
         return partner_steam_id
@@ -217,7 +218,7 @@ class SteamClient:
                   'historical_only': historical_only,
                   'time_historical_cutoff': time_historical_cutoff}
         try:
-            response = self.api_call('GET', 'IEconService', 'GetTradeOffer', 'v1', params).json()
+            response = self.api_call('GET', 'IEconService', 'GetTradeOffers', 'v1', params).json()
             return response
         except:
             return None

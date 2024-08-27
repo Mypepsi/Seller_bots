@@ -12,8 +12,8 @@ class TMGeneral(Steam):
         Logs.log(f"Site Apikey: thread are running", '')
         while True:
             self.update_account_settings_info()
-            username = None
             for acc_info in self.content_acc_settings_list:
+                username = None
                 try:
                     username = acc_info['username']
                     tm_apikey = acc_info['tm apikey']
@@ -40,8 +40,8 @@ class TMGeneral(Steam):
             except:
                 api_to_withdraw = None
             if api_to_withdraw:
-                username = None
                 for acc in self.content_acc_settings_list:
+                    username = None
                     try:
                         username = acc['username']
                         tm_apikey = acc['tm apikey']
