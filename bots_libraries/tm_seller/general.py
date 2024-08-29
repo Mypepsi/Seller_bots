@@ -32,7 +32,7 @@ class TMGeneral(Steam):
     def balance_transfer(self):
         Logs.log(f"Balance Transfer: thread are running", '')
         while True:
-            time.sleep(self.balance_transfer_global_time)
+            #time.sleep(self.balance_transfer_global_time)
             self.update_account_settings_info()
             self.update_database_info(prices=False)
             try:

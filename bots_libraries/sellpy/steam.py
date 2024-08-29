@@ -83,7 +83,6 @@ class Steam(Mongo):
             return False
 
     def steam_cancel_offers(self):
-        Logs.log('Steam Cancel Offers: thread are running', '')
         while True:
             try:
                 current_time = int(time.time())

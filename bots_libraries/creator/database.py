@@ -8,7 +8,7 @@ class CreatorDataBase(Steam):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
-    def database_prices(self):
+    def database_prices(self):  # Global Function (class_for_many_functions)
         Logs.log(f"Database Prices: thread are running", '')
         while True:
             try:
@@ -146,7 +146,7 @@ class CreatorDataBase(Steam):
                 Logs.notify_except(self.tg_info, f"Database Prices Global Error: {e}", '')
             time.sleep(self.db_prices_global_time)
 
-    def database_settings(self):
+    def database_settings(self):  # Global Function (class_for_many_functions)
         Logs.log(f"Database Settings: thread are running", '')
         while True:
             try:

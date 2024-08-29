@@ -10,10 +10,11 @@ class CreatorGeneral(Steam):
         self.questionable_proxies = {}
         self.mongo_tg_alert = False
 
-    def proxy(self):
+    def proxy(self):  # Global Function (class_for_single_function)
         Logs.log(f"Proxy: thread are running", '')
         while True:
             try:
+                self.update_account_settings_info()
                 self.update_account_data_info()
                 proxy_list = []
                 for acc in self.content_acc_data_list:
@@ -52,7 +53,7 @@ class CreatorGeneral(Steam):
                 Logs.notify_except(self.tg_info, f"Proxy Global Error: {e}", '')
             time.sleep(self.proxy_global_time)
 
-    def mongodb(self):
+    def mongodb(self):  # Global Function (class_for_many_functions)
         Logs.log(f"MongoDB: thread are running", '')
         while True:
             if not self.mongo_tg_alert:

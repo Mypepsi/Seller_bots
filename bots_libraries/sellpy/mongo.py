@@ -142,9 +142,9 @@ class Mongo:
             self.waiting_start_time = self.get_key(self.waxpeer_settings_general, 'waiting start time')
             self.function_start_time = self.get_key(self.waxpeer_settings_general, 'function start time')
             self.account_start_time = self.get_key(self.waxpeer_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
+            self.update_session_global_time = self.get_key(self.waxpeer_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.waxpeer_settings_general, 'site url')}"
-            self.site_cookie_global_time = self.get_key(self.waxpeer_settings_general, 'site cookie global time')
+            self.site_apikey_global = self.get_key(self.waxpeer_settings_general, 'site apikey global time')
             self.balance_transfer_global_time = self.get_key(self.waxpeer_settings_general, 'balance transfer global time')
             self.site_name = self.get_key(self.waxpeer_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.waxpeer_settings_general, 'saleprice bot name')
@@ -192,9 +192,9 @@ class Mongo:
             self.waiting_start_time = self.get_key(self.csgoempire_settings_general, 'waiting start time')
             self.function_start_time = self.get_key(self.csgoempire_settings_general, 'function start time')
             self.account_start_time = self.get_key(self.csgoempire_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
+            self.update_session_global_time = self.get_key(self.csgoempire_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.csgoempire_settings_general, 'site url')}"
-            self.site_cookie_global_time = self.get_key(self.csgoempire_settings_general, 'site cookie global time')
+            self.site_apikey_global = self.get_key(self.csgoempire_settings_general, 'site apikey global time')
             self.balance_transfer_global_time = self.get_key(self.csgoempire_settings_general, 'balance transfer global time')
             self.site_name = self.get_key(self.csgoempire_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.csgoempire_settings_general, 'saleprice bot name')
@@ -242,9 +242,9 @@ class Mongo:
             self.waiting_start_time = self.get_key(self.csgo500_settings_general, 'waiting start time')
             self.function_start_time = self.get_key(self.csgo500_settings_general, 'function start time')
             self.account_start_time = self.get_key(self.csgo500_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
+            self.update_session_global_time = self.get_key(self.csgo500_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.csgo500_settings_general, 'site url')}"
-            self.site_cookie_global_time = self.get_key(self.csgo500_settings_general, 'site cookie global time')
+            self.site_apikey_global = self.get_key(self.csgo500_settings_general, 'site apikey global time')
             self.balance_transfer_global_time = self.get_key(self.csgo500_settings_general, 'balance transfer global time')
             self.site_name = self.get_key(self.csgo500_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.csgo500_settings_general, 'saleprice bot name')
@@ -292,9 +292,9 @@ class Mongo:
             self.waiting_start_time = self.get_key(self.shadowpay_settings_general, 'waiting start time')
             self.function_start_time = self.get_key(self.shadowpay_settings_general, 'function start time')
             self.account_start_time = self.get_key(self.shadowpay_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
+            self.update_session_global_time = self.get_key(self.shadowpay_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.shadowpay_settings_general, 'site url')}"
-            self.site_cookie_global_time = self.get_key(self.shadowpay_settings_general, 'site cookie global time')
+            self.site_apikey_global = self.get_key(self.shadowpay_settings_general, 'site apikey global time')
             self.balance_transfer_global_time = self.get_key(self.shadowpay_settings_general, 'balance transfer global time')
             self.site_name = self.get_key(self.shadowpay_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.shadowpay_settings_general, 'saleprice bot name')
@@ -345,9 +345,9 @@ class Mongo:
             self.waiting_start_time = self.get_key(self.buff_settings_general, 'waiting start time')
             self.function_start_time = self.get_key(self.buff_settings_general, 'function start time')
             self.account_start_time = self.get_key(self.buff_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
+            self.update_session_global_time = self.get_key(self.buff_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.buff_settings_general, 'site url')}"
-            self.site_cookie_global_time = self.get_key(self.buff_settings_general, 'site cookie global time')
+            self.site_apikey_global = self.get_key(self.buff_settings_general, 'site cookie global time')
             self.balance_transfer_global_time = self.get_key(self.buff_settings_general, 'balance transfer global time')
             self.site_name = self.get_key(self.buff_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.buff_settings_general, 'saleprice bot name')
@@ -386,7 +386,7 @@ class Mongo:
             self.restart_bots_global_time = self.get_key(self.buff_settings_restart, 'restart bots global time')
         # endregion
 
-        else: # Initialization Parameters Error
+        else:  # Initialization Parameters Error
             raise ExitException
 
     # region Mongo Info

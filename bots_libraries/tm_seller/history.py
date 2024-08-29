@@ -9,7 +9,7 @@ class TMHistory(Steam):
         super().__init__(main_tg_info)
 
     # region History
-    def history(self):
+    def tm_history(self):
         while True:
             time.sleep(self.history_global_time)
             try:

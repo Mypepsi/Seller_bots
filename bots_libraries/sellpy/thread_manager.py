@@ -10,6 +10,7 @@ class ThreadManager(Mongo):
         self.dict_for_accounts = {}
         self.dict_for_classes = {}
 
+
     def start_work_functions(self, functions):
         for function in functions:
             modified_function_name = 'Function not found'
@@ -42,11 +43,12 @@ class ThreadManager(Mongo):
             username = None
             try:
                 username = acc['username']
-                if username not in self.dict_for_accounts or class_name not in self.dict_for_accounts[username]:
-                    class_obj = class_name(self.tg_info)
+                if username not in self.dict_for_accounts:
                     self.dict_for_accounts[username] = {}
+                if class_name not in self.dict_for_accounts[username]:
+                    class_obj = class_name(self.tg_info)
                     self.dict_for_accounts[username][class_name] = class_obj
-                    ThreadManager.create_work_threads(class_obj, "update_session", args=acc)
+                    ThreadManager.create_work_threads(class_obj, "update_session", args=(acc,))
                     time.sleep(1)
                 else:
                     class_obj = self.dict_for_accounts[username][class_name]
@@ -62,7 +64,6 @@ class ThreadManager(Mongo):
     @staticmethod
     def create_work_threads(class_obj, func: str, args=None):
         func_to_call = getattr(class_obj, func)
-        print(args)
         if args:
             thread = threading.Thread(target=func_to_call, args=args)
         else:

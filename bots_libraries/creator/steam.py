@@ -18,13 +18,12 @@ class CreatorSteam(Steam):
         super().__init__(main_tg_info)
         self.ua = UserAgent()
 
-
     # region Steam Login
-    def steam_login(self):
+    def steam_login(self):  # Global Function (class_for_single_function)
         Logs.log(f"Steam Login: thread are running", '')
         while True:
-            self.update_account_data_info()
             self.update_account_settings_info()
+            self.update_account_data_info()
             for acc in self.content_acc_settings_list:
                 username = None
                 try:
@@ -60,6 +59,7 @@ class CreatorSteam(Steam):
 
                 except Exception as e:
                     Logs.notify_except(self.tg_info, f"Steam Login Global Error: {e}", username)
+                time.sleep(10)
             time.sleep(self.steam_login_global_time)
 
     def make_steam_login(self, username, password, steam_guard, proxies):
@@ -80,7 +80,6 @@ class CreatorSteam(Steam):
                     Logs.log(f"Steam Login: Authorization was successful", username)
                     self.handle_doc_in_account_data()
                     self.create_history_doc()
-                time.sleep(10)
                 break
             except:
                 if number_of_try == 1:
@@ -140,7 +139,7 @@ class CreatorSteam(Steam):
             pass
     # endregion
 
-    def steam_inventory(self):
+    def steam_inventory(self):  # Global Function (class_for_single_function)
         Logs.log(f"Steam Inventory: thread are running", '')
         while True:
             self.update_account_data_info()
@@ -205,13 +204,7 @@ class CreatorSteam(Steam):
 
                             for item_id, item_info in filtered_items_phases.items():
                                 if item_id not in self.steam_inventory_phases:
-                                    self.steam_inventory_phases[item_id] = {
-                                        "asset_id": item_id,
-                                        "market_hash_name": item_info["market_hash_name"],
-                                        "launch_price": item_info["launch_price"],
-                                        "service_launch_price": item_info["service_launch_price"],
-                                        "time": current_timestamp
-                                    }
+                                    self.steam_inventory_phases[item_id] = filtered_items_phases[item_id]
 
                             items_to_remove = [
                                 item_id
@@ -231,7 +224,7 @@ class CreatorSteam(Steam):
                 time.sleep(10)
             time.sleep(self.steam_inventory_global_time)
 
-    def steam_access_token(self):
+    def steam_access_token(self):  # Global Function (class_for_single_function)
         Logs.log(f"Steam Access Token: thread are running", '')
         while True:
             time.sleep(self.steam_access_token_global_time)
@@ -264,7 +257,7 @@ class CreatorSteam(Steam):
                 time.sleep(10)
     # region Steam Apikey
 
-    def steam_apikey(self):
+    def steam_apikey(self):  # Global Function (class_for_single_function)
         Logs.log(f"Steam Apikey: thread are running", '')
         while True:
             self.update_account_data_info()
@@ -316,16 +309,12 @@ class CreatorSteam(Steam):
             'User-Agent': self.steamclient.user_agent
         }
 
-        session_id = self.get_steam_comm_cookie().split(';')
-        for asd in session_id:
-            if 'sessionid' in asd:
-                session_id = asd.split('=')[1]
-                break
+        session_id = self.steamclient._get_session_id()
 
-        data = {'Revoke': 'Revoke My Steam Web API Key',
+        json_data = {'Revoke': 'Revoke My Steam Web API Key',
                 'sessionid': session_id}
         try:
-            delete_api_key_response = self.steamclient.session.post(url, headers=headers, data=data, timeout=15)
+            delete_api_key_response = self.steamclient.session.post(url, headers=headers, data=json_data, timeout=15)
         except:
             delete_api_key_response = None
         if delete_api_key_response and delete_api_key_response.status_code == 200:
@@ -333,6 +322,7 @@ class CreatorSteam(Steam):
             self.create_steam_apikey()
 
     def create_steam_apikey(self):
+        request_key_url = 'https://steamcommunity.com/dev/requestkey'
         headers = {
             'Cookie': self.get_steam_comm_cookie(),
             'Origin': 'https://steamcommunity.com',
@@ -340,11 +330,8 @@ class CreatorSteam(Steam):
             'X-Requested-With': 'XMLHttpRequest',
             'User-Agent': self.steamclient.user_agent
         }
-        session_id = self.get_steam_comm_cookie().split(';')
-        for asd in session_id:
-            if 'sessionid' in asd:
-                session_id = asd.split('=')[1]
-                break
+
+        session_id = self.steamclient._get_session_id()
 
         json_data = {
             'domain': 'localhost',
@@ -353,8 +340,7 @@ class CreatorSteam(Steam):
             "request_id": 0
         }
         try:
-            response = self.steamclient.session.post('https://steamcommunity.com/dev/requestkey', headers=headers,
-                                                     data=json_data, timeout=15).json()
+            response = self.steamclient.session.post(request_key_url, headers=headers, data=json_data, timeout=15).json()
         except:
             response = None
 
@@ -369,8 +355,7 @@ class CreatorSteam(Steam):
                     'agreeToTerms': 'true'
                 }
                 try:
-                    response_second = self.steamclient.session.post('https://steamcommunity.com/dev/requestkey',
-                                                                    headers=headers, timeout=15,
+                    response_second = self.steamclient.session.post(request_key_url, headers=headers, timeout=15,
                                                                     data=json_data).json()
                 except:
                     response_second = None
@@ -393,18 +378,16 @@ class CreatorSteam(Steam):
     def request_to_confirm_steam_apikey(self, request_id: str):
         try:
             confirmation = ConfirmationExecutor(self.steamclient.steam_guard['identity_secret'],
-                                                  self.steamclient.steam_guard['steamid'],
-                                                  self.steamclient.session)
+                                                self.steamclient.steam_guard['steamid'],
+                                                self.steamclient.session)
             confirm = confirmation._fetch_confirmations_page_api_key()['conf']
-            need_c = False
             need_data = None
             for c in confirm:
                 if c['creator_id'] == request_id:
-                    need_c = True
                     need_data = c
                     break
 
-            if need_c:
+            if need_data:
                 jf = Confirmation(f"conf{need_data['id']}", need_data['id'], need_data['nonce'])
                 response = confirmation._send_confirmation_api_key(jf)
                 if response['success']:
@@ -416,3 +399,4 @@ class CreatorSteam(Steam):
         except:
             return False
     # endregion
+
