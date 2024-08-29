@@ -22,8 +22,11 @@ class Steam(Mongo):
 
         self.steam_inventory_tradable = self.steam_inventory_full = self.steam_inventory_phases = {}
 
-    def update_session(self, acc_info):
+    # region Session
+    def update_session(self, acc_info):  # Global Function (class_for_account_functions)
         while True:
+            self.update_account_settings_info()
+            self.update_account_data_info()
             self.active_session = self.take_session(acc_info)
             time.sleep(self.update_session_global_time)
 
@@ -78,11 +81,12 @@ class Steam(Mongo):
                 return True
             else:
                 raise ExitException
-        except:
-            Logs.notify_except(self.tg_info, 'MongoDB: Error while taking Account Session', username)
+        except Exception as e:
+            Logs.notify_except(self.tg_info, f'MongoDB: Error while taking Account Session: {e}', username)
             return False
+    # endregion
 
-    def steam_cancel_offers(self):
+    def steam_cancel_offers(self):  # Global Function (class_for_account_functions)
         while True:
             try:
                 current_time = int(time.time())
@@ -114,7 +118,7 @@ class Steam(Mongo):
                                 validity_time = None
                                 for item in self.steam_cancel_offers_sites_name:
                                     if item['site'] == site:
-                                        validity_time = item['offers validity time']
+                                        validity_time = item['offer validity time']
                                         break
                                 if validity_time is None:
                                     continue
@@ -232,6 +236,7 @@ class Steam(Mongo):
             steam_full_price = 0
             max_price = 0
             service_max_price = None
+            middle_message = 'none price\n'
 
             launch_price = 0
             service_launch_price = None
@@ -240,7 +245,6 @@ class Steam(Mongo):
             max_price_with_margin = 0
             max_limits_site_price = 0
             min_limits_site_price = 0
-            middle_message = 'none price\n'
             profit = 0
 
             try:

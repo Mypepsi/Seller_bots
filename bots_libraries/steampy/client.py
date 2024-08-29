@@ -367,6 +367,14 @@ class SteamClient:
         msg = 'Access is denied. Retrying will not help. Please verify your <pre>key=</pre> parameter'
         return msg in response.text
 
+    @property
+    def session(self):
+        return self._session
+
+    def _get_session_id(self) -> str:
+        return self._session.cookies.get('sessionid', domain='steamcommunity.com')
+
+
     @login_required
     def get_escrow_duration(self, trade_offer_url: str) -> int:
         headers = {'Referer': SteamUrl.COMMUNITY_URL + urlparse.urlparse(trade_offer_url).path,
@@ -398,10 +406,6 @@ class SteamClient:
             return parse_price(balance)
         else:
             return balance
-
-    @property
-    def session(self):
-        return self._session
 
     def _fetch_trade_partner_id(self, trade_offer_id: str) -> str:
         url = self._get_trade_offer_url(trade_offer_id)
@@ -450,9 +454,6 @@ class SteamClient:
 
     def _update_auth_session(self, data) -> None:
         self._session.post('https://api.steampowered.com/IAuthenticationService/UpdateAuthSessionWithSteamGuardCode/v1', data=data, timeout=15)
-
-    def _get_session_id(self) -> str:
-        return self._session.cookies.get('sessionid', domain='steamcommunity.com')
 
     def _is_twofactor_required(self, confirmation: CAuthentication_AllowedConfirmation) -> bool:
         return confirmation.confirmation_type == EAuthSessionGuardType.k_EAuthSessionGuardType_DeviceCode

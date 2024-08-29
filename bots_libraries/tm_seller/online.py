@@ -11,13 +11,12 @@ class TMOnline(Steam):
         super().__init__(main_tg_info)
         self.ping_alert = False
 
-    def ping(self):
+    def ping(self):  # Global Function (class_for_account_functions)
         while True:
             try:
-                self.update_account_data_info()
                 if self.active_session:
                     response = self.request_to_ping()
-                    if (response is not None and 'success' in response and response['success'] is False
+                    if (response and 'success' in response and response['success'] is False
                             and 'message' in response and response['message'] != 'too early for ping'):
                         Logs.log(f"Ping: Error to ping: {response['message']}", self.steamclient.username)
                         if not self.ping_alert:
@@ -41,10 +40,9 @@ class TMOnline(Steam):
         except:
             return None
 
-    def restart_store(self):
+    def restart_store(self):  # Global Function (class_for_account_functions)
         while True:
             try:
-                self.update_account_data_info()
                 if self.active_session:
                     try:
                         url = f'{self.site_url}/api/v2/go-offline?key={self.tm_apikey}'
@@ -59,12 +57,11 @@ class TMOnline(Steam):
                 Logs.notify_except(self.tg_info, f"Restart Store Global Error: {e}", self.steamclient.username)
             time.sleep(self.restart_store_global_time)
 
-    def visible_store(self):
+    def visible_store(self):  # Global Function (class_for_account_functions)
         while True:
             time.sleep(self.visible_store_global_time)
+            search_result = False
             try:
-                search_result = False
-                self.update_account_data_info()
                 if self.active_session:
                     try:
                         my_inventory_url = f'{self.site_url}/api/v2/my-inventory/?key={self.tm_apikey}'
@@ -108,14 +105,16 @@ class TMOnline(Steam):
                                         search_list = search_response['data'][hash_name]
                                     except:
                                         search_list = []
-                                    for dictionary in search_list:
-                                        if 'id' in dictionary and str(dictionary['id']) == str(item_id):
-                                            search_result = True
-                                            break
-                                    if not search_result:
-                                        Logs.notify(self.tg_info, 'Visible Store: Items not visible in store',
-                                                    self.steamclient.username)
-                                        raise ExitException
+                                    if search_list:
+                                        for dictionary in search_list:
+                                            if 'id' in dictionary and str(dictionary['id']) == str(item_id):
+                                                search_result = True
+                                                break
+                                        if not search_result:
+                                            Logs.notify(self.tg_info, 'Visible Store: Items not visible in store',
+                                                        self.steamclient.username)
+                                            raise ExitException
+                                break
             except ExitException:
                 break
             except Exception as e:

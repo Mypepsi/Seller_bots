@@ -8,7 +8,7 @@ class TMGeneral(Steam):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
-    def site_apikey(self):
+    def site_apikey(self):  # Global Function (class_for_many_functions)
         Logs.log(f"Site Apikey: thread are running", '')
         while True:
             self.update_account_settings_info()
@@ -29,10 +29,10 @@ class TMGeneral(Steam):
                 time.sleep(10)
             time.sleep(self.site_apikey_global_time)
 
-    def balance_transfer(self):
+    def balance_transfer(self):  # Global Function (class_for_many_functions)
         Logs.log(f"Balance Transfer: thread are running", '')
         while True:
-            #time.sleep(self.balance_transfer_global_time)
+            time.sleep(self.balance_transfer_global_time)
             self.update_account_settings_info()
             self.update_database_info(prices=False)
             try:
@@ -68,7 +68,7 @@ class TMGeneral(Steam):
                                     data_ = None
                                 if data_ and 'success' in data_ and data_['success']:
                                     Logs.log(f'Balance Transfer: Payment password has been successfully set', username)
-                                elif data_:
+                                elif data_ and 'error' in data_:
                                     Logs.notify(self.tg_info, 'Balance Transfer: Error to set payment password', username)
                             elif data:
                                 Logs.notify(self.tg_info, 'Balance Transfer: Wrong payment password', username)

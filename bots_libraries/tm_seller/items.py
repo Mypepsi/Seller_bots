@@ -12,10 +12,9 @@ class TMItems(Steam):
         super().__init__(main_tg_info)
 
     # region Add To Sale
-    def add_to_sale(self):
+    def add_to_sale(self):  # Global Function (class_for_account_functions)
         while True:
             try:
-                self.update_account_data_info()
                 self.update_database_info()
                 if self.active_session:
                     filtered_inventory = self.add_to_sale_inventory()
