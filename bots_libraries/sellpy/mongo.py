@@ -19,36 +19,36 @@ class Mongo:
         self.tg_info = main_tg_info  # Initialization TG Info
 
         # region MongoDB
-        self.database = self.get_database('Seller_DataBases')
-        self.database_prices_collection = self.get_collection(self.database, 'database_prices')
+        self.seller_databases = self.get_database('Seller_DataBases')
+        self.database_prices_collection = self.get_collection(self.seller_databases, 'database_prices')
         self.content_database_prices = None
 
-        self.database_settings_collection = self.get_collection(self.database, 'database_settings')
+        self.database_settings_collection = self.get_collection(self.seller_databases, 'database_settings')
         self.content_database_settings = None
 
-        self.settings = self.get_database('Seller_Settings')
+        self.seller_settings = self.get_database('Seller_Settings')
 
-        self.accounts = self.get_database('Seller_Accounts')
-        self.acc_settings_collection = self.get_collection(self.accounts, 'account_settings')
+        self.seller_accounts = self.get_database('Seller_Accounts')
+        self.acc_settings_collection = self.get_collection(self.seller_accounts, 'account_settings')
         self.content_acc_settings_list = self.get_all_docs_from_mongo_collection(self.acc_settings_collection)
         self.content_acc_settings_dict = self.get_dict_from_collection_list(self.content_acc_settings_list, 'username')
 
-        self.acc_data_collection = self.get_collection(self.accounts, 'account_data')
+        self.acc_data_collection = self.get_collection(self.seller_accounts, 'account_data')
         self.content_acc_data_list = self.get_all_docs_from_mongo_collection(self.acc_data_collection)
         self.content_acc_data_dict = self.get_dict_from_collection_list(self.content_acc_data_list, 'username')
 
-        self.acc_for_parsing_collection = self.get_collection(self.accounts, 'account_for_parsing')
+        self.acc_for_parsing_collection = self.get_collection(self.seller_accounts, 'account_for_parsing')
         self.content_acc_for_parsing_list = self.get_all_docs_from_mongo_collection(self.acc_for_parsing_collection)
 
         self.content_merges = self.create_merge_info_for_parsing()
 
-        self.history = self.get_database('Seller_History')
+        self.seller_history = self.get_database('Seller_History')
         self.acc_history_collection = None
         # endregion
 
         # region Collection creator_settings
         if self.tg_info["bot name"] == 'Creator':
-            self.creator_settings_collection = self.get_collection(self.settings, 'creator_settings')
+            self.creator_settings_collection = self.get_collection(self.seller_settings, 'creator_settings')
             self.content_creator_settings = self.get_first_doc_from_mongo_collection(self.creator_settings_collection)
 
             self.creator_settings_general = self.get_key(self.content_creator_settings, 'general')
@@ -85,7 +85,7 @@ class Mongo:
 
         # region Collection tm_seller_settings
         elif self.tg_info["bot name"] == 'TM Seller':
-            self.tm_settings_collection = self.get_collection(self.settings, 'tm_seller_settings')
+            self.tm_settings_collection = self.get_collection(self.seller_settings, 'tm_seller_settings')
             self.content_tm_settings = self.get_first_doc_from_mongo_collection(self.tm_settings_collection)
 
             self.tm_settings_general = self.get_key(self.content_tm_settings, 'general')
@@ -135,7 +135,7 @@ class Mongo:
 
         # region Collection waxpeer_seller_settings
         elif self.tg_info["bot name"] == 'Waxpeer Seller':
-            self.waxpeer_settings_collection = self.get_collection(self.settings, 'waxpeer_seller_settings')
+            self.waxpeer_settings_collection = self.get_collection(self.seller_settings, 'waxpeer_seller_settings')
             self.content_waxpeer_settings = self.get_first_doc_from_mongo_collection(self.waxpeer_settings_collection)
 
             self.waxpeer_settings_general = self.get_key(self.content_waxpeer_settings, 'general')
@@ -185,7 +185,7 @@ class Mongo:
 
         # region Collection csgoempire_seller_settings
         elif self.tg_info["bot name"] == 'CSGOEmpire Seller':
-            self.csgoempire_settings_collection = self.get_collection(self.settings, 'csgoempire_seller_settings')
+            self.csgoempire_settings_collection = self.get_collection(self.seller_settings, 'csgoempire_seller_settings')
             self.content_csgoempire_settings = self.get_first_doc_from_mongo_collection(self.csgoempire_settings_collection)
 
             self.csgoempire_settings_general = self.get_key(self.content_csgoempire_settings, 'general')
@@ -235,7 +235,7 @@ class Mongo:
 
         # region Collection csgo500_seller_settings
         elif self.tg_info["bot name"] == 'CSGO500 Seller':
-            self.csgo500_settings_collection = self.get_collection(self.settings, 'csgo500_seller_settings')
+            self.csgo500_settings_collection = self.get_collection(self.seller_settings, 'csgo500_seller_settings')
             self.content_csgo500_settings = self.get_first_doc_from_mongo_collection(self.csgo500_settings_collection)
 
             self.csgo500_settings_general = self.get_key(self.content_csgo500_settings, 'general')
@@ -285,7 +285,7 @@ class Mongo:
 
         # region Collection shadowpay_seller_settings
         elif self.tg_info["bot name"] == 'ShadowPay Seller':
-            self.shadowpay_settings_collection = self.get_collection(self.settings, 'shadowpay_seller_settings')
+            self.shadowpay_settings_collection = self.get_collection(self.seller_settings, 'shadowpay_seller_settings')
             self.content_shadowpay_settings = self.get_first_doc_from_mongo_collection(self.shadowpay_settings_collection)
 
             self.shadowpay_settings_general = self.get_key(self.content_shadowpay_settings, 'general')
@@ -338,7 +338,7 @@ class Mongo:
 
         # region Collection buff_seller_settings
         elif self.tg_info["bot name"] == 'Buff Seller':
-            self.buff_settings_collection = self.get_collection(self.settings, 'buff_seller_settings')
+            self.buff_settings_collection = self.get_collection(self.seller_settings, 'buff_seller_settings')
             self.content_buff_settings = self.get_first_doc_from_mongo_collection(self.buff_settings_collection)
 
             self.buff_settings_general = self.get_key(self.content_buff_settings, 'general')

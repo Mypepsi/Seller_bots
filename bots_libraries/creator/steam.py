@@ -133,8 +133,8 @@ class CreatorSteam(Steam):
     def create_history_doc(self):
         try:
             collection_name = f'history_{self.steamclient.username}'
-            if collection_name not in self.history.list_collection_names():
-                self.history.create_collection(collection_name)
+            if collection_name not in self.seller_history.list_collection_names():
+                self.seller_history.create_collection(collection_name)
         except:
             pass
     # endregion

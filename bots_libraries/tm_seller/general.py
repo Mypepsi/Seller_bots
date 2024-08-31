@@ -19,10 +19,11 @@ class TMGeneral(Steam):
                     tm_apikey = acc_info['tm apikey']
                     try:
                         balance_url = f'{self.site_url}/api/v2/get-money?key={tm_apikey}'
-                        search_response = requests.get(balance_url, timeout=30).json()
+                        response = requests.get(balance_url, timeout=30).json()
+                        response_error = response['error']
                     except:
-                        search_response = None
-                    if search_response and 'error' in search_response and search_response['error'] == 'Bad KEY':
+                        response_error = None
+                    if response_error and response_error == 'Bad KEY':
                         Logs.notify(self.tg_info, 'Site Apikey: Invalid apikey', username)
                 except Exception as e:
                     Logs.notify_except(self.tg_info, f"Site Apikey Global Error: {e}", username)
@@ -48,18 +49,20 @@ class TMGeneral(Steam):
                         try:
                             current_balance_url = f'{self.site_url}/api/v2/get-money?key={tm_apikey}'
                             response = requests.get(current_balance_url, timeout=30).json()
+                            response_money = response['money']
                         except:
-                            response = None
-                        if response and 'money' in response and response['money'] > 1:
+                            response_money = None
+                        if response_money and response_money > 1:
                             time.sleep(3)
-                            new_value = round(response['money'] * 100)
+                            new_value = round(response_money * 100)
                             try:
                                 withdrawing_tm_url = (f'{self.site_url}/api/v2/money-send/{new_value}/{api_to_withdraw}?'
                                                       f'pay_pass=34368&key={tm_apikey}')
                                 data = requests.get(withdrawing_tm_url, timeout=30).json()
+                                data_error = data['error']
                             except:
-                                data = None
-                            if data and 'error' in data and data['error'] == 'need_payment_password':
+                                data_error = None
+                            if data_error and data_error == 'need_payment_password':
                                 try:
                                     set_pay_password_url = (f'{self.site_url}/api/v2/set-pay-password?'
                                                             f'new_password=34368&key={tm_apikey}')
@@ -70,7 +73,7 @@ class TMGeneral(Steam):
                                     Logs.log(f'Balance Transfer: Payment password has been successfully set', username)
                                 elif data_ and 'error' in data_:
                                     Logs.notify(self.tg_info, 'Balance Transfer: Error to set payment password', username)
-                            elif data:
+                            elif data_error:
                                 Logs.notify(self.tg_info, 'Balance Transfer: Wrong payment password', username)
                     except Exception as e:
                         Logs.notify_except(self.tg_info, f"Balance Transfer Global Error: {e}", username)

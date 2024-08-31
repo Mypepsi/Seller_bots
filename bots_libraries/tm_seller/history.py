@@ -9,23 +9,22 @@ class TMHistory(Steam):
         super().__init__(main_tg_info)
 
     # region History
-    def tm_history(self):
+    def history(self):  # Global Function (class_for_account_functions)
         while True:
             time.sleep(self.history_global_time)
             try:
-                self.update_account_data_info()
-                self.update_database_info()
                 if self.active_session:
-                    collection_info = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
-                    if collection_info:
-                        self.steam_history(collection_info)
-                        self.site_history(collection_info)
-                        self.money_history(collection_info)
+                    self.update_database_info()
+                    history_docs = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
+                    if history_docs:
+                        self.steam_history(history_docs)
+                        self.site_history(history_docs)
+                        self.money_history(history_docs)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"History Global Error: {e}", self.steamclient.username)
 
     # region Site History
-    def site_history(self, collection_info):
+    def site_history(self, history_docs):
         try:
             current_timestamp = int(time.time())
             current_timestamp_unique = int(time.time())
@@ -34,35 +33,35 @@ class TMHistory(Steam):
                 item_history_url = (f'{self.site_url}/api/v2/history?key={self.tm_apikey}'
                                     f'&date={month_ago}&date_end={current_timestamp}')
                 response = requests.get(item_history_url, timeout=30).json()
-                response_info = response['data']
+                response_data = response['data']
             except:
-                response_info = None
+                response_data = None
 
-            if response_info and isinstance(response_info, list):
-                collection_info_sorted = [
-                    doc for doc in collection_info
+            if response_data and isinstance(response_data, list):
+                history_docs_sorted = [
+                    doc for doc in history_docs
                     if doc.get('site') == self.site_name
                     and doc.get('transaction') == 'sale_record'
                     and all(key in doc for key in ['site item id', 'site status', 'asset id'])
                 ]
 
-                collection_info_with_new_id = self.search_site_item_id(collection_info_sorted, response_info)
+                history_docs_with_new_id = self.search_site_item_id(history_docs_sorted, response_data)
 
-                for doc in collection_info_with_new_id:
+                for doc in history_docs_with_new_id:
                     if doc["site status"] == 'active_deal':
                         match_for_alert = False
-                        for item_transfer in response_info:
-                            if (all(key in item_transfer for key in ['item_id', 'stage', 'time'])
-                                    and str(doc['site item id']) == str(item_transfer['item_id'])):
+                        for site_item in response_data:
+                            if (all(key in site_item for key in ['item_id', 'stage', 'time'])
+                                    and str(doc['site item id']) == str(site_item['item_id'])):
                                 match_for_alert = True
-                                stage = str(item_transfer['stage'])
+                                stage = str(site_item['stage'])
                                 if stage == '1':
-                                    if (current_timestamp - int(item_transfer['time'])) >= 86400:
+                                    if (current_timestamp - int(site_item['time'])) >= 86400:
                                         Logs.notify(self.tg_info, f"Site History: "
                                                                             f"'Active_deal' status on item with "
-                                                                            f"{item_transfer['item_id']} itemID "
+                                                                            f"{site_item['item_id']} itemID "
                                                                             f"more than 24 hours",
-                                                           self.steamclient.username)
+                                                    self.steamclient.username)
                                     break
                                 elif stage == '2':
                                     doc["site status"] = 'accepted'
@@ -75,10 +74,10 @@ class TMHistory(Steam):
                                     except:
                                         rate = commission = 0
                                     if commission and rate:
-                                        hash_name = item_transfer['market_hash_name']
-                                        site_price = round((int(item_transfer['received']) / 0.95 / 100), 2)
+                                        hash_name = site_item['market_hash_name']
+                                        site_price = round((int(site_item['received']) / 0.95 / 100), 2)
                                         sold_price = round((site_price / rate * commission), 3)
-                                        currency = item_transfer["currency"]
+                                        currency = site_item["currency"]
 
                                         self.send_sold_item_info(hash_name, site_price, sold_price,
                                                                  currency, '₽', doc)
@@ -90,7 +89,7 @@ class TMHistory(Steam):
                                     doc["site status"] = 'unavailable'
                                     doc['site status time'] = current_timestamp
                                     Logs.notify(self.tg_info,
-                                                f"'Unavailable' status on item with {item_transfer['item_id']} itemID",
+                                                f"'Unavailable' status on item with {site_item['item_id']} itemID",
                                                 self.steamclient.username)
                                 try:
                                     self.acc_history_collection.update_one({'_id': doc['_id']},
@@ -105,12 +104,12 @@ class TMHistory(Steam):
                             Logs.notify(self.tg_info,
                                         f"Site History: MongoDB {doc['site item id']} siteItemID not in site history",
                                         self.steamclient.username)
-                for item_transfer in response_info:
-                    if all(key in item_transfer for key in ['item_id', 'stage', 'time', 'market_hash_name', 'assetid']):
+                for site_item in response_data:
+                    if all(key in site_item for key in ['item_id', 'stage', 'time', 'market_hash_name', 'assetid']):
 
                         availability = False
-                        for doc in collection_info_with_new_id:
-                            if str(item_transfer['item_id']) == str(doc['site item id']):
+                        for doc in history_docs_with_new_id:
+                            if str(site_item['item_id']) == str(doc['site item id']):
                                 availability = True
                                 break
 
@@ -120,22 +119,22 @@ class TMHistory(Steam):
                                 "transaction": "sale_record",
                                 "site": self.site_name,
                                 "time": current_timestamp_unique,
-                                "name": item_transfer['market_hash_name'],
+                                "name": site_item['market_hash_name'],
                                 "steam status": None,
                                 "steam status time": None,
                                 "site status": None,
-                                "site status time": int(item_transfer['time']),
+                                "site status time": int(site_item['time']),
                                 "site id": None,
                                 "buyer steam id": None,
-                                "asset id": str(item_transfer['assetid']),
+                                "asset id": str(site_item['assetid']),
                                 "trade id": None,
                                 "sent time": None,
-                                "site item id": str(item_transfer['item_id'])
+                                "site item id": str(site_item['item_id'])
                             }
-                            stage = str(item_transfer['stage'])
+                            stage = str(site_item['stage'])
                             if stage == '1':
-                                if (current_timestamp - int(item_transfer['time'])) < 86400:
-                                    continue
+                                if (current_timestamp - int(site_item['time'])) < 86400:
+                                    break
                                 data_append["site status"] = 'active deal'
                             elif stage == '2':
                                 data_append["site status"] = 'accepted'
@@ -152,62 +151,62 @@ class TMHistory(Steam):
             Logs.notify_except(self.tg_info, f"Site History Global Error: {e}", self.steamclient.username)
         time.sleep(3)
 
-    def search_site_item_id(self, collection_info_sorted, item_history_response_info):
+    def search_site_item_id(self, history_docs_sorted, response_data):
         current_timestamp = int(time.time())
-        collection_info_sorted_by_time = sorted(collection_info_sorted, key=lambda x: x.get('time', 0), reverse=True)
+        history_docs_sorted_by_time = sorted(history_docs_sorted, key=lambda x: x.get('time', 0), reverse=True)
 
-        for doc in collection_info_sorted_by_time:
+        for doc in history_docs_sorted_by_time:
             try:
                 if doc['site item id'] is None:
                     list_of_matches = [
-                        item_transfer
-                        for item_transfer in item_history_response_info
-                        if all(key in item_transfer for key in ['assetid', 'item_id', 'time'])
-                        and str(doc['asset id']) == str(item_transfer['assetid'])
+                        site_item
+                        for site_item in response_data
+                        if all(key in site_item for key in ['assetid', 'item_id', 'time'])
+                        and str(doc['asset id']) == str(site_item['assetid'])
                         and not any(
-                            str(inner_doc['site item id']) == str(item_transfer['item_id'])
-                            for inner_doc in collection_info_sorted_by_time)
+                            str(inner_doc['site item id']) == str(site_item['item_id'])
+                            for inner_doc in history_docs_sorted_by_time)
                     ]
-                    closest_item_transfer = min(
+                    closest_site_item = min(
                         (entry for entry in list_of_matches if int(entry['time']) <= current_timestamp),
                         key=lambda entry: current_timestamp - int(entry['time']),
                         default=None
                     )
-                    if closest_item_transfer:
-                        doc['site item id'] = str(closest_item_transfer['item_id'])
+                    if closest_site_item:
+                        doc['site item id'] = str(closest_site_item['item_id'])
                         try:
                             self.acc_history_collection.update_one({'_id': doc['_id']},
                                                                    {'$set': {'site item id': doc['site item id']}})
                         except:
                             pass
                         time.sleep(1)
-                        for index, element in enumerate(collection_info_sorted_by_time):
+                        for index, element in enumerate(history_docs_sorted_by_time):
                             if element.get('_id') == doc['_id']:
-                                collection_info_sorted_by_time[index] = doc
+                                history_docs_sorted_by_time[index] = doc
                                 break
             except:
                 pass
-        return collection_info_sorted_by_time
+        return history_docs_sorted_by_time
     # endregion
 
-    def money_history(self, collection_info):
+    def money_history(self, history_docs):
         try:
             try:
                 transfer_id = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_transfer_id']
                 money_history_url = f'{self.site_url}/api/v2/money-send-history/0?key={self.tm_apikey}'
                 response = requests.get(money_history_url, timeout=30).json()
+                response_money = response['data']
             except:
                 transfer_id = None
-                response = None
+                response_money = None
 
-            if (transfer_id and response and 'success' in response and response['success'] is True
-                    and 'data' in response and isinstance(response['data'], list)):
-                for money_transfer in response['data']:
+            if transfer_id and response_money and isinstance(response_money, list):
+                for money_transfer in response_money:
                     if all(key in money_transfer for key in ['id', 'to', 'amount_from', 'currency_from']):
                         match = False
                         money_status = 'accepted'
-                        for doc in collection_info:
-                            if 'money id' in doc and doc['money id'] == money_transfer['id']:
+                        for doc in history_docs:
+                            if 'money id' in doc and str(doc['money id']) == str(money_transfer['id']):
                                 match = True
                                 break
 
@@ -215,7 +214,7 @@ class TMHistory(Steam):
                             if str(transfer_id) != str(money_transfer['to']):
                                 money_status = 'error_strange_id'
                                 Logs.notify(self.tg_info, f"Money History: Strange {money_transfer['to']} transferID in "
-                                                     f"{money_transfer['id']} transactionID", self.steamclient.username)
+                                                          f"{money_transfer['id']} transactionID", self.steamclient.username)
                             money = int(money_transfer['amount_from']) / 100
 
                             current_timestamp = int(time.time())

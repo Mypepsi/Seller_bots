@@ -85,18 +85,18 @@ class TMOnline(Steam):
                     except:
                         items_on_sale = None
                     if items_on_sale and len(items_on_sale) != 0:
-                        for _ in range(len(items_on_sale)):
-                            random_item = random.choice(items_on_sale)
-                            if random_item['status'] == '1':
-                                hash_name = random_item['market_hash_name']
-                                coded_hash_name = urllib.parse.quote(hash_name)
-                                item_id = random_item['item_id']
-                                try:
-                                    another_tm_apis_list = self.search_in_merges_by_username(
-                                        self.steamclient.username)['tm apikey']
-                                except:
-                                    another_tm_apis_list = None
-                                if another_tm_apis_list:
+                        try:
+                            another_tm_apis_list = self.search_in_merges_by_username(
+                                self.steamclient.username)['tm apikey']
+                        except:
+                            another_tm_apis_list = None
+                        if another_tm_apis_list:
+                            for _ in range(len(items_on_sale)):
+                                random_item = random.choice(items_on_sale)
+                                if random_item['status'] == '1':
+                                    hash_name = random_item['market_hash_name']
+                                    coded_hash_name = urllib.parse.quote(hash_name)
+                                    item_id = random_item['item_id']
                                     another_tm_api = random.choice(another_tm_apis_list)
                                     try:
                                         search_url = (f'{self.site_url}/api/v2/search-list-items-by-hash-name-all?'
@@ -114,7 +114,7 @@ class TMOnline(Steam):
                                             Logs.notify(self.tg_info, 'Visible Store: Items not visible in store',
                                                         self.steamclient.username)
                                             raise ExitException
-                                break
+                                    break
             except ExitException:
                 break
             except Exception as e:

@@ -18,19 +18,18 @@ class TMSteam(Steam):
                 if self.active_session:
                     try:
                         url = f'{self.site_url}/api/v2/trade-request-give-p2p-all?key={self.tm_apikey}'
-                        request_site_offers = requests.get(url, timeout=30).json()
+                        request_site = requests.get(url, timeout=30).json()
+                        request_site_offers = request_site['offers']
                     except:
                         request_site_offers = None
 
-                    if (request_site_offers and 'offers' in request_site_offers
-                            and type(request_site_offers['offers']) == list
-                            and len(request_site_offers['offers']) > 0):
+                    if request_site_offers and isinstance(request_site_offers, list) and len(request_site_offers) > 0:
                         send_offers = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
 
-                        for i in range(len(request_site_offers['offers'])):
-                            msg = request_site_offers['offers'][i]['tradeoffermessage']
+                        for i in range(len(request_site_offers)):
+                            msg = request_site_offers[i]['tradeoffermessage']
                             self.request_trade_ready(send_offers, msg)
-                            self.steam_resending_offer(request_site_offers['offers'][i], send_offers, msg)
+                            self.steam_resending_offer(request_site_offers[i], send_offers, msg)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Steam Send Offers Global Error: {e}", self.steamclient.username)
             time.sleep(self.steam_send_offers_global_time)
@@ -74,14 +73,14 @@ class TMSteam(Steam):
                 if trade_id is None:
                     break
 
-                response_steam_trade_offer = self.steamclient.get_trade_offer_state(trade_id)
+                response_state = self.steamclient.get_trade_offer_state(trade_id)
                 time.sleep(1)
 
-                if not isinstance(response_steam_trade_offer, dict):
+                if not isinstance(response_state, dict):
                     break
 
-                if 'response' in response_steam_trade_offer and 'offer' in response_steam_trade_offer['response']:
-                    offer_status = response_steam_trade_offer['response']['offer']['trade_offer_state']
+                if 'response' in response_state and 'offer' in response_state['response']:
+                    offer_status = response_state['response']['offer']['trade_offer_state']
                 else:
                     break
 

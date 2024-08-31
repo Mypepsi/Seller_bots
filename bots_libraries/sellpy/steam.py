@@ -44,7 +44,8 @@ class Steam(Mongo):
                         return False
                 steam_cookie_file = io.BytesIO(session)
                 self.steamclient = pickle.load(steam_cookie_file)
-                self.acc_history_collection = self.get_collection(self.history, f'history_{self.steamclient.username}')
+                self.acc_history_collection = self.get_collection(self.seller_history,
+                                                                  f'history_{self.steamclient.username}')
 
                 # Info from account_settings
                 proxy = self.content_acc_settings_dict[self.steamclient.username]['proxy']
@@ -89,9 +90,9 @@ class Steam(Mongo):
     def steam_cancel_offers(self):  # Global Function (class_for_account_functions)
         while True:
             try:
-                current_time = int(time.time())
                 self.update_account_data_info()
                 if self.active_session:
+                    current_time = int(time.time())
                     active_trades = self.steamclient.get_trade_offers(get_sent_offers=1, active_only=1)
                     if active_trades and 'response' in active_trades and 'trade_offers_sent' in active_trades['response']:
                         sites_name = []

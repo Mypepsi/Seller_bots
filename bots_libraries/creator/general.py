@@ -56,6 +56,7 @@ class CreatorGeneral(Steam):
     def mongodb(self):  # Global Function (class_for_many_functions)
         Logs.log(f"MongoDB: thread are running", '')
         while True:
+            time.sleep(self.mongodb_global_time)
             if not self.mongo_tg_alert:
                 try:
                     response = self.client.admin.command('ping')
@@ -64,4 +65,3 @@ class CreatorGeneral(Steam):
                 except Exception as e:
                     self.mongo_tg_alert = True
                     Logs.notify_except(self.tg_info, f"MongoDB: Error receiving response from MongoDB: {e}", '')
-            time.sleep(self.mongodb_global_time)

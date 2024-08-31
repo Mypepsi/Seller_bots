@@ -18,14 +18,14 @@ class BuffSeller(BuffGeneral, BuffOnline, BuffItems, BuffSteam, BuffHistory, Res
     @staticmethod
     def collect_work_functions():
         functions_list = []
+        if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
+            functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": BuffSeller})
+
         if manager.restart_server_global_time != 0:  # Restart Server
             functions_list.append({"func": "restart_server", "class_for_many_functions": BuffSeller})
 
         if manager.restart_bots_global_time != 0:    # Restart Bots
             functions_list.append({"func": "restart_bots", "class_for_many_functions": BuffSeller})
-
-        if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
-            functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": BuffSeller})
 
         return functions_list
 

@@ -16,12 +16,6 @@ class Creator(CreatorGeneral, CreatorDataBase, CreatorSteam, Restarter):
     @staticmethod
     def collect_work_functions():
         functions_list = []
-        if manager.restart_server_global_time != 0:  # Restart Server
-            functions_list.append({"func": "restart_server", "class_for_many_functions": Creator})
-
-        if manager.restart_bots_global_time != 0:  # Restart Bots
-            functions_list.append({"func": "restart_bots", "class_for_many_functions": Creator})
-
         if manager.db_prices_global_time != 0:  # Database Prices
             functions_list.append({"func": "database_prices", "class_for_many_functions": Creator})
 
@@ -34,17 +28,23 @@ class Creator(CreatorGeneral, CreatorDataBase, CreatorSteam, Restarter):
         if manager.steam_inventory_global_time != 0:  # Steam Inventory
             functions_list.append({"func": "steam_inventory", "class_for_single_function": CreatorSteam})
 
-        if manager.steam_access_token_global_time != 0:  # Steam Access Token
-            functions_list.append({"func": "steam_access_token", "class_for_single_function": CreatorSteam})
-
         if manager.steam_apikey_global_time != 0:  # Steam Apikey
             functions_list.append({"func": "steam_apikey", "class_for_single_function": CreatorSteam})
 
         if manager.proxy_global_time != 0:  # Proxy
             functions_list.append({"func": "proxy", "class_for_single_function": CreatorGeneral})
 
+        if manager.steam_access_token_global_time != 0:  # Steam Access Token
+            functions_list.append({"func": "steam_access_token", "class_for_single_function": CreatorSteam})
+
         if manager.mongodb_global_time != 0:  # MongoDB
             functions_list.append({"func": "mongodb", "class_for_many_functions": Creator})
+
+        if manager.restart_server_global_time != 0:  # Restart Server
+            functions_list.append({"func": "restart_server", "class_for_many_functions": Creator})
+
+        if manager.restart_bots_global_time != 0:  # Restart Bots
+            functions_list.append({"func": "restart_bots", "class_for_many_functions": Creator})
 
         return functions_list
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
         Logs.log(f'{bot_name} STARTED ({len(manager.content_acc_data_list)} in Account Data '
                  f'and {len(manager.content_acc_settings_list)} in Account Settings)', '')
-        #time.sleep(manager.waiting_start_time)
+        time.sleep(manager.waiting_start_time)
         manager.start_work_functions(functions)
 
     except ServerSelectionTimeoutError as e:
