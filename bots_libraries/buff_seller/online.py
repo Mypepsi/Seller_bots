@@ -16,7 +16,6 @@ class BuffOnline(Steam):
             try:
                 if self.active_session:
                     response = self.request_to_ping(0)
-                    print(response)
                     if response and "error" in response:
                         Logs.log(f"Ping: Error to ping: {response['error']}", self.steamclient.username)
                         if not self.ping_alert:
