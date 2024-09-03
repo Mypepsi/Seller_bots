@@ -20,15 +20,7 @@ class CreatorDataBase(Steam):
                 if db_doc:
                     last_update_time = int(db_doc.get("Time", 0))
                 else:
-                    db_doc = {
-                        "Time": 0,
-                        "DataBasePrices": []
-                    }
-                    try:
-                        self.database_prices_collection.replace_one({}, db_doc, upsert=True)
-                    except:
-                        pass
-                    last_update_time = db_doc["Time"]
+                    last_update_time = 0
 
                 difference_to_update = current_timestamp - last_update_time
                 if difference_to_update > self.db_prices_validity_time:
@@ -158,15 +150,7 @@ class CreatorDataBase(Steam):
                 if settings_doc:
                     last_update_time = int(settings_doc.get("Time", 0))
                 else:
-                    settings_doc = {
-                        "Time": 0,
-                        "DataBaseSettings": []
-                    }
-                    try:
-                        self.database_settings_collection.replace_one({}, settings_doc, upsert=True)
-                    except:
-                        pass
-                    last_update_time = settings_doc["Time"]
+                    last_update_time = 0
 
                 difference_to_update = current_timestamp - last_update_time
                 if difference_to_update > self.db_settings_validity_time:

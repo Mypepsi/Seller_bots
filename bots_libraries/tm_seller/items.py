@@ -16,7 +16,7 @@ class TMItems(Steam):
         while True:
             try:
                 if self.active_session:
-                    self.update_database_info()
+                    self.update_database_info(prices=True, settings=True)
                     filtered_inventory = self.add_to_sale_inventory()
                     seller_value = self.get_information_for_price()
                     if filtered_inventory and seller_value:
@@ -30,7 +30,7 @@ class TMItems(Steam):
                                 except:
                                     pass
                             else:
-                                Logs.notify(self.tg_info, f"Add To Sale: Failed to list item on sale: {asset_id} assetID",
+                                Logs.notify(self.tg_info, f"Add To Sale: Failed to add item on sale: {asset_id} assetID",
                                             self.steamclient.username)
                             time.sleep(3)
             except Exception as e:
@@ -41,7 +41,7 @@ class TMItems(Steam):
     def add_to_sale_inventory(self):
         try:
             update_inventory_url = f'{self.site_url}/api/v2/update-inventory/?key={self.tm_apikey}'
-            requests.get(update_inventory_url, timeout=5)
+            requests.get(update_inventory_url, timeout=15)
         except:
             pass
         time.sleep(10)
@@ -94,7 +94,7 @@ class TMItems(Steam):
         while True:
             try:
                 if self.active_session:
-                    self.update_database_info()
+                    self.update_database_info(prices=True, settings=True)
                     try:
                         items_url = f'{self.site_url}/api/v2/items?key={self.tm_apikey}'
                         listed = requests.get(items_url, timeout=30).json()
@@ -111,15 +111,15 @@ class TMItems(Steam):
                             new_listed_items = self.change_price_delete_items(items_with_status_one)
                             seller_value = self.get_information_for_price()
                             try:
-                                another_tm_apis_list = self.search_in_merges_by_username(self.steamclient.username)['tm apikey']
+                                another_apis_list = self.search_in_merges_by_username(self.steamclient.username)['tm apikey']
                             except:
-                                another_tm_apis_list = None
-                            if another_tm_apis_list and seller_value:
+                                another_apis_list = None
+                            if another_apis_list and seller_value:
                                 max_items_count = 100
                                 for i in range(0, len(new_listed_items), max_items_count):
-                                    storelist = new_listed_items[i:i + max_items_count]
-                                    parsed_info = self.threads_parsing_prices(storelist, another_tm_apis_list)
-                                    self.change_price_lower_opponent(storelist, parsed_info, seller_value, listed_items)
+                                    items_list = new_listed_items[i:i + max_items_count]
+                                    parsed_info = self.threads_parsing_prices(items_list, another_apis_list)
+                                    self.change_price_below_opponent(items_list, parsed_info, seller_value, listed_items)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Change Price Global Error: {e}", self.steamclient.username)
             time.sleep(self.change_price_global_time)
@@ -152,17 +152,17 @@ class TMItems(Steam):
             data = {f'list[{ui_id}]': price for ui_id, price in items.items()}
             try:
                 url_change_price = f'{self.site_url}/api/MassSetPriceById/?key={self.tm_apikey}'
-                requests.post(url_change_price, data=data, timeout=5)
+                requests.post(url_change_price, data=data, timeout=15)
             except:
                 pass
-            time.sleep(65)
+            time.sleep(60)
 
-    def change_price_lower_opponent(self, storelist, parsed_info, seller_value, listed_items):
+    def change_price_below_opponent(self, items_list, parsed_info, seller_value, listed_items):
         my_prices = {}
-        items_id_list = [item["item_id"] for item in storelist]
-        for item in range(len(storelist)):
-            item_name = storelist[item]['market_hash_name']
-            item_id = storelist[item]['item_id']
+        items_id_list = [item["item_id"] for item in items_list]
+        for item in range(len(items_list)):
+            item_name = items_list[item]['market_hash_name']
+            item_id = items_list[item]['item_id']
             for el in parsed_info.keys():
                 if el == item_name:
                     filtered_dict = {
@@ -172,10 +172,10 @@ class TMItems(Steam):
                     item_prices_all = [item["price"] for item in parsed_info[el]]
                     item_prices_opponent = [item["price"] for item in filtered_dict.values()]
                     max_site_price = self.get_site_price(
-                        self.steam_inventory_phases[storelist[item]["assetid"]], seller_value, 'max')
+                        self.steam_inventory_phases[items_list[item]["assetid"]], seller_value, 'max')
 
                     min_site_price = self.get_site_price(
-                        self.steam_inventory_phases[storelist[item]["assetid"]], seller_value, 'min')
+                        self.steam_inventory_phases[items_list[item]["assetid"]], seller_value, 'min')
 
                     if len(item_prices_opponent) > 0 and min_site_price and max_site_price:
                         lower_market_price_opponent = min([int(price) for price in item_prices_opponent])
@@ -192,12 +192,12 @@ class TMItems(Steam):
                     else:
                         Logs.notify(self.tg_info, f"Change Price: "
                                                   f"Unable to calculate new price for item on sale: "
-                                                  f"{self.steam_inventory_phases[storelist[item]['assetid']]} assetID",
+                                                  f"{self.steam_inventory_phases[items_list[item]['assetid']]} assetID",
                                     self.steamclient.username)
                         break
                     for item_ in listed_items:
                         if item_['item_id'] == item_id and item_['price'] != my_price / 100:
-                            my_prices[storelist[item]["item_id"]] = my_price
+                            my_prices[items_list[item]["item_id"]] = my_price
                             break
                     break
         if len(my_prices) > 0:

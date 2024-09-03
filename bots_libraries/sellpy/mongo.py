@@ -26,6 +26,12 @@ class Mongo:
         self.database_settings_collection = self.get_collection(self.seller_databases, 'database_settings')
         self.content_database_settings = None
 
+        self.database_csgoempire_collection = self.get_collection(self.seller_databases, 'database_csgoempire')
+        self.content_database_csgoempire = None
+
+        self.database_csgo500_collection = self.get_collection(self.seller_databases, 'database_csgo500')
+        self.content_database_csgo500 = None
+
         self.seller_settings = self.get_database('Seller_Settings')
 
         self.seller_accounts = self.get_database('Seller_Accounts')
@@ -507,7 +513,7 @@ class Mongo:
     # endregion
 
     # region Update Info
-    def update_database_info(self, prices=True, settings=True):
+    def update_database_info(self, prices=False, settings=False, csgoempire=False, csgo500=False):
         try:
             if prices:
                 database_prices = self.get_first_doc_from_mongo_collection(self.database_prices_collection)
@@ -517,6 +523,14 @@ class Mongo:
                 database_settings = self.get_first_doc_from_mongo_collection(self.database_settings_collection)
                 if database_settings:
                     self.content_database_settings = database_settings
+            if csgoempire:
+                database_csgoempire = self.get_first_doc_from_mongo_collection(self.database_csgoempire_collection)
+                if database_csgoempire:
+                    self.content_database_csgoempire = database_csgoempire
+            if csgo500:
+                database_csgo500 = self.get_first_doc_from_mongo_collection(self.database_csgo500_collection)
+                if database_csgo500:
+                    self.content_database_csgo500 = database_csgo500
         except:
             pass
 

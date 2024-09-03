@@ -27,7 +27,7 @@ class TMOnline(Steam):
                 Logs.notify_except(self.tg_info, f'Ping Global Error: {e}', self.steamclient.username)
             time.sleep(self.ping_global_time)
 
-    def request_to_ping(self):
+    def request_to_ping(self, timeout=30):
         try:
             url_to_ping = f'{self.site_url}/api/v2/ping-new?key={self.tm_apikey}'
             json_data = {
@@ -35,7 +35,7 @@ class TMOnline(Steam):
             }
             if self.steamclient.proxies and 'http' in self.steamclient.proxies:
                 json_data['proxy'] = self.steamclient.proxies['http']
-            response = requests.post(url_to_ping, json=json_data, timeout=30).json()
+            response = requests.post(url_to_ping, json=json_data, timeout=timeout).json()
             return response
         except:
             return None
@@ -46,13 +46,13 @@ class TMOnline(Steam):
                 if self.active_session:
                     try:
                         url = f'{self.site_url}/api/v2/go-offline?key={self.tm_apikey}'
-                        response = requests.get(url, timeout=5).json()
+                        response = requests.get(url, timeout=15).json()
                     except:
                         response = None
                     if response and 'success' in response and response['success'] is not True and len(response) == 1:
                         Logs.log(f'Restart Store: Offline request failed', self.steamclient.username)
                     time.sleep(3)
-                    self.request_to_ping()
+                    self.request_to_ping(timeout=15)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Restart Store Global Error: {e}", self.steamclient.username)
             time.sleep(self.restart_store_global_time)
@@ -86,21 +86,21 @@ class TMOnline(Steam):
                         items_on_sale = None
                     if items_on_sale and len(items_on_sale) != 0:
                         try:
-                            another_tm_apis_list = self.search_in_merges_by_username(
+                            another_apis_list = self.search_in_merges_by_username(
                                 self.steamclient.username)['tm apikey']
                         except:
-                            another_tm_apis_list = None
-                        if another_tm_apis_list:
+                            another_apis_list = None
+                        if another_apis_list:
                             for _ in range(len(items_on_sale)):
                                 random_item = random.choice(items_on_sale)
                                 if random_item['status'] == '1':
                                     hash_name = random_item['market_hash_name']
                                     coded_hash_name = urllib.parse.quote(hash_name)
                                     item_id = random_item['item_id']
-                                    another_tm_api = random.choice(another_tm_apis_list)
+                                    another_api = random.choice(another_apis_list)
                                     try:
                                         search_url = (f'{self.site_url}/api/v2/search-list-items-by-hash-name-all?'
-                                                      f'key={another_tm_api}&extended=1&list_hash_name[]={coded_hash_name}')
+                                                      f'key={another_api}&extended=1&list_hash_name[]={coded_hash_name}')
                                         search_response = requests.get(search_url, timeout=30).json()
                                         search_list = search_response['data'][hash_name]
                                     except:

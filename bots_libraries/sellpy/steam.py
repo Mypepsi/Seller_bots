@@ -1,4 +1,5 @@
 import io
+import jwt
 import time
 import pickle
 from bots_libraries.sellpy.mongo import Mongo
@@ -17,6 +18,8 @@ class Steam(Mongo):
         self.waxpeer_apikey = None
         self.csgoempire_apikey = None
         self.csgo500_user_id = self.csgo500_apikey = None
+        self.jwt_api_key = None
+        self.csgo500_jwt_apikey = None
         self.shadowpay_apikey = None
         self.buff_cookie = None
 
@@ -67,8 +70,18 @@ class Steam(Mongo):
                 self.csgoempire_apikey = self.content_acc_settings_dict[self.steamclient.username]['csgoempire apikey']
                 self.csgo500_user_id = self.content_acc_settings_dict[self.steamclient.username]['csgo500 user id']
                 self.csgo500_apikey = self.content_acc_settings_dict[self.steamclient.username]['csgo500 apikey']
+                self.jwt_api_key = jwt.encode(
+                    {'userId': self.csgo500_user_id},
+                    self.csgo500_apikey,
+                    algorithm="HS256"
+                )
+                self.csgo500_jwt_apikey = {'x-500-auth': self.jwt_api_key}
                 self.shadowpay_apikey = self.content_acc_settings_dict[self.steamclient.username]['shadowpay apikey']
-                self.buff_cookie = self.content_acc_settings_dict[self.steamclient.username]['buff cookie']
+                raw_cookies = self.content_acc_settings_dict[self.steamclient.username]['buff cookie']
+                if raw_cookies:
+                    self.buff_cookie = dict(pair.split("=", 1) for pair in raw_cookies.split("; "))
+                else:
+                    self.buff_cookie = None
 
                 # Info from account_data
                 self.steamclient._api_key = self.content_acc_data_dict[self.steamclient.username]['steam apikey']

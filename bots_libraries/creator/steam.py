@@ -143,7 +143,7 @@ class CreatorSteam(Steam):
         Logs.log(f"Steam Inventory: thread are running", '')
         while True:
             self.update_account_data_info()
-            self.update_database_info(settings=False)
+            self.update_database_info(prices=True)
             for acc in self.content_acc_data_list:
                 try:
                     if self.take_session(acc):
@@ -265,7 +265,8 @@ class CreatorSteam(Steam):
                 try:
                     if self.take_session(acc):
                         try:
-                            response = self.steamclient.session.get('https://steamcommunity.com/dev/apikey', timeout=15)
+                            url = 'https://steamcommunity.com/dev/apikey'
+                            response = self.steamclient.session.get(url, timeout=15)
                         except:
                             response = None
                         if response and response.status_code == 200:

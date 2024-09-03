@@ -10,7 +10,6 @@ class ThreadManager(Mongo):
         self.dict_for_accounts = {}
         self.dict_for_classes = {}
 
-
     def start_work_functions(self, functions):
         for function in functions:
             modified_function_name = 'Function not found'

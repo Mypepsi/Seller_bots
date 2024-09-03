@@ -71,10 +71,9 @@ if __name__ == '__main__':
     try:
         manager = ThreadManager(tg_info)
         functions = TMSeller.collect_work_functions()
-
         Logs.log(f'{bot_name} STARTED ({len(manager.content_acc_data_list)} in Account Data '
                  f'and {len(manager.content_acc_settings_list)} in Account Settings)', '')
-        time.sleep(manager.waiting_start_time)
+        # time.sleep(manager.waiting_start_time)
         manager.start_work_functions(functions)
 
     except ServerSelectionTimeoutError as e:

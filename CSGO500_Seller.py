@@ -18,15 +18,17 @@ class CSGO500Seller(CSGO500General, CSGO500Online, CSGO500Items, CSGO500Steam, C
     @staticmethod
     def collect_work_functions():
         functions_list = []
-        if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
-            functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": CSGO500Seller})
+        # if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
+        #     functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": CSGO500Seller})
+        #
+        # if manager.restart_server_global_time != 0:  # Restart Server
+        #     functions_list.append({"func": "restart_server", "class_for_many_functions": CSGO500Seller})
+        #
+        # if manager.restart_bots_global_time != 0:    # Restart Bots
+        #     functions_list.append({"func": "restart_bots", "class_for_many_functions": CSGO500Seller})
 
-        if manager.restart_server_global_time != 0:  # Restart Server
-            functions_list.append({"func": "restart_server", "class_for_many_functions": CSGO500Seller})
-
-        if manager.restart_bots_global_time != 0:    # Restart Bots
-            functions_list.append({"func": "restart_bots", "class_for_many_functions": CSGO500Seller})
-
+        if manager.ping_global_time != 0:  # Ping
+            functions_list.append({"func": "ping", "class_for_account_functions": CSGO500Seller})
         return functions_list
 
 
@@ -47,7 +49,7 @@ if __name__ == '__main__':
 
         Logs.log(f'{bot_name} STARTED ({len(manager.content_acc_data_list)} in Account Data '
                  f'and {len(manager.content_acc_settings_list)} in Account Settings)', '')
-        time.sleep(manager.waiting_start_time)
+        # time.sleep(manager.waiting_start_time)
         manager.start_work_functions(functions)
 
     except ServerSelectionTimeoutError as e:

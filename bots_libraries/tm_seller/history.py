@@ -14,7 +14,7 @@ class TMHistory(Steam):
             time.sleep(self.history_global_time)
             try:
                 if self.active_session:
-                    self.update_database_info()
+                    self.update_database_info(prices=True, settings=True)
                     history_docs = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
                     if history_docs:
                         self.steam_history(history_docs)

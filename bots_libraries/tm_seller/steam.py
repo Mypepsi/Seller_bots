@@ -113,7 +113,7 @@ class TMSteam(Steam):
             trade_offer_url = f'https://steamcommunity.com/tradeoffer/new/?partner={partner}&token={token}'
             creating_offer_time = int(time.time())
             steam_response = self.steamclient.make_trade_offer(assets_for_offer, [], trade_offer_url)
-            time.sleep(1)
+            time.sleep(2)
             try:
                 self.steamclient.confirm_trade_offer(steam_response)
             except:

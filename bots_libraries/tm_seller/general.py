@@ -35,7 +35,7 @@ class TMGeneral(Steam):
         while True:
             time.sleep(self.balance_transfer_global_time)
             self.update_account_settings_info()
-            self.update_database_info(prices=False)
+            self.update_database_info(settings=True)
             try:
                 api_to_withdraw = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_transfer_apikey']
             except:
