@@ -36,11 +36,10 @@ class WaxpeerOnline(Steam):
     def visible_store(self):  # Global Function (class_for_account_functions)
         while True:
             time.sleep(self.visible_store_global_time)
-            search_result = False
             try:
                 if self.active_session:
                     try:
-                        my_inventory_url = f'{self.site_url}/v1/fetch-my-inventory?api={self.waxpeer_apikey}'
+                        my_inventory_url = f'{self.site_url}/v1/get-my-inventory?api={self.waxpeer_apikey}&game=730'
                         my_inventory_response = requests.get(my_inventory_url, timeout=15).json()
                         my_inventory = my_inventory_response['items']
                     except:
@@ -62,7 +61,6 @@ class WaxpeerOnline(Steam):
                                 self.steamclient.username)['waxpeer apikey']
                         except:
                             another_apis_list = None
-                        print(another_apis_list)
                         if another_apis_list:
                             for _ in range(len(items_on_sale)):
                                 random_item = random.choice(items_on_sale)
@@ -72,11 +70,9 @@ class WaxpeerOnline(Steam):
                                     search_url = (f'{self.site_url}/v1/check-availability?'
                                                   f'api={another_api}&item_id={item_id}')
                                     search_response = requests.get(search_url, timeout=15).json()
-                                    print(search_response)
                                     search_list = search_response['items']
                                 except:
                                     search_list = []
-                                print(search_list)
                                 if not search_list:
                                     Logs.notify(self.tg_info, 'Visible Store: Items not visible in store',
                                                 self.steamclient.username)
