@@ -106,10 +106,7 @@ class WaxpeerItems(Steam):
                         listed_items = listed['items']
                     except:
                         listed_items = None
-                    print(21)
-                    print(listed_items)
                     if listed_items and isinstance(listed_items, list) and len(listed_items) > 0:
-                        print(333)
                         new_listed_items = self.change_price_delete_items(listed_items)
                         seller_value = self.get_information_for_price()
                         try:
@@ -117,19 +114,11 @@ class WaxpeerItems(Steam):
                                 'waxpeer apikey']
                         except:
                             another_apis_list = None
-
-                        print(another_apis_list)
-                        print(seller_value)
                         if another_apis_list and seller_value:
-                            print(44)
-                            print(new_listed_items)
                             max_items_count = 100
                             for i in range(0, len(new_listed_items), max_items_count):
                                 items_list = new_listed_items[i:i + max_items_count]
-                                print(22)
-                                print(items_list)
                                 parsed_info = self.threads_parsing_prices(items_list, another_apis_list)
-                                print(parsed_info)
                                 self.change_price_below_opponent(items_list, parsed_info, seller_value, listed_items)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Change Price Global Error: {e}", self.steamclient.username)
@@ -142,45 +131,56 @@ class WaxpeerItems(Steam):
         for assetid in item_id_on_sale:
             if assetid not in tradable_asset_id:
                 item_id_to_delete.append({"item_id": assetid, "price": 0})
-        # self.request_change_price(item_id_to_delete)
-        # filtered_items = []
-        # for item in items_on_sale:
-        #     if 'item_id' in item and not any(d["item_id"] == item["item_id"] for d in item_id_to_delete):
-        #         filtered_items.append(item)
+        self.request_change_price(item_id_to_delete)
+        filtered_items = []
+        for item in items_on_sale:
+            if 'item_id' in item and not any(d["item_id"] == item["item_id"] for d in item_id_to_delete):
+                filtered_items.append(item)
         return items_on_sale
 
-    def request_change_price(self, item_id_change_price):
-        items_to_change_price = 25
-        sublist = [item_id_change_price[i:i + items_to_change_price]
-                   for i in range(0, len(item_id_change_price), items_to_change_price)]
-        for i in sublist:
-            data = {"items": i}
+    def request_change_price(self, item_id_to_change_price):
+        items_to_change_price = 50
+        data = []
+        if isinstance(item_id_to_change_price, list):
+            sublist = [item_id_to_change_price[i:i + items_to_change_price]
+                       for i in range(0, len(item_id_to_change_price), items_to_change_price)]
+            for i in sublist:
+                data.append({"items": i})
+        elif isinstance(item_id_to_change_price, dict):
+            for i in range(0, len(item_id_to_change_price), items_to_change_price):
+                sublist_keys = list(item_id_to_change_price.keys())[i:i + items_to_change_price]
+                sublist = {k: item_id_to_change_price[k] for k in sublist_keys}
+                items = {ui_id: item_id_to_change_price[ui_id] for ui_id in sublist}
+                data.append({
+                    "items": [{"item_id": key, "price": value} for key, value in items.items()]
+                })
+        for info in data:
             try:
                 url_change_price = f'{self.site_url}/v1/edit-items?api={self.waxpeer_apikey}'
-                requests.post(url_change_price, json=data, timeout=15)
+                r = requests.post(url_change_price, json=info, timeout=15)
             except:
                 pass
-            time.sleep(60)
+            time.sleep(5)
 
     def change_price_below_opponent(self, items_list, parsed_info, seller_value, listed_items):
         my_prices = {}
         items_id_list = [item["item_id"] for item in items_list]
         for item in range(len(items_list)):
-            item_name = items_list[item]['market_hash_name']
+            item_name = items_list[item]['name']
             item_id = items_list[item]['item_id']
             for el in parsed_info.keys():
                 if el == item_name:
                     filtered_dict = {
-                        item["id"]: item for item in parsed_info[el]
-                        if str(item["id"]) not in str(items_id_list)
+                        item["item_id"]: item for item in parsed_info[el]
+                        if str(item["item_id"]) not in str(items_id_list)
                     }
                     item_prices_all = [item["price"] for item in parsed_info[el]]
                     item_prices_opponent = [item["price"] for item in filtered_dict.values()]
                     max_site_price = self.get_site_price(
-                        self.steam_inventory_phases[items_list[item]["assetid"]], seller_value, 'max')
+                        self.steam_inventory_phases[str(items_list[item]["item_id"])], seller_value, 'max')
 
                     min_site_price = self.get_site_price(
-                        self.steam_inventory_phases[items_list[item]["assetid"]], seller_value, 'min')
+                        self.steam_inventory_phases[str(items_list[item]["item_id"])], seller_value, 'min')
 
                     if len(item_prices_opponent) > 0 and min_site_price and max_site_price:
                         lower_market_price_opponent = min([int(price) for price in item_prices_opponent])
@@ -201,7 +201,7 @@ class WaxpeerItems(Steam):
                                     self.steamclient.username)
                         break
                     for item_ in listed_items:
-                        if item_['item_id'] == item_id and item_['price'] != my_price / 100:
+                        if item_['item_id'] == item_id and item_['price'] != my_price:
                             my_prices[items_list[item]["item_id"]] = my_price
                             break
                     break
@@ -248,12 +248,15 @@ class WaxpeerItems(Steam):
     def request_parsing_prices(self, api_key, hash_names, results, results_lock, threads):
         try:
             list_hash_names = '&names=' + '&names='.join(hash_names)
-            print(4444444)
             search_hash_name_url = f'{self.site_url}/v1/search-items-by-name?api={api_key}{list_hash_names}'
-            print(search_hash_name_url)
             parsed_info = requests.get(search_hash_name_url, timeout=15).json()
             if parsed_info['success'] and len(parsed_info['items']) > 0:
-                info_to_write = parsed_info['items']
+                info_to_write = {}
+                for item in parsed_info['items']:
+                    name = item['name']
+                    if name not in info_to_write:
+                        info_to_write[name] = []
+                    info_to_write[name].append(item)
                 with results_lock:
                     results.update(info_to_write)
         except:

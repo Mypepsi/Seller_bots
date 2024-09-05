@@ -49,9 +49,18 @@ class TMItems(Steam):
             my_inventory_url = f'{self.site_url}/api/v2/my-inventory/?key={self.tm_apikey}'
             my_inventory = requests.get(my_inventory_url, timeout=30).json()
             my_inventory_items = my_inventory['items']
-            my_inventory_list = [item['id'] for item in my_inventory_items]
+            tradable_inventory = []
+            for item in my_inventory_items:
+                if 'tradable' in item and item['tradable'] == 1:
+                    tradable_inventory.append(item)
+            if len(tradable_inventory) > self.visible_store_max_number_of_inv_items:
+                Logs.notify(self.tg_info, f"Visible Store: {len(tradable_inventory)} items not listed on sale",
+                            self.steamclient.username)
+                raise
+            my_inventory_list = [item['id'] for item in tradable_inventory]
             acc_data_inventory_assets_id = [item['asset_id'] for item in self.steam_inventory_tradable.values()]
             filtered_inventory = [item for item in my_inventory_list if item in acc_data_inventory_assets_id]
+
             return filtered_inventory
         except:
             return None
