@@ -19,20 +19,28 @@ class CSGO500Items(Steam):
                     self.update_database_info(prices=True, settings=True)
                     filtered_inventory = self.add_to_sale_inventory()
                     seller_value = self.get_information_for_price()
+                    print(filtered_inventory)
+                    print(seller_value)
                     if filtered_inventory and seller_value:
+                        print(1)
                         for list_of_asset_id in filtered_inventory:
-                            data = {"items": []}
+                            data = {
+                                "appId": 730,
+                                "items": []
+                            }
                             for item_dict in list_of_asset_id:
-                                asset_id = list(item_dict.keys())[0]
+                                asset_id = item_dict['assetId']
                                 site_price = self.get_site_price(self.steam_inventory_phases[str(asset_id)],
                                                                  seller_value, 'max')
                                 if site_price < item_dict['value']:
                                     site_price = item_dict['value']
                                 if site_price is not None and site_price != 0:
-                                    data["items"].append({"item_id": int(asset_id), "price": site_price})
+                                    data["items"].append({"assetId": str(asset_id), "value": site_price})
                             try:
-                                list_items_steam_url = f'{self.site_url}/v1/list-items-steam?api={self.waxpeer_apikey}'
-                                requests.post(list_items_steam_url, json=data, timeout=15)
+                                list_items_steam_url = f'{self.site_url}/api/v1/market/deposit'
+                                r = requests.post(list_items_steam_url, headers=self.csgo500_jwt_apikey,
+                                              json=data, timeout=15)
+                                print(r.json())
                             except:
                                 Logs.notify(self.tg_info,
                                             f"Add To Sale: Failed to add item on sale: {data} assetID`s",
@@ -51,9 +59,7 @@ class CSGO500Items(Steam):
             my_inventory_list = [item for item in my_inventory_items if item.get('tradable', False)]
             acc_data_inventory_assets_id = [int(item['asset_id']) for item in self.steam_inventory_tradable.values()]
             filtered_inventory = [
-                {item['assetId']: item}
-                for item in my_inventory_list
-                if int(item['assetId']) in acc_data_inventory_assets_id
+                item for item in my_inventory_list if int(item['assetId']) in acc_data_inventory_assets_id
             ]
             chunk = 20
             return [filtered_inventory[i:i + chunk] for i in range(0, len(filtered_inventory), chunk)]

@@ -18,8 +18,8 @@ class CSGO500Seller(CSGO500General, CSGO500Online, CSGO500Items, CSGO500Steam, C
     @staticmethod
     def collect_work_functions():
         functions_list = []
-        if manager.db_csgo500_global_time != 0:  # Database CSGO500
-            functions_list.append({"func": "database_csgo500", "class_for_account_functions": CSGO500Seller})
+        # if manager.db_csgo500_global_time != 0:  # Database CSGO500
+        #     functions_list.append({"func": "database_csgo500", "class_for_account_functions": CSGO500Seller})
 
         # if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
         #     functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": CSGO500Seller})
@@ -36,8 +36,8 @@ class CSGO500Seller(CSGO500General, CSGO500Online, CSGO500Items, CSGO500Steam, C
         # if manager.visible_store_global_time != 0:  # Visible Store
         #     functions_list.append({"func": "visible_store", "class_for_account_functions": CSGO500Seller})
         #
-        # if manager.add_to_sale_global_time != 0:  # Add To Sale
-        #     functions_list.append({"func": "add_to_sale", "class_for_account_functions": CSGO500Seller})
+        if manager.add_to_sale_global_time != 0:  # Add To Sale
+            functions_list.append({"func": "add_to_sale", "class_for_account_functions": CSGO500Seller})
         return functions_list
 
 
