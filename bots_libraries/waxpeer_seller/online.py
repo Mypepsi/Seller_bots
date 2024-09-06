@@ -62,23 +62,19 @@ class WaxpeerOnline(Steam):
                         except:
                             another_apis_list = None
                         if another_apis_list:
-                            for _ in range(len(items_on_sale)):
-                                random_item = random.choice(items_on_sale)
-                                item_id = random_item['item_id']
-                                another_api = random.choice(another_apis_list)
-                                try:
-                                    search_url = (f'{self.site_url}/v1/check-availability?'
-                                                  f'api={another_api}&item_id={item_id}')
-                                    search_response = requests.get(search_url, timeout=15).json()
-                                    search_list = search_response['items']
-                                except:
-                                    search_list = []
-                                if not search_list:
-                                    Logs.notify(self.tg_info, 'Visible Store: Items not visible in store',
-                                                self.steamclient.username)
-                                    raise ExitException
+                            random_item = random.choice(items_on_sale)
+                            item_id = random_item['item_id']
+                            another_api = random.choice(another_apis_list)
+                            try:
+                                search_url = (f'{self.site_url}/v1/check-availability?'
+                                              f'api={another_api}&item_id={item_id}')
+                                search_response = requests.get(search_url, timeout=15).json()
+                                search_list = search_response['items']
+                            except:
+                                search_list = []
+                            if not search_list:
+                                Logs.notify(self.tg_info, 'Visible Store: Items not visible in store',
+                                            self.steamclient.username)
                                 break
-            except ExitException:
-                break
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Visible Store Global Error: {e}", self.steamclient.username)

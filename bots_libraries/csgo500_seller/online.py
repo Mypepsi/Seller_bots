@@ -1,3 +1,4 @@
+import jwt
 import time
 import random
 import requests
@@ -16,12 +17,10 @@ class CSGO500Online(Steam):
             try:
                 if self.active_session:
                     try:
-                        url_to_ping = 'https://tradingapi.500.casino/api/v1/market/ping'
+                        url_to_ping = f'{self.site_url}/api/v1/market/ping'
                         params = {"version": 2}
-                        print(self.csgo500_jwt_apikey)
                         response = requests.post(
                             url_to_ping, headers=self.csgo500_jwt_apikey, data=params, timeout=15).json()
-                        print(response)
                     except:
                         response = None
                     if (response and 'success' in response and response['success'] is False
@@ -35,3 +34,69 @@ class CSGO500Online(Steam):
                 Logs.notify_except(self.tg_info, f'Ping Global Error: {e}', self.steamclient.username)
             time.sleep(self.ping_global_time)
 
+    def visible_store(self):  # Global Function (class_for_account_functions)
+        while True:
+            # time.sleep(self.visible_store_global_time)
+            search_result = False
+            try:
+                if self.active_session:
+                    try:
+                        my_inventory_url = f'{self.site_url}/api/v1/market/inventory?appId=730'
+                        my_inventory_response = requests.get(my_inventory_url, headers=self.csgo500_jwt_apikey,
+                                                             timeout=15).json()
+                        my_inventory = my_inventory_response['data']
+                    except:
+                        my_inventory = []
+                    tradable_inventory = []
+                    for item in my_inventory:
+                        if 'tradable' in item and item['tradable'] == 1:
+                            tradable_inventory.append(item)
+                    if len(tradable_inventory) > self.visible_store_max_number_of_inv_items:
+                        Logs.notify(self.tg_info, f"Visible Store: {len(tradable_inventory)} items not listed on sale",
+                                    self.steamclient.username)
+                        raise ExitException
+                    time.sleep(1)
+                    try:
+                        items_url = f'{self.site_url}/api/v1/market/listings/deposit/active?appId=730&page=1'
+                        response = requests.get(items_url, headers=self.csgo500_jwt_apikey, timeout=15).json()
+                        items_on_sale = response['data']['listings']
+                    except:
+                        items_on_sale = None
+                    if items_on_sale and len(items_on_sale) != 0:
+                        try:
+                            another_apis_list = self.search_in_merges_by_username(
+                                self.steamclient.username)['csgo500 parse']
+                        except:
+                            another_apis_list = None
+                        if another_apis_list:
+                            random_item = random.choice(items_on_sale)
+                            hash_name = random_item['name']
+                            item_id = random_item['id']
+                            another_api = random.choice(another_apis_list)
+                            another_jwt_api_key = jwt.encode(
+                                {'userId': another_api['user_id']},
+                                another_api['apikey'],
+                                algorithm="HS256"
+                            )
+                            another_csgo500_jwt_apikey = {'x-500-auth': another_jwt_api_key}
+                            payload = {"pagination": {"limit": 500},
+                                       "filters": {"appId": 730},
+                                       "search": hash_name}
+                            try:
+                                search_url = f'{self.site_url}/api/v1/market/shop'
+                                search_response = requests.post(search_url, headers=another_csgo500_jwt_apikey,
+                                                                json=payload, timeout=15).json()
+                                search_list = search_response['data']['listings']
+                            except:
+                                search_list = []
+                            if search_list:
+                                for dictionary in search_list:
+                                    if 'id' in dictionary and str(dictionary['id']) == str(item_id):
+                                        search_result = True
+                                        break
+                                if not search_result:
+                                    Logs.notify(self.tg_info, 'Visible Store: Items not visible in store',
+                                                self.steamclient.username)
+                                    break
+            except Exception as e:
+                Logs.notify_except(self.tg_info, f"Visible Store Global Error: {e}", self.steamclient.username)
