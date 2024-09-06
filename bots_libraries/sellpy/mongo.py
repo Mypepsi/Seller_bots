@@ -252,6 +252,8 @@ class Mongo:
             self.site_url = f"https://{self.get_key(self.csgo500_settings_general, 'site url')}"
             self.site_apikey_global = self.get_key(self.csgo500_settings_general, 'site apikey global time')
             self.balance_transfer_global_time = self.get_key(self.csgo500_settings_general, 'balance transfer global time')
+            self.db_csgo500_validity_time = self.get_key(self.csgo500_settings_general, 'db csgo500 validity time')
+            self.db_csgo500_global_time = self.get_key(self.csgo500_settings_general, 'db csgo500 global time')
             self.site_name = self.get_key(self.csgo500_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.csgo500_settings_general, 'saleprice bot name')
 
