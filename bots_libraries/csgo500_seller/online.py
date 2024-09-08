@@ -59,7 +59,10 @@ class CSGO500Online(Steam):
                     try:
                         items_url = f'{self.site_url}/api/v1/market/listings/deposit/active?appId=730&page=1'
                         response = requests.get(items_url, headers=self.csgo500_jwt_apikey, timeout=15).json()
-                        items_on_sale = response['data']['listings']
+                        items_on_sale = []
+                        for item in response['data']['listings']:
+                            if 'shortStatus' in item and item['shortStatus'] == 'market_listed':
+                                items_on_sale.append(item)
                     except:
                         items_on_sale = None
                     if items_on_sale and len(items_on_sale) != 0:
