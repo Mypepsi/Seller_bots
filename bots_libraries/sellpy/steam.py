@@ -17,6 +17,7 @@ class Steam(Mongo):
         self.tm_apikey = None
         self.waxpeer_apikey = None
         self.csgoempire_apikey = None
+        self.csgoempire_headers = None
         self.csgo500_user_id = self.csgo500_apikey = None
         self.jwt_api_key = None
         self.csgo500_jwt_apikey = None
@@ -68,6 +69,9 @@ class Steam(Mongo):
                 self.tm_apikey = self.content_acc_settings_dict[self.steamclient.username]['tm apikey']
                 self.waxpeer_apikey = self.content_acc_settings_dict[self.steamclient.username]['waxpeer apikey']
                 self.csgoempire_apikey = self.content_acc_settings_dict[self.steamclient.username]['csgoempire apikey']
+                self.csgoempire_headers = {
+                    'Authorization': f'Bearer {self.csgoempire_apikey}'
+                }
                 self.csgo500_user_id = self.content_acc_settings_dict[self.steamclient.username]['csgo500 user id']
                 self.csgo500_apikey = self.content_acc_settings_dict[self.steamclient.username]['csgo500 apikey']
                 self.jwt_api_key = jwt.encode(

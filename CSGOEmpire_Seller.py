@@ -19,14 +19,20 @@ class CSGOEmpireSeller(CSGOEmpireGeneral, CSGOEmpireOnline, CSGOEmpireItems, CSG
     @staticmethod
     def collect_work_functions():
         functions_list = []
-        if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
-            functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": CSGOEmpireSeller})
+        # if manager.db_csgoempire_global_time != 0:  # Database CSGOEmpire
+        #     functions_list.append({"func": "database_csgoempire", "class_for_account_functions": CSGOEmpireSeller})
 
-        if manager.restart_server_global_time != 0:  # Restart Server
-            functions_list.append({"func": "restart_server", "class_for_many_functions": CSGOEmpireSeller})
+        # if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
+        #     functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": CSGOEmpireSeller})
+        #
+        # if manager.restart_server_global_time != 0:  # Restart Server
+        #     functions_list.append({"func": "restart_server", "class_for_many_functions": CSGOEmpireSeller})
+        #
+        # if manager.restart_bots_global_time != 0:    # Restart Bots
+        #     functions_list.append({"func": "restart_bots", "class_for_many_functions": CSGOEmpireSeller})
 
-        if manager.restart_bots_global_time != 0:    # Restart Bots
-            functions_list.append({"func": "restart_bots", "class_for_many_functions": CSGOEmpireSeller})
+        if manager.visible_store_global_time != 0:  # Visible Store
+            functions_list.append({"func": "visible_store", "class_for_account_functions": CSGOEmpireSeller})
 
         return functions_list
 
@@ -48,7 +54,7 @@ if __name__ == '__main__':
 
         Logs.log(f'{bot_name} STARTED ({len(manager.content_acc_data_list)} in Account Data '
                  f'and {len(manager.content_acc_settings_list)} in Account Settings)', '')
-        time.sleep(manager.waiting_start_time)
+        # time.sleep(manager.waiting_start_time)
         manager.start_work_functions(functions)
 
     except ServerSelectionTimeoutError as e:
