@@ -49,7 +49,8 @@ class CSGO500Online(Steam):
                         my_inventory = []
                     tradable_inventory = []
                     for item in my_inventory:
-                        if 'tradable' in item and item['tradable'] == 1:
+                        if ('tradable' in item and item['tradable'] is True
+                                and 'enabled' in item and item['enabled'] is True):
                             tradable_inventory.append(item)
                     if len(tradable_inventory) > self.visible_store_max_number_of_inv_items:
                         Logs.notify(self.tg_info, f"Visible Store: {len(tradable_inventory)} items not listed on sale",

@@ -24,7 +24,7 @@ class CSGOEmpireOnline(Steam):
                         my_inventory = []
                     tradable_inventory = []
                     for item in my_inventory:
-                        if 'tradable' in item and item['tradable'] is True:
+                        if 'tradable' in item and item['tradable'] is True and 'invalid' not in item:
                             tradable_inventory.append(item)
                     if len(tradable_inventory) > self.visible_store_max_number_of_inv_items:
                         Logs.notify(self.tg_info, f"Visible Store: {len(tradable_inventory)} items not listed on sale",
@@ -36,7 +36,7 @@ class CSGOEmpireOnline(Steam):
                         response = requests.get(items_url, headers=self.csgoempire_headers, timeout=15).json()
                         items_on_sale = []
                         for item in response['data']['deposits']:
-                            if 'status' in item and item['status'] == 2:
+                            if 'status_message' in item and item['status_message'] == 'Processing':
                                 items_on_sale.append(item)
                     except:
                         items_on_sale = None
@@ -65,7 +65,7 @@ class CSGOEmpireOnline(Steam):
                             try:
                                 search_url = f'{self.site_url}/api/v2/trading/items'
                                 search_response = requests.get(search_url, params=params, headers=headers, timeout=15).json()
-                                search_list = search_response['data'][hash_name]
+                                search_list = search_response['data']
                             except:
                                 search_list = []
                             if search_list:

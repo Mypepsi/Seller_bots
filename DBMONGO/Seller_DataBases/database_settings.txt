@@ -1,5 +1,0 @@
-{
-    "_id" : ObjectId("6665e281138aa83633283fbf"),
-    "Time" : NumberInt(1718279364),
-    "DataBaseSettings" : {    }
-}
