@@ -30,9 +30,12 @@ class CSGOEmpireSeller(CSGOEmpireGeneral, CSGOEmpireOnline, CSGOEmpireItems, CSG
         #
         # if manager.restart_bots_global_time != 0:    # Restart Bots
         #     functions_list.append({"func": "restart_bots", "class_for_many_functions": CSGOEmpireSeller})
+        #
+        # if manager.visible_store_global_time != 0:  # Visible Store
+        #     functions_list.append({"func": "visible_store", "class_for_account_functions": CSGOEmpireSeller})
 
-        if manager.visible_store_global_time != 0:  # Visible Store
-            functions_list.append({"func": "visible_store", "class_for_account_functions": CSGOEmpireSeller})
+        if manager.add_to_sale_global_time != 0:  # Add To Sale
+            functions_list.append({"func": "add_to_sale", "class_for_account_functions": CSGOEmpireSeller})
 
         return functions_list
 
