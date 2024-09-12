@@ -138,6 +138,10 @@ class TMItems(Steam):
         item_id_to_delete = {}
         asset_id_on_sale = [item["assetid"] for item in items_on_sale]
         tradable_asset_id = list(self.steam_inventory_tradable.keys())
+        for item in items_on_sale:
+            if item['assetid'] not in tradable_asset_id:
+                asset_id_to_delete.append(item['assetid'])
+                item_id_to_delete[item["item_id"]] = 0
         for assetid in asset_id_on_sale:
             if assetid not in tradable_asset_id:
                 asset_id_to_delete.append(assetid)
