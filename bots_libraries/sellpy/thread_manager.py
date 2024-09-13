@@ -7,8 +7,8 @@ from bots_libraries.sellpy.logs import Logs, ExitException
 class ThreadManager(Mongo):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
-        self.dict_for_accounts = {}
         self.dict_for_classes = {}
+        self.dict_for_accounts = {}
 
     def start_work_functions(self, functions):
         for function in functions:
@@ -27,9 +27,7 @@ class ThreadManager(Mongo):
                     ThreadManager.create_work_threads(class_obj, func)
                 elif "class_for_account_functions" in function:
                     class_name = function["class_for_account_functions"]
-                    ThreadManager.create_work_threads(self, 'manage_work_accounts', args=(func,
-                                                                                          class_name,
-                                                                                          modified_function_name))
+                    ThreadManager.create_work_threads(self, 'manage_work_accounts', args=(func, class_name, modified_function_name))
                 else:
                     raise ExitException
             except Exception as e:
@@ -38,16 +36,16 @@ class ThreadManager(Mongo):
 
     def manage_work_accounts(self, func, class_name, modified_function_name):
         counter = 0
-        for acc in self.content_acc_data_list:
+        for acc_info in self.content_acc_data_list:
             username = None
             try:
-                username = acc['username']
+                username = acc_info['username']
                 if username not in self.dict_for_accounts:
                     self.dict_for_accounts[username] = {}
                 if class_name not in self.dict_for_accounts[username]:
                     class_obj = class_name(self.tg_info)
                     self.dict_for_accounts[username][class_name] = class_obj
-                    ThreadManager.create_work_threads(class_obj, "update_session", args=(acc,))
+                    ThreadManager.create_work_threads(class_obj, "update_session", args=(acc_info,))
                     time.sleep(1)
                 else:
                     class_obj = self.dict_for_accounts[username][class_name]

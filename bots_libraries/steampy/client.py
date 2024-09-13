@@ -4,11 +4,10 @@ import json
 import base64
 import decimal
 import requests
-import urllib.parse as urlparse
+from lxml import html
 from typing import List, Union
+import urllib.parse as urlparse
 from bots_libraries.steampy import guard
-# from bots_libraries.steampy.chat import SteamChat
-# from bots_libraries.steampy.market import SteamMarket
 from bots_libraries.steampy.confirmation import ConfirmationExecutor
 from bots_libraries.steampy.steam_auth.auth.schemas import FinalizeLoginStatus
 from bots_libraries.steampy.steam_auth.pb2.enums_pb2 import ESessionPersistence
@@ -158,7 +157,7 @@ class SteamClient:
         return response_dict
 
     @staticmethod
-    def get_steamid_from_url(trade_offer_url):
+    def get_steam_id_from_url(trade_offer_url):
         partner_account_id = get_key_value_from_url(trade_offer_url, 'partner', True)
         partner_steam_id = account_id_to_steam_id(partner_account_id)
         return partner_steam_id
@@ -366,6 +365,19 @@ class SteamClient:
     def is_invalid_api_key(response: requests.Response) -> bool:
         msg = 'Access is denied. Retrying will not help. Please verify your <pre>key=</pre> parameter'
         return msg in response.text
+
+    @staticmethod
+    def get_api_key(text):
+        parsed_body = html.fromstring(text)
+        api_key = parsed_body.xpath("//div[@id='bodyContents_ex']/p")
+        if len(api_key) == 0:
+            return False
+        api_key_ = ''
+        for p in api_key:
+            if 'Key: ' in p.text:
+                api_key_ = p.text.replace('Key: ', '')
+                return api_key_
+        return api_key_
 
     @property
     def session(self):

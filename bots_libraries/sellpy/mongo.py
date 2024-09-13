@@ -57,6 +57,12 @@ class Mongo:
             self.creator_settings_collection = self.get_collection(self.seller_settings, 'creator_settings')
             self.content_creator_settings = self.get_first_doc_from_mongo_collection(self.creator_settings_collection)
 
+            self.creator_settings_start = self.get_key(self.content_creator_settings, 'start')
+            self.waiting_start_time = self.get_key(self.creator_settings_start, 'waiting start time')
+            self.function_start_time = self.get_key(self.creator_settings_start, 'function start time')
+            self.account_start_time = self.get_key(self.creator_settings_start, 'account start time')
+            self.update_session_global_time = self.get_key(self.creator_settings_start, 'update session global time')
+
             self.creator_settings_general = self.get_key(self.content_creator_settings, 'general')
             self.waiting_start_time = self.get_key(self.creator_settings_general, 'waiting start time')
             self.function_start_time = self.get_key(self.creator_settings_general, 'function start time')
@@ -94,11 +100,13 @@ class Mongo:
             self.tm_settings_collection = self.get_collection(self.seller_settings, 'tm_seller_settings')
             self.content_tm_settings = self.get_first_doc_from_mongo_collection(self.tm_settings_collection)
 
+            self.tm_settings_start = self.get_key(self.content_tm_settings, 'start')
+            self.waiting_start_time = self.get_key(self.tm_settings_start, 'waiting start time')
+            self.function_start_time = self.get_key(self.tm_settings_start, 'function start time')
+            self.account_start_time = self.get_key(self.tm_settings_start, 'account start time')
+            self.update_session_global_time = self.get_key(self.tm_settings_start, 'update session global time')
+
             self.tm_settings_general = self.get_key(self.content_tm_settings, 'general')
-            self.waiting_start_time = self.get_key(self.tm_settings_general, 'waiting start time')
-            self.function_start_time = self.get_key(self.tm_settings_general, 'function start time')
-            self.account_start_time = self.get_key(self.tm_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.tm_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.tm_settings_general, 'site url')}"
             self.site_apikey_global_time = self.get_key(self.tm_settings_general, 'site apikey global time')
             self.balance_transfer_global_time = self.get_key(self.tm_settings_general, 'balance transfer global time')
@@ -113,6 +121,8 @@ class Mongo:
             self.tm_settings_items = self.get_key(self.content_tm_settings, 'items')
             self.add_to_sale_global_time = self.get_key(self.tm_settings_items, 'add to sale global time')
             self.change_price_global_time = self.get_key(self.tm_settings_items, 'change price global time')
+            self.change_price_items_count = self.get_key(self.tm_settings_items, 'change price items count')
+            self.change_price_items_count_in_request = self.get_key(self.tm_settings_items, 'change price items count in request')
 
             self.tm_settings_steam = self.get_key(self.content_tm_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.tm_settings_steam, 'steam send offers global time')
@@ -144,13 +154,15 @@ class Mongo:
             self.waxpeer_settings_collection = self.get_collection(self.seller_settings, 'waxpeer_seller_settings')
             self.content_waxpeer_settings = self.get_first_doc_from_mongo_collection(self.waxpeer_settings_collection)
 
+            self.waxpeer_settings_start = self.get_key(self.content_waxpeer_settings, 'start')
+            self.waiting_start_time = self.get_key(self.waxpeer_settings_start, 'waiting start time')
+            self.function_start_time = self.get_key(self.waxpeer_settings_start, 'function start time')
+            self.account_start_time = self.get_key(self.waxpeer_settings_start, 'account start time')
+            self.update_session_global_time = self.get_key(self.waxpeer_settings_start, 'update session global time')
+
             self.waxpeer_settings_general = self.get_key(self.content_waxpeer_settings, 'general')
-            self.waiting_start_time = self.get_key(self.waxpeer_settings_general, 'waiting start time')
-            self.function_start_time = self.get_key(self.waxpeer_settings_general, 'function start time')
-            self.account_start_time = self.get_key(self.waxpeer_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.waxpeer_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.waxpeer_settings_general, 'site url')}"
-            self.site_apikey_global = self.get_key(self.waxpeer_settings_general, 'site apikey global time')
+            self.site_apikey_global_time = self.get_key(self.waxpeer_settings_general, 'site apikey global time')
             self.balance_transfer_global_time = self.get_key(self.waxpeer_settings_general, 'balance transfer global time')
             self.site_name = self.get_key(self.waxpeer_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.waxpeer_settings_general, 'saleprice bot name')
@@ -163,6 +175,8 @@ class Mongo:
             self.waxpeer_settings_items = self.get_key(self.content_waxpeer_settings, 'items')
             self.add_to_sale_global_time = self.get_key(self.waxpeer_settings_items, 'add to sale global time')
             self.change_price_global_time = self.get_key(self.waxpeer_settings_items, 'change price global time')
+            self.change_price_items_count = self.get_key(self.tm_settings_items, 'change price items count')
+            self.change_price_items_count_in_request = self.get_key(self.tm_settings_items, 'change price items count in request')
 
             self.waxpeer_settings_steam = self.get_key(self.content_waxpeer_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.waxpeer_settings_steam, 'steam send offers global time')
@@ -194,13 +208,15 @@ class Mongo:
             self.csgoempire_settings_collection = self.get_collection(self.seller_settings, 'csgoempire_seller_settings')
             self.content_csgoempire_settings = self.get_first_doc_from_mongo_collection(self.csgoempire_settings_collection)
 
+            self.csgoempire_settings_start = self.get_key(self.content_csgoempire_settings, 'start')
+            self.waiting_start_time = self.get_key(self.csgoempire_settings_start, 'waiting start time')
+            self.function_start_time = self.get_key(self.csgoempire_settings_start, 'function start time')
+            self.account_start_time = self.get_key(self.csgoempire_settings_start, 'account start time')
+            self.update_session_global_time = self.get_key(self.csgoempire_settings_start, 'update session global time')
+
             self.csgoempire_settings_general = self.get_key(self.content_csgoempire_settings, 'general')
-            self.waiting_start_time = self.get_key(self.csgoempire_settings_general, 'waiting start time')
-            self.function_start_time = self.get_key(self.csgoempire_settings_general, 'function start time')
-            self.account_start_time = self.get_key(self.csgoempire_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.csgoempire_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.csgoempire_settings_general, 'site url')}"
-            self.site_apikey_global = self.get_key(self.csgoempire_settings_general, 'site apikey global time')
+            self.site_apikey_global_time = self.get_key(self.csgoempire_settings_general, 'site apikey global time')
             self.balance_transfer_global_time = self.get_key(self.csgoempire_settings_general, 'balance transfer global time')
             self.db_csgoempire_validity_time = self.get_key(self.csgoempire_settings_general, 'db csgoempire validity time')
             self.db_csgoempire_global_time = self.get_key(self.csgoempire_settings_general, 'db csgoempire global time')
@@ -215,6 +231,8 @@ class Mongo:
             self.csgoempire_settings_items = self.get_key(self.content_csgoempire_settings, 'items')
             self.add_to_sale_global_time = self.get_key(self.csgoempire_settings_items, 'add to sale global time')
             self.change_price_global_time = self.get_key(self.csgoempire_settings_items, 'change price global time')
+            self.change_price_items_count = self.get_key(self.tm_settings_items, 'change price items count')
+            self.change_price_items_count_in_request = self.get_key(self.tm_settings_items, 'change price items count in request')
 
             self.csgoempire_settings_steam = self.get_key(self.content_csgoempire_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.csgoempire_settings_steam, 'steam send offers global time')
@@ -246,13 +264,15 @@ class Mongo:
             self.csgo500_settings_collection = self.get_collection(self.seller_settings, 'csgo500_seller_settings')
             self.content_csgo500_settings = self.get_first_doc_from_mongo_collection(self.csgo500_settings_collection)
 
+            self.csgo500_settings_start = self.get_key(self.content_csgo500_settings, 'start')
+            self.waiting_start_time = self.get_key(self.csgo500_settings_start, 'waiting start time')
+            self.function_start_time = self.get_key(self.csgo500_settings_start, 'function start time')
+            self.account_start_time = self.get_key(self.csgo500_settings_start, 'account start time')
+            self.update_session_global_time = self.get_key(self.csgo500_settings_start, 'update session global time')
+
             self.csgo500_settings_general = self.get_key(self.content_csgo500_settings, 'general')
-            self.waiting_start_time = self.get_key(self.csgo500_settings_general, 'waiting start time')
-            self.function_start_time = self.get_key(self.csgo500_settings_general, 'function start time')
-            self.account_start_time = self.get_key(self.csgo500_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.csgo500_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.csgo500_settings_general, 'site url')}"
-            self.site_apikey_global = self.get_key(self.csgo500_settings_general, 'site apikey global time')
+            self.site_apikey_global_time = self.get_key(self.csgo500_settings_general, 'site apikey global time')
             self.balance_transfer_global_time = self.get_key(self.csgo500_settings_general, 'balance transfer global time')
             self.db_csgo500_validity_time = self.get_key(self.csgo500_settings_general, 'db csgo500 validity time')
             self.db_csgo500_global_time = self.get_key(self.csgo500_settings_general, 'db csgo500 global time')
@@ -267,6 +287,8 @@ class Mongo:
             self.csgo500_settings_items = self.get_key(self.content_csgo500_settings, 'items')
             self.add_to_sale_global_time = self.get_key(self.csgo500_settings_items, 'add to sale global time')
             self.change_price_global_time = self.get_key(self.csgo500_settings_items, 'change price global time')
+            self.change_price_items_count = self.get_key(self.tm_settings_items, 'change price items count')
+            self.change_price_items_count_in_request = self.get_key(self.tm_settings_items, 'change price items count in request')
 
             self.csgo500_settings_steam = self.get_key(self.content_csgo500_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.csgo500_settings_steam, 'steam send offers global time')
@@ -298,13 +320,15 @@ class Mongo:
             self.shadowpay_settings_collection = self.get_collection(self.seller_settings, 'shadowpay_seller_settings')
             self.content_shadowpay_settings = self.get_first_doc_from_mongo_collection(self.shadowpay_settings_collection)
 
+            self.shadowpay_settings_start = self.get_key(self.content_shadowpay_settings, 'start')
+            self.waiting_start_time = self.get_key(self.shadowpay_settings_start, 'waiting start time')
+            self.function_start_time = self.get_key(self.shadowpay_settings_start, 'function start time')
+            self.account_start_time = self.get_key(self.shadowpay_settings_start, 'account start time')
+            self.update_session_global_time = self.get_key(self.shadowpay_settings_start, 'update session global time')
+
             self.shadowpay_settings_general = self.get_key(self.content_shadowpay_settings, 'general')
-            self.waiting_start_time = self.get_key(self.shadowpay_settings_general, 'waiting start time')
-            self.function_start_time = self.get_key(self.shadowpay_settings_general, 'function start time')
-            self.account_start_time = self.get_key(self.shadowpay_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.shadowpay_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.shadowpay_settings_general, 'site url')}"
-            self.site_apikey_global = self.get_key(self.shadowpay_settings_general, 'site apikey global time')
+            self.site_apikey_global_time = self.get_key(self.shadowpay_settings_general, 'site apikey global time')
             self.balance_transfer_global_time = self.get_key(self.shadowpay_settings_general, 'balance transfer global time')
             self.site_name = self.get_key(self.shadowpay_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.shadowpay_settings_general, 'saleprice bot name')
@@ -318,6 +342,8 @@ class Mongo:
             self.shadowpay_settings_items = self.get_key(self.content_shadowpay_settings, 'items')
             self.add_to_sale_global_time = self.get_key(self.shadowpay_settings_items, 'add to sale global time')
             self.change_price_global_time = self.get_key(self.shadowpay_settings_items, 'change price global time')
+            self.change_price_items_count = self.get_key(self.tm_settings_items, 'change price items count')
+            self.change_price_items_count_in_request = self.get_key(self.tm_settings_items, 'change price items count in request')
 
             self.shadowpay_settings_steam = self.get_key(self.content_shadowpay_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.shadowpay_settings_steam, 'steam send offers global time')
@@ -351,13 +377,15 @@ class Mongo:
             self.buff_settings_collection = self.get_collection(self.seller_settings, 'buff_seller_settings')
             self.content_buff_settings = self.get_first_doc_from_mongo_collection(self.buff_settings_collection)
 
+            self.buff_settings_start = self.get_key(self.content_buff_settings, 'start')
+            self.waiting_start_time = self.get_key(self.buff_settings_start, 'waiting start time')
+            self.function_start_time = self.get_key(self.buff_settings_start, 'function start time')
+            self.account_start_time = self.get_key(self.buff_settings_start, 'account start time')
+            self.update_session_global_time = self.get_key(self.buff_settings_start, 'update session global time')
+
             self.buff_settings_general = self.get_key(self.content_buff_settings, 'general')
-            self.waiting_start_time = self.get_key(self.buff_settings_general, 'waiting start time')
-            self.function_start_time = self.get_key(self.buff_settings_general, 'function start time')
-            self.account_start_time = self.get_key(self.buff_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.buff_settings_general, 'update session global time')
             self.site_url = f"https://{self.get_key(self.buff_settings_general, 'site url')}"
-            self.site_apikey_global = self.get_key(self.buff_settings_general, 'site cookie global time')
+            self.site_cookie_global_time = self.get_key(self.buff_settings_general, 'site cookie global time')
             self.balance_transfer_global_time = self.get_key(self.buff_settings_general, 'balance transfer global time')
             self.site_name = self.get_key(self.buff_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.buff_settings_general, 'saleprice bot name')
@@ -370,6 +398,8 @@ class Mongo:
             self.buff_settings_items = self.get_key(self.content_buff_settings, 'items')
             self.add_to_sale_global_time = self.get_key(self.buff_settings_items, 'add to sale global time')
             self.change_price_global_time = self.get_key(self.buff_settings_items, 'change price global time')
+            self.change_price_items_count = self.get_key(self.tm_settings_items, 'change price items count')
+            self.change_price_items_count_in_request = self.get_key(self.tm_settings_items, 'change price items count in request')
 
             self.buff_settings_steam = self.get_key(self.content_buff_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.buff_settings_steam, 'steam send offers global time')
@@ -463,9 +493,9 @@ class Mongo:
         result = []
         try:
             unique_iterator = itertools.cycle(self.content_acc_for_parsing_list)
-            for acc in self.content_acc_data_list:
+            for acc_info in self.content_acc_data_list:
                 unique_acc = next(unique_iterator)
-                result.append([acc, unique_acc])
+                result.append([acc_info, unique_acc])
         except Exception as e:
             Logs.notify_except(self.tg_info, f"MongoDB: Error while creating Merge Info for Parsing: {e}", '')
         return result

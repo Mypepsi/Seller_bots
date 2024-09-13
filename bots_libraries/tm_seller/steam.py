@@ -211,7 +211,7 @@ class TMSteam(Steam):
                                                self.steamclient.username)
             else:
                 current_timestamp_unique += 1
-                partner_id = SteamClient.get_steamid_from_url(offer_url)
+                partner_id = SteamClient.get_steam_id_from_url(offer_url)
                 data_append = {
                     "transaction": "sale_record",
                     "site": self.site_name,  # str

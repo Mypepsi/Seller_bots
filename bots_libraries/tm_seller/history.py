@@ -27,7 +27,6 @@ class TMHistory(Steam):
     def site_history(self, history_docs):
         try:
             current_timestamp = int(time.time())
-            current_timestamp_unique = int(time.time())
             try:
                 month_ago = current_timestamp - 30 * 24 * 60 * 60
                 item_history_url = (f'{self.site_url}/api/v2/history?key={self.tm_apikey}'
@@ -51,7 +50,7 @@ class TMHistory(Steam):
                     if doc["site status"] == 'active_deal':
                         match_for_alert = False
                         for site_item in response_data:
-                            if (all(key in site_item for key in ['item_id', 'stage', 'time'])
+                            if (all(key in site_item for key in ['item_id', 'stage'])
                                     and str(doc['site item id']) == str(site_item['item_id'])):
                                 match_for_alert = True
                                 stage = str(site_item['stage'])
@@ -104,49 +103,8 @@ class TMHistory(Steam):
                             Logs.notify(self.tg_info,
                                         f"Site History: MongoDB {doc['site item id']} siteItemID not in site history",
                                         self.steamclient.username)
-                for site_item in response_data:
-                    if all(key in site_item for key in ['item_id', 'stage', 'time', 'market_hash_name', 'assetid']):
+                self.site_history_new_docs(history_docs_with_new_id, response_data)
 
-                        availability = False
-                        for doc in history_docs_with_new_id:
-                            if str(site_item['item_id']) == str(doc['site item id']):
-                                availability = True
-                                break
-
-                        if not availability:
-                            current_timestamp_unique += 1
-                            data_append = {
-                                "transaction": "sale_record",
-                                "site": self.site_name,
-                                "time": current_timestamp_unique,
-                                "name": site_item['market_hash_name'],
-                                "steam status": None,
-                                "steam status time": None,
-                                "site status": None,
-                                "site status time": int(site_item['time']),
-                                "site id": None,
-                                "buyer steam id": None,
-                                "asset id": str(site_item['assetid']),
-                                "trade id": None,
-                                "sent time": None,
-                                "site item id": str(site_item['item_id'])
-                            }
-                            stage = str(site_item['stage'])
-                            if stage == '1':
-                                if (current_timestamp - int(site_item['time'])) < 86400:
-                                    break
-                                data_append["site status"] = 'active deal'
-                            elif stage == '2':
-                                data_append["site status"] = 'accepted'
-                            elif stage == '5':
-                                data_append["site status"] = 'cancelled'
-                            else:
-                                data_append["site status"] = 'unavailable'
-                            try:
-                                self.acc_history_collection.insert_one(data_append)
-                            except:
-                                pass
-                            time.sleep(1)
         except Exception as e:
             Logs.notify_except(self.tg_info, f"Site History Global Error: {e}", self.steamclient.username)
         time.sleep(3)
@@ -187,6 +145,52 @@ class TMHistory(Steam):
             except:
                 pass
         return history_docs_sorted_by_time
+
+    def site_history_new_docs(self, history_docs_with_new_id, response_data):
+        current_timestamp_unique = current_timestamp = int(time.time())
+        for site_item in response_data:
+            if all(key in site_item for key in ['item_id', 'stage', 'time', 'market_hash_name', 'assetid']):
+
+                availability = False
+                for doc in history_docs_with_new_id:
+                    if str(site_item['item_id']) == str(doc['site item id']):
+                        availability = True
+                        break
+
+                if not availability:
+                    current_timestamp_unique += 1
+                    data_append = {
+                        "transaction": "sale_record",
+                        "site": self.site_name,
+                        "time": current_timestamp_unique,
+                        "name": site_item['market_hash_name'],
+                        "steam status": None,
+                        "steam status time": None,
+                        "site status": None,
+                        "site status time": int(site_item['time']),
+                        "site id": None,
+                        "buyer steam id": None,
+                        "asset id": str(site_item['assetid']),
+                        "trade id": None,
+                        "sent time": None,
+                        "site item id": str(site_item['item_id'])
+                    }
+                    stage = str(site_item['stage'])
+                    if stage == '1':
+                        if (current_timestamp - int(site_item['time'])) < 86400:
+                            continue
+                        data_append["site status"] = 'active deal'
+                    elif stage == '2':
+                        data_append["site status"] = 'accepted'
+                    elif stage == '5':
+                        data_append["site status"] = 'cancelled'
+                    else:
+                        data_append["site status"] = 'unavailable'
+                    try:
+                        self.acc_history_collection.insert_one(data_append)
+                    except:
+                        pass
+                    time.sleep(1)
     # endregion
 
     def money_history(self, history_docs):

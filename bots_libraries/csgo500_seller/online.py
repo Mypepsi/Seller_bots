@@ -23,8 +23,8 @@ class CSGO500Online(Steam):
                             url_to_ping, headers=self.csgo500_jwt_apikey, data=params, timeout=15).json()
                     except:
                         response = None
-                    if (response and 'success' in response and response['success'] is False
-                            and 'message' in response and response['message'] != 'Ping too soon.'):
+                    if (response and 'success' in response and 'message' in response
+                            and response['message'] != 'Ping too soon.'):
                         Logs.log(f"Ping: Error to ping: {response['message']}", self.steamclient.username)
                         if not self.ping_alert:
                             Logs.notify(self.tg_info, f"Ping: Error to ping: {response['message']}",
@@ -92,7 +92,7 @@ class CSGO500Online(Steam):
                                                                 json=payload, timeout=15).json()
                                 search_list = search_response['data']['listings']
                             except:
-                                search_list = []
+                                search_list = None
                             if search_list:
                                 for dictionary in search_list:
                                     if 'id' in dictionary and str(dictionary['id']) == str(item_id):

@@ -72,11 +72,10 @@ class Steam(Mongo):
                 self.csgoempire_headers = {
                     'Authorization': f'Bearer {self.csgoempire_apikey}'
                 }
-                self.csgo500_user_id = self.content_acc_settings_dict[self.steamclient.username]['csgo500 user id']
-                self.csgo500_apikey = self.content_acc_settings_dict[self.steamclient.username]['csgo500 apikey']
+
                 self.jwt_api_key = jwt.encode(
-                    {'userId': self.csgo500_user_id},
-                    self.csgo500_apikey,
+                    {'userId': self.content_acc_settings_dict[self.steamclient.username]['csgo500 user id']},
+                    self.content_acc_settings_dict[self.steamclient.username]['csgo500 apikey'],
                     algorithm="HS256"
                 )
                 self.csgo500_jwt_apikey = {'x-500-auth': self.jwt_api_key}
@@ -107,7 +106,6 @@ class Steam(Mongo):
     def steam_cancel_offers(self):  # Global Function (class_for_account_functions)
         while True:
             try:
-                self.update_account_data_info()
                 if self.active_session:
                     current_time = int(time.time())
                     active_trades = self.steamclient.get_trade_offers(get_sent_offers=1, active_only=1)
@@ -185,10 +183,10 @@ class Steam(Mongo):
         else:
             return None
 
-    def steam_history(self, collection_info):
+    def steam_history(self, history_docs):
         try:
             need_to_work = False
-            for doc in collection_info:
+            for doc in history_docs:
                 if 'steam status' in doc and doc['steam status'] in ['sent', 'again_sent', 'error_again_send']:
                     need_to_work = True
                     break
@@ -198,7 +196,7 @@ class Steam(Mongo):
 
                 if response and 'response' in response and 'trade_offers_sent' in response['response']:
                     trade_offers = response['response']['trade_offers_sent']
-                    for doc in collection_info:
+                    for doc in history_docs:
                         if ('steam status' in doc and doc['steam status'] in ['sent', 'again_sent', 'error_again_send']
                                 and 'transaction' in doc and doc['transaction'] == 'sale_record'
                                 and all(key in doc for key in ['site', 'trade id', 'asset id'])
@@ -217,6 +215,11 @@ class Steam(Mongo):
 
                                     current_timestamp = int(time.time())
                                     if offer['trade_offer_state'] in [2, 9]:
+                                        if (current_timestamp - int(offer['time_created'])) >= 86400:
+                                            Logs.notify(self.tg_info, f"Steam History: "
+                                                                      f"Active {offer['tradeofferid']} "
+                                                                      f"tradeID more than 12 hours",
+                                                        self.steamclient.username)
                                         break
                                     elif offer['trade_offer_state'] == 3:
                                         doc['steam status'] = 'accepted'

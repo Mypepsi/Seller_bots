@@ -9,7 +9,7 @@ from bots_libraries.creator.database import CreatorDataBase
 from bots_libraries.sellpy.thread_manager import ThreadManager
 
 
-class Creator(CreatorGeneral, CreatorDataBase, CreatorSteam, Restarter):
+class Creator(CreatorGeneral, CreatorSteam, CreatorDataBase, Restarter):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 

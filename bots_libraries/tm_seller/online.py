@@ -16,8 +16,8 @@ class TMOnline(Steam):
             try:
                 if self.active_session:
                     response = self.request_to_ping()
-                    if (response and 'success' in response and response['success'] is False
-                            and 'message' in response and response['message'] != 'too early for ping'):
+                    if (response and 'success' in response and 'message' in response
+                            and response['message'] != 'too early for ping'):
                         Logs.log(f"Ping: Error to ping: {response['message']}", self.steamclient.username)
                         if not self.ping_alert:
                             Logs.notify(self.tg_info, f"Ping: Error to ping: {response['message']}",
@@ -104,7 +104,7 @@ class TMOnline(Steam):
                                         search_response = requests.get(search_url, timeout=30).json()
                                         search_list = search_response['data'][hash_name]
                                     except:
-                                        search_list = []
+                                        search_list = None
                                     if search_list:
                                         for dictionary in search_list:
                                             if 'id' in dictionary and str(dictionary['id']) == str(item_id):

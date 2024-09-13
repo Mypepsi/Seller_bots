@@ -61,7 +61,7 @@ class CSGO500Items(Steam):
 
     # endregion
 
-    def get_site_price(self, asset_id_in_phases_inventory, conditions, limits_value):
+    def get_site_price(self, asset_id_in_phases_inventory, seller_value, limits_value):
         try:
             start_sale_time = asset_id_in_phases_inventory['time']
             hash_name = asset_id_in_phases_inventory['market_hash_name']
@@ -71,7 +71,7 @@ class CSGO500Items(Steam):
             rate = 0
             start_sale_time = hash_name = None
         if start_sale_time and hash_name and rate:
-            for condition in conditions:
+            for condition in seller_value:
                 if condition['date to'] >= start_sale_time >= condition['date from']:
                     current_timestamp = int(time.time())
                     phases_difference = (current_timestamp - start_sale_time) / 86400
@@ -116,12 +116,12 @@ class CSGO500Items(Steam):
                             break
                     if listed_items and isinstance(listed_items, list) and len(listed_items) > 0:
                         if listed_items:
-                            new_listed_items = self.change_price_delete_items(listed_items)
+                            filtered_items = self.change_price_delete_items(listed_items)
                             seller_value = self.get_information_for_price()
                             if seller_value:
-                                max_items_count = 20
-                                for i in range(0, len(new_listed_items), max_items_count):
-                                    items_list = new_listed_items[i:i + max_items_count]
+                                items_count = self.change_price_items_count
+                                for i in range(0, len(filtered_items), items_count):
+                                    items_list = filtered_items[i:i + items_count]
                                     self.change_price_below_opponent(items_list, seller_value, listed_items)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Change Price Global Error: {e}", self.steamclient.username)
@@ -156,7 +156,7 @@ class CSGO500Items(Steam):
             except:
                 pass
 
-    def request_change_price(self, item_id_to_change_price):
+    def request_to_change_price(self, item_id_to_change_price):
         for key, value in item_id_to_change_price.items():
             data = {
                 "listingId": key,
@@ -215,5 +215,5 @@ class CSGO500Items(Steam):
                             break
                     break
         if len(my_prices) > 0:
-            self.request_change_price(my_prices)
+            self.request_to_change_price(my_prices)
     # endregion

@@ -67,7 +67,7 @@ class CSGOEmpireOnline(Steam):
                                 search_response = requests.get(search_url, params=params, headers=headers, timeout=15).json()
                                 search_list = search_response['data']
                             except:
-                                search_list = []
+                                search_list = None
                             if search_list:
                                 for dictionary in search_list:
                                     if 'id' in dictionary and str(dictionary['id']) == str(item_id):

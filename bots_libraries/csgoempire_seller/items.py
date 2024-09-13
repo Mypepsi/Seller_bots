@@ -124,7 +124,7 @@ class CSGOEmpireItems(Steam):
                     break
         return my_prices
 
-    def get_site_price(self, asset_id_in_phases_inventory, conditions, limits_value):
+    def get_site_price(self, asset_id_in_phases_inventory, seller_value, limits_value):
         try:
             start_sale_time = asset_id_in_phases_inventory['time']
             hash_name = asset_id_in_phases_inventory['market_hash_name']
@@ -133,7 +133,7 @@ class CSGOEmpireItems(Steam):
             rate = 0
             start_sale_time = hash_name = None
         if start_sale_time and hash_name and rate:
-            for condition in conditions:
+            for condition in seller_value:
                 if condition['date to'] >= start_sale_time >= condition['date from']:
                     current_timestamp = int(time.time())
                     phases_difference = (current_timestamp - start_sale_time) / 86400
@@ -188,9 +188,9 @@ class CSGOEmpireItems(Steam):
                                                     or (suggested_price and old_price >= suggested_price)):
                                                 del my_prices[key]
                                             break
-                                # if len(my_prices) > 0:
-                                #     my_prices_to_delete = [int(key) for key in my_prices.keys()]
-                                #     self.request_delete_items(my_prices_to_delete)
+                                if len(my_prices) > 0:
+                                    my_prices_to_delete = [int(key) for key in my_prices.keys()]
+                                    self.request_delete_items(my_prices_to_delete)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Change Price Global Error: {e}", self.steamclient.username)
             time.sleep(self.change_price_global_time)
@@ -210,9 +210,9 @@ class CSGOEmpireItems(Steam):
         return filtered_items
 
     def request_delete_items(self, items_id_to_delete):
-        items_to_change_price = 50
-        for i in range(0, len(items_id_to_delete), items_to_change_price):
-            sublist = items_id_to_delete[i:i + items_to_change_price]
+        items_count_in_request = self.change_price_items_count_in_request
+        for i in range(0, len(items_id_to_delete), items_count_in_request):
+            sublist = items_id_to_delete[i:i + items_count_in_request]
             data = {
                 "ids": sublist
             }

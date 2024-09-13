@@ -1,7 +1,6 @@
 import time
 import random
 import requests
-import urllib.parse
 from bots_libraries.sellpy.steam import Steam
 from bots_libraries.sellpy.logs import Logs, ExitException
 
@@ -22,8 +21,7 @@ class WaxpeerOnline(Steam):
                         response = requests.get(url_to_ping, timeout=15).json()
                     except:
                         response = None
-                    if (response and 'success' in response and response['success'] is False
-                            and 'msg' in response and response['msg'] != 'wrong api'):
+                    if response and 'success' in response and 'msg' in response and response['msg'] != 'wrong api':
                         Logs.log(f"Ping: Error to ping: {response['msg']}", self.steamclient.username)
                         if not self.ping_alert:
                             Logs.notify(self.tg_info, f"Ping: Error to ping: {response['msg']}",
@@ -71,7 +69,7 @@ class WaxpeerOnline(Steam):
                                 search_response = requests.get(search_url, timeout=15).json()
                                 search_list = search_response['items']
                             except:
-                                search_list = []
+                                search_list = None
                             if not search_list:
                                 Logs.notify(self.tg_info, 'Visible Store: Items not visible in store',
                                             self.steamclient.username)

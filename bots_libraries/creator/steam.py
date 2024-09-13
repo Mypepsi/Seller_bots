@@ -3,7 +3,6 @@ import time
 import pickle
 import string
 import random
-from lxml import html
 from fake_useragent import UserAgent
 from bots_libraries.sellpy.logs import Logs
 from bots_libraries.sellpy.steam import Steam
@@ -53,7 +52,7 @@ class CreatorSteam(Steam):
                         proxy_login = proxy_list[2]
                         proxy_password = proxy_list[3]
                         proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
-                                                    'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
+                                   'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
 
                     self.make_steam_login(username, password, steam_guard, proxies)
 
@@ -73,12 +72,12 @@ class CreatorSteam(Steam):
                     if difference_to_update > self.steam_session_validity_time:
                         self.steamclient.make_login(username, password, steam_guard, proxies)
                         Logs.log(f"Steam Login: Authorization was successful", username)
-                        self.handle_doc_in_account_data()
+                        self.add_doc_in_account_data()
                         self.create_history_doc()
                 elif username not in self.content_acc_data_dict:
                     self.steamclient.make_login(username, password, steam_guard, proxies)
                     Logs.log(f"Steam Login: Authorization was successful", username)
-                    self.handle_doc_in_account_data()
+                    self.add_doc_in_account_data()
                     self.create_history_doc()
                 break
             except:
@@ -90,7 +89,7 @@ class CreatorSteam(Steam):
                     Logs.notify(self.tg_info, f"Steam Login: Not authorized on Steam", username)
                     break
 
-    def handle_doc_in_account_data(self):
+    def add_doc_in_account_data(self):
         try:
             current_timestamp = int(time.time())
             if self.steamclient.proxies is None:
@@ -157,15 +156,6 @@ class CreatorSteam(Steam):
                         all_prices = self.content_database_prices['DataBasePrices']
                         if my_items:
                             current_timestamp = int(time.time())
-                            filtered_items_full = {
-                                item_id: {
-                                    "asset_id": item_id,
-                                    "market_hash_name": item_info["market_hash_name"],
-                                    "tradable": item_info.get("tradable", 'Error')
-                                }
-                                for item_id, item_info in my_items.items()
-                            }
-
                             filtered_items_tradable = {
                                 item_id: {
                                     "asset_id": item_id,
@@ -173,6 +163,15 @@ class CreatorSteam(Steam):
                                 }
                                 for item_id, item_info in my_items.items()
                                 if item_info.get("tradable", 0) != 0
+                            }
+
+                            filtered_items_full = {
+                                item_id: {
+                                    "asset_id": item_id,
+                                    "market_hash_name": item_info["market_hash_name"],
+                                    "tradable": item_info.get("tradable", 'Error')
+                                }
+                                for item_id, item_info in my_items.items()
                             }
                             try:
                                 self.acc_data_collection.update_one({"username": self.steamclient.username},
@@ -270,7 +269,7 @@ class CreatorSteam(Steam):
                         except:
                             response = None
                         if response and response.status_code == 200:
-                            api_key_ = self.get_steam_apikey(response.text)
+                            api_key_ = self.steamclient.get_api_key(response.text)
                             if isinstance(api_key_, bool):
                                 pass
                             elif api_key_ == '':
@@ -288,18 +287,6 @@ class CreatorSteam(Steam):
                 time.sleep(10)
             time.sleep(self.steam_apikey_global_time)
 
-    def get_steam_apikey(self, text):
-        parsed_body = html.fromstring(text)
-        api_key = parsed_body.xpath("//div[@id='bodyContents_ex']/p")
-        if len(api_key) == 0:
-            return False
-        api_key_ = ''
-        for p in api_key:
-            if 'Key: ' in p.text:
-                api_key_ = p.text.replace('Key: ', '')
-                return api_key_
-        return api_key_
-
     def revoke_steam_apikey(self):
         url = 'https://steamcommunity.com/dev/revokekey'
         headers = {
@@ -310,10 +297,8 @@ class CreatorSteam(Steam):
             'User-Agent': self.steamclient.user_agent
         }
 
-        session_id = self.steamclient._get_session_id()
-
         json_data = {'Revoke': 'Revoke My Steam Web API Key',
-                'sessionid': session_id}
+                     'sessionid': self.steamclient._get_session_id()}
         try:
             delete_api_key_response = self.steamclient.session.post(url, headers=headers, data=json_data, timeout=15)
         except:
@@ -323,7 +308,7 @@ class CreatorSteam(Steam):
             self.create_steam_apikey()
 
     def create_steam_apikey(self):
-        request_key_url = 'https://steamcommunity.com/dev/requestkey'
+        url = 'https://steamcommunity.com/dev/requestkey'
         headers = {
             'Cookie': self.get_steam_comm_cookie(),
             'Origin': 'https://steamcommunity.com',
@@ -332,16 +317,14 @@ class CreatorSteam(Steam):
             'User-Agent': self.steamclient.user_agent
         }
 
-        session_id = self.steamclient._get_session_id()
-
         json_data = {
             'domain': 'localhost',
             'agreeToTerms': True,
-            'sessionid': session_id,
+            'sessionid': self.steamclient._get_session_id(),
             "request_id": 0
         }
         try:
-            response = self.steamclient.session.post(request_key_url, headers=headers, data=json_data, timeout=15).json()
+            response = self.steamclient.session.post(url, headers=headers, data=json_data, timeout=15).json()
         except:
             response = None
 
@@ -351,12 +334,12 @@ class CreatorSteam(Steam):
             if confirm_response:
                 json_data = {
                     "request_id": request_id,
-                    'sessionid': session_id,
+                    'sessionid': self.steamclient._get_session_id(),
                     'domain': ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(random.randint(7, 15))) + ".com",
                     'agreeToTerms': 'true'
                 }
                 try:
-                    response_second = self.steamclient.session.post(request_key_url, headers=headers, timeout=15,
+                    response_second = self.steamclient.session.post(url, headers=headers, timeout=15,
                                                                     data=json_data).json()
                 except:
                     response_second = None
@@ -370,11 +353,11 @@ class CreatorSteam(Steam):
                         pass
 
     def get_steam_comm_cookie(self):
-        str = ''
+        str_ = ''
         for cookie in self.steamclient.session.cookies:
             if cookie.domain == 'steamcommunity.com':
-                str += cookie.name + '=' + cookie.value + '; '
-        return str[0: len(str) - 2]
+                str_ += cookie.name + '=' + cookie.value + '; '
+        return str_[0: len(str_) - 2]
 
     def request_to_confirm_steam_apikey(self, request_id: str):
         try:

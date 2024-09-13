@@ -62,7 +62,7 @@ class WaxpeerItems(Steam):
 
     # endregion
 
-    def get_site_price(self, asset_id_in_phases_inventory, conditions, limits_value):
+    def get_site_price(self, asset_id_in_phases_inventory, seller_value, limits_value):
         try:
             start_sale_time = asset_id_in_phases_inventory['time']
             hash_name = asset_id_in_phases_inventory['market_hash_name']
@@ -72,7 +72,7 @@ class WaxpeerItems(Steam):
             commission = 0
             start_sale_time = hash_name = None
         if start_sale_time and hash_name and commission:
-            for condition in conditions:
+            for condition in seller_value:
                 if condition['date to'] >= start_sale_time >= condition['date from']:
                     current_timestamp = int(time.time())
                     phases_difference = (current_timestamp - start_sale_time) / 86400
@@ -107,17 +107,17 @@ class WaxpeerItems(Steam):
                     except:
                         listed_items = None
                     if listed_items and isinstance(listed_items, list) and len(listed_items) > 0:
-                        new_listed_items = self.change_price_delete_items(listed_items)
+                        filtered_items = self.change_price_delete_items(listed_items)
                         seller_value = self.get_information_for_price()
                         try:
                             another_apis_list = self.search_in_merges_by_username(self.steamclient.username)[
                                 'waxpeer apikey']
                         except:
                             another_apis_list = None
-                        if another_apis_list and seller_value:
-                            max_items_count = 100
-                            for i in range(0, len(new_listed_items), max_items_count):
-                                items_list = new_listed_items[i:i + max_items_count]
+                        if another_apis_list and seller_value and filtered_items:
+                            items_count = self.change_price_items_count
+                            for i in range(0, len(filtered_items), items_count):
+                                items_list = filtered_items[i:i + items_count]
                                 parsed_info = self.threads_parsing_prices(items_list, another_apis_list)
                                 self.change_price_below_opponent(items_list, parsed_info, seller_value, listed_items)
             except Exception as e:
@@ -131,24 +131,24 @@ class WaxpeerItems(Steam):
         for assetid in item_id_on_sale:
             if assetid not in tradable_asset_id:
                 item_id_to_delete.append({"item_id": assetid, "price": 0})
-        self.request_change_price(item_id_to_delete)
+        self.request_to_change_price(item_id_to_delete)
         filtered_items = []
         for item in items_on_sale:
             if 'item_id' in item and not any(d["item_id"] == item["item_id"] for d in item_id_to_delete):
                 filtered_items.append(item)
         return items_on_sale
 
-    def request_change_price(self, item_id_to_change_price):
-        items_to_change_price = 50
+    def request_to_change_price(self, item_id_to_change_price):
+        items_count_in_request = self.change_price_items_count_in_request
         data = []
         if isinstance(item_id_to_change_price, list):
-            sublist = [item_id_to_change_price[i:i + items_to_change_price]
-                       for i in range(0, len(item_id_to_change_price), items_to_change_price)]
+            sublist = [item_id_to_change_price[i:i + items_count_in_request]
+                       for i in range(0, len(item_id_to_change_price), items_count_in_request)]
             for i in sublist:
                 data.append({"items": i})
         elif isinstance(item_id_to_change_price, dict):
-            for i in range(0, len(item_id_to_change_price), items_to_change_price):
-                sublist_keys = list(item_id_to_change_price.keys())[i:i + items_to_change_price]
+            for i in range(0, len(item_id_to_change_price), items_count_in_request):
+                sublist_keys = list(item_id_to_change_price.keys())[i:i + items_count_in_request]
                 sublist = {k: item_id_to_change_price[k] for k in sublist_keys}
                 items = {ui_id: item_id_to_change_price[ui_id] for ui_id in sublist}
                 data.append({
@@ -206,7 +206,7 @@ class WaxpeerItems(Steam):
                             break
                     break
         if len(my_prices) > 0:
-            self.request_change_price(my_prices)
+            self.request_to_change_price(my_prices)
 
     # region Parsing Info for change price
     def threads_parsing_prices(self, items, api_keys):
@@ -234,7 +234,7 @@ class WaxpeerItems(Steam):
                             hash_names.append(hash_queue.get_nowait())
                         except Empty:
                             break
-                    thread = threading.Thread(target=self.request_parsing_prices,
+                    thread = threading.Thread(target=self.request_to_parsing_prices,
                                               args=(api_key, hash_names, results, results_lock, threads))
                     thread.start()
                     threads[api_key] = thread
@@ -245,7 +245,7 @@ class WaxpeerItems(Steam):
             time.sleep(1)
         return results
 
-    def request_parsing_prices(self, api_key, hash_names, results, results_lock, threads):
+    def request_to_parsing_prices(self, api_key, hash_names, results, results_lock, threads):
         try:
             list_hash_names = '&names=' + '&names='.join(hash_names)
             search_hash_name_url = f'{self.site_url}/v1/search-items-by-name?api={api_key}{list_hash_names}'

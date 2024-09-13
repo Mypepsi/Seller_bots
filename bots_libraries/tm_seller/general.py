@@ -41,11 +41,11 @@ class TMGeneral(Steam):
             except:
                 api_to_withdraw = None
             if api_to_withdraw:
-                for acc in self.content_acc_settings_list:
+                for acc_info in self.content_acc_settings_list:
                     username = None
                     try:
-                        username = acc['username']
-                        tm_apikey = acc['tm apikey']
+                        username = acc_info['username']
+                        tm_apikey = acc_info['tm apikey']
                         try:
                             current_balance_url = f'{self.site_url}/api/v2/get-money?key={tm_apikey}'
                             response = requests.get(current_balance_url, timeout=30).json()
@@ -56,9 +56,9 @@ class TMGeneral(Steam):
                             time.sleep(3)
                             new_value = round(response_money * 100)
                             try:
-                                withdrawing_tm_url = (f'{self.site_url}/api/v2/money-send/{new_value}/{api_to_withdraw}?'
+                                withdrawing_url = (f'{self.site_url}/api/v2/money-send/{new_value}/{api_to_withdraw}?'
                                                       f'pay_pass=34368&key={tm_apikey}')
-                                data = requests.get(withdrawing_tm_url, timeout=30).json()
+                                data = requests.get(withdrawing_url, timeout=30).json()
                                 data_error = data['error']
                             except:
                                 data_error = None
@@ -66,12 +66,12 @@ class TMGeneral(Steam):
                                 try:
                                     set_pay_password_url = (f'{self.site_url}/api/v2/set-pay-password?'
                                                             f'new_password=34368&key={tm_apikey}')
-                                    data_ = requests.get(set_pay_password_url, timeout=30).json()
+                                    set_data = requests.get(set_pay_password_url, timeout=30).json()
                                 except:
-                                    data_ = None
-                                if data_ and 'success' in data_ and data_['success']:
+                                    set_data = None
+                                if set_data and 'success' in set_data and set_data['success']:
                                     Logs.log(f'Balance Transfer: Payment password has been successfully set', username)
-                                elif data_ and 'error' in data_:
+                                elif set_data:
                                     Logs.notify(self.tg_info, 'Balance Transfer: Error to set payment password', username)
                             elif data_error:
                                 Logs.notify(self.tg_info, 'Balance Transfer: Wrong payment password', username)
