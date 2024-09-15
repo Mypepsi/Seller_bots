@@ -3,11 +3,11 @@ import time
 import random
 import requests
 import urllib.parse
-from bots_libraries.sellpy.steam import Steam
+from bots_libraries.sellpy.session_manager import SessionManager
 from bots_libraries.sellpy.logs import Logs, ExitException
 
 
-class CSGO500Online(Steam):
+class CSGO500Online(SessionManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
         self.ping_alert = False

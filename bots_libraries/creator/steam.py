@@ -5,14 +5,14 @@ import string
 import random
 from fake_useragent import UserAgent
 from bots_libraries.sellpy.logs import Logs
-from bots_libraries.sellpy.steam import Steam
+from bots_libraries.sellpy.session_manager import SessionManager
 from bots_libraries.steampy.client import SteamClient
 from bots_libraries.steampy.models import GameOptions
 from bots_libraries.steampy.confirmation import Confirmation
 from bots_libraries.steampy.confirmation import ConfirmationExecutor
 
 
-class CreatorSteam(Steam):
+class CreatorSteam(SessionManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
         self.ua = UserAgent()

@@ -1,107 +1,88 @@
-import io
-import jwt
 import time
-import pickle
-from bots_libraries.sellpy.mongo import Mongo
+from bots_libraries.steampy.client import Asset
 from bots_libraries.steampy.client import SteamClient
-from bots_libraries.sellpy.logs import Logs, ExitException
+from bots_libraries.steampy.models import GameOptions
+from bots_libraries.sellpy.session_manager import SessionManager
+from bots_libraries.sellpy.logs import Logs
 
 
-class Steam(Mongo):
+class SteamManager(SessionManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
-        self.active_session = False
-        self.steamclient = SteamClient('')
 
-        self.trade_url = None
-        self.tm_apikey = None
-        self.waxpeer_apikey = None
-        self.csgoempire_apikey = None
-        self.csgoempire_headers = None
-        self.csgo500_user_id = self.csgo500_apikey = None
-        self.jwt_api_key = None
-        self.csgo500_jwt_apikey = None
-        self.shadowpay_apikey = None
-        self.buff_cookie = None
+    # region Steam Send Offers
+    def send_steam_offer(self, response_data_offer, send_offers, unique_site_id):
+        match = False
+        for offer in send_offers:
+            if 'site id' in offer and str(unique_site_id) == str(offer['site id']) and offer['trade id'] is not None:
+                match = True
+                break
+        if not match:
+            self.make_steam_offer(response_data_offer, send_offers)
+            return True
+        return False
 
-        self.steam_inventory_tradable = self.steam_inventory_full = self.steam_inventory_phases = {}
+    def resend_steam_offer(self, response_data_offer, send_offers, unique_site_id):
+        for offer in send_offers:
+            if 'site id' in offer and str(unique_site_id) == str(offer['site id']):
+                trade_id = offer['trade id']
+                if trade_id is None:
+                    break
 
-    # region Session
-    def update_session(self, acc_info):  # Global Function (class_for_account_functions)
-        while True:
-            self.update_account_settings_info()
-            self.update_account_data_info()
-            self.active_session = self.take_session(acc_info)
-            time.sleep(self.update_session_global_time)
+                response_state = self.steamclient.get_trade_offer_state(trade_id)
+                time.sleep(1)
 
-    def take_session(self, acc_info):
-        username = None
+                if not isinstance(response_state, dict):
+                    break
+
+                if 'response' in response_state and 'offer' in response_state['response']:
+                    offer_status = response_state['response']['offer']['trade_offer_state']
+                else:
+                    break
+
+                if int(offer_status) == 9:
+                    try:
+                        self.steamclient.confirm_trade_offer({'tradeofferid': trade_id})
+                    except:
+                        pass
+                    break
+
+                if int(offer_status) not in [1, 4, 8, 10]:
+                    break
+                self.make_steam_offer(response_data_offer, send_offers)
+                break
+
+    def make_steam_offer(self, send_offers, unique_site_id, partner, token, assets_list):
         try:
-            if 'username' in acc_info:
-                username = acc_info['username']
-                if 'steam session' in acc_info:
-                    session = acc_info['steam session']
-                else:
-                    if username in self.content_acc_data_dict and 'steam session' in self.content_acc_data_dict[username]:
-                        session = self.content_acc_data_dict[username]['steam session']
-                    else:
-                        return False
-                steam_cookie_file = io.BytesIO(session)
-                self.steamclient = pickle.load(steam_cookie_file)
-                self.acc_history_collection = self.get_collection(self.seller_history,
-                                                                  f'history_{self.steamclient.username}')
+            name_list = []
+            assets_for_offer = []
+            for asset_id in assets_list:
+                my_asset = Asset(str(asset_id), GameOptions.CS)
+                assets_for_offer.append(my_asset)
 
-                # Info from account_settings
-                proxy = self.content_acc_settings_dict[self.steamclient.username]['proxy']
-                if proxy == "proxy":
-                    proxies = None
-                else:
-                    proxy_list = proxy.split(':')
-                    proxy_ip = proxy_list[0]
-                    proxy_port = proxy_list[1]
-                    proxy_login = proxy_list[2]
-                    proxy_password = proxy_list[3]
-                    proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
-                               'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
-                self.steamclient.proxies = proxies
-                self.steamclient.session.proxies.update(self.steamclient.proxies)
-                self.trade_url = self.content_acc_settings_dict[self.steamclient.username]['trade url']
-                self.tm_apikey = self.content_acc_settings_dict[self.steamclient.username]['tm apikey']
-                self.waxpeer_apikey = self.content_acc_settings_dict[self.steamclient.username]['waxpeer apikey']
-                self.csgoempire_apikey = self.content_acc_settings_dict[self.steamclient.username]['csgoempire apikey']
-                self.csgoempire_headers = {
-                    'Authorization': f'Bearer {self.csgoempire_apikey}'
-                }
-
-                self.jwt_api_key = jwt.encode(
-                    {'userId': self.content_acc_settings_dict[self.steamclient.username]['csgo500 user id']},
-                    self.content_acc_settings_dict[self.steamclient.username]['csgo500 apikey'],
-                    algorithm="HS256"
-                )
-                self.csgo500_jwt_apikey = {'x-500-auth': self.jwt_api_key}
-                self.shadowpay_apikey = self.content_acc_settings_dict[self.steamclient.username]['shadowpay apikey']
-                raw_cookies = self.content_acc_settings_dict[self.steamclient.username]['buff cookie']
-                if raw_cookies:
-                    self.buff_cookie = dict(pair.split("=", 1) for pair in raw_cookies.split("; "))
-                else:
-                    self.buff_cookie = None
-
-                # Info from account_data
-                self.steamclient._api_key = self.content_acc_data_dict[self.steamclient.username]['steam apikey']
-                self.steam_inventory_tradable = (
-                                    self.content_acc_data_dict)[self.steamclient.username]['steam inventory tradable']
-                self.steam_inventory_full = (
-                                    self.content_acc_data_dict)[self.steamclient.username]['steam inventory full']
-                self.steam_inventory_phases = (
-                                    self.content_acc_data_dict)[self.steamclient.username]['steam inventory phases']
-
-                return True
+            trade_offer_url = f'https://steamcommunity.com/tradeoffer/new/?partner={partner}&token={token}'
+            creating_offer_time = int(time.time())
+            steam_response = self.steamclient.make_trade_offer(assets_for_offer, [], trade_offer_url)
+            time.sleep(2)
+            try:
+                self.steamclient.confirm_trade_offer(steam_response)
+            except:
+                pass
+            if steam_response is None or 'tradeofferid' not in steam_response:
+                trade_offer_id = self.check_created_steam_offer(creating_offer_time, assets_list, partner)
+                steam_response = {'tradeofferid': trade_offer_id}
             else:
-                raise ExitException
+                trade_offer_id = steam_response['tradeofferid']
+
+            if trade_offer_id is not None:
+                self.add_doc_in_history(send_offers, assets_list, name_list, unique_site_id, steam_response, trade_offer_url)
+                Logs.log(f"Make Steam Offer: Trade sent: {name_list}", self.steamclient.username)
+            else:
+                self.add_doc_in_history(send_offers, assets_list, name_list, unique_site_id, steam_response, trade_offer_url,
+                                           success=False)
+                Logs.log(f"Make Steam Offer: Error send trade: {name_list}", self.steamclient.username)
         except Exception as e:
-            Logs.notify_except(self.tg_info, f'MongoDB: Error while taking Account Session: {e}', username)
-            return False
-    # endregion
+            Logs.notify_except(self.tg_info, f"Make Steam Offer Global Error: {e}", self.steamclient.username)
 
     def steam_cancel_offers(self):  # Global Function (class_for_account_functions)
         while True:
@@ -148,6 +129,107 @@ class Steam(Mongo):
                                    self.steamclient.username)
             time.sleep(self.steam_cancel_offers_global_time)
 
+    def add_doc_in_history(self, send_offers, asset_list, name_list, unique_site_id, steam_response, trade_offer_url,
+                           success=True):
+        current_timestamp = int(time.time())
+        current_timestamp_unique = int(time.time())
+        if success:
+            steam_status = 'sent'
+            trade_id = steam_response['tradeofferid']
+            sent_time = current_timestamp
+        else:
+            steam_status = 'error_send'
+            trade_id = None
+            sent_time = None
+
+        doc_exist = False
+        trade_id_in_mongo = None
+        for entry in send_offers:
+            if str(entry.get('site id')) == str(unique_site_id):
+                trade_id_in_mongo = entry.get('trade id')
+                doc_exist = True
+                break
+
+        for asset in asset_list:
+            name = ''
+            for item in self.steam_inventory_phases.values():
+                if item['asset_id'] == asset:
+                    name = item['market_hash_name']
+                    name_list.append(name)
+                    break
+            if doc_exist:
+                if success:
+                    data = {
+                        "steam status time": current_timestamp,
+                        "trade id": trade_id
+                    }
+                    if trade_id_in_mongo is not None:
+                        data['steam status'] = 'again_sent'
+                    else:
+                        data['steam status'] = steam_status
+                        data['sent time'] = sent_time
+                    try:
+                        self.acc_history_collection.update_one(
+                            {
+                                "$and": [
+                                    {"asset id": asset},
+                                    {"site id": str(unique_site_id)}
+                                ]
+                            },
+                            {
+                                "$set": data
+                            }
+                        )
+                    except Exception as e:
+                        Logs.notify_except(self.tg_info, f"Steam Send Offers: MongoDB critical request failed: {e}",
+                                           self.steamclient.username)
+                else:
+                    data = {
+                        "steam status time": current_timestamp
+                    }
+                    if trade_id_in_mongo is not None:
+                        data['steam status'] = 'error_again_send'
+                        try:
+                            self.acc_history_collection.update_one(
+                                {
+                                    "$and": [
+                                        {"asset id": asset},
+                                        {"site id": str(unique_site_id)}
+                                    ]
+                                },
+                                {
+                                    "$set": data
+                                }
+                            )
+                        except Exception as e:
+                            Logs.notify_except(self.tg_info, f"Steam Send Offers: MongoDB critical request failed: {e}",
+                                               self.steamclient.username)
+            else:
+                current_timestamp_unique += 1
+                steam_id = SteamClient.get_steam_id_from_url(trade_offer_url)
+                data_append = {
+                    "transaction": "sale_record",
+                    "site": self.site_name,  # str
+                    "time": current_timestamp_unique,  # int
+                    "name": name,  # str
+                    "steam status": steam_status,  # str
+                    "steam status time": current_timestamp_unique,  # int
+                    "site status": 'active_deal',
+                    "site status time": current_timestamp_unique,  # int
+                    "site id": str(unique_site_id),  # str
+                    "buyer steam id": steam_id,  # i`m not sure)
+                    "asset id": asset,  # str
+                    "trade id": trade_id,  # str
+                    "sent time": sent_time,  # int
+                    "site item id": None
+                }
+                try:
+                    self.acc_history_collection.insert_one(data_append)
+                except Exception as e:
+                    Logs.notify_except(self.tg_info, f"Steam Send Offers: MongoDB critical request failed: {e}",
+                                       self.steamclient.username)
+
+
     def check_created_steam_offer(self, creating_offer_time, assets_list, partner):
         trade_offers = self.steamclient.get_trade_offers(get_sent_offers=1)
         if trade_offers and 'response' in trade_offers and 'trade_offers_sent' in trade_offers['response']:
@@ -182,7 +264,9 @@ class Steam(Mongo):
                 return None
         else:
             return None
+    # endregion
 
+    # region History
     def steam_history(self, history_docs):
         try:
             need_to_work = False
@@ -372,3 +456,4 @@ class Steam(Mongo):
         except Exception as e:
             Logs.notify_except(self.tg_info, f"Send Sold Item Info Global Error: {e}", self.steamclient.username)
         time.sleep(3)
+    # endregion

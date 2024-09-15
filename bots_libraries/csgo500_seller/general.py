@@ -3,10 +3,10 @@ import time
 import random
 import requests
 from bots_libraries.sellpy.logs import Logs
-from bots_libraries.sellpy.steam import Steam
+from bots_libraries.sellpy.session_manager import SessionManager
 
 
-class CSGO500General(Steam):
+class CSGO500General(SessionManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 

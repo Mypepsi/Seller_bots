@@ -1,14 +1,14 @@
 import time
 import requests
 from bots_libraries.sellpy.logs import Logs
-from bots_libraries.sellpy.steam import Steam
+from bots_libraries.sellpy.session_manager import SessionManager
 
 
-class CreatorDataBase(Steam):
+class CreatorDataBase(SessionManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
-    #region Database Prices
+    # region Database Prices
     def database_prices(self):  # Global Function (class_for_many_functions)
         Logs.log(f"Database Prices: thread are running", '')
         while True:
