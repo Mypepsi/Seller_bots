@@ -33,9 +33,7 @@ class WaxpeerOnline(SteamManager):
             time.sleep(self.ping_global_time)
 
     # region Visible Store
-
     def visible_store(self):  # Global Function (class_for_account_functions)
-        """Основна функція для перевірки інвентарю та виставлених предметів на продаж."""
         while True:
             time.sleep(self.visible_store_global_time)
             try:
@@ -48,7 +46,6 @@ class WaxpeerOnline(SteamManager):
                 Logs.notify_except(self.tg_info, f"Visible Store Global Error: {e}", self.steamclient.username)
 
     def visible_store_inventory(self):
-        """Функція для перевірки інвентарю користувача."""
         try:
             my_inventory_url = f'{self.site_url}/v1/get-my-inventory?api={self.waxpeer_apikey}&game=730'
             my_inventory_response = requests.get(my_inventory_url, timeout=15).json()
@@ -68,7 +65,6 @@ class WaxpeerOnline(SteamManager):
         time.sleep(1)
 
     def visible_store_listed(self):
-        """Функція для перевірки предметів, виставлених на продаж."""
         try:
             items_url = f'{self.site_url}/v1/list-items-steam?api={self.waxpeer_apikey}'
             response = requests.get(items_url, timeout=15).json()

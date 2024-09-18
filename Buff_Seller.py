@@ -26,9 +26,12 @@ class BuffSeller(BuffGeneral, BuffOnline, BuffItems, BuffSteam, BuffHistory, Res
         #
         # if manager.restart_bots_global_time != 0:    # Restart Bots
         #     functions_list.append({"func": "restart_bots", "class_for_many_functions": BuffSeller})
+        #
+        # if manager.ping_global_time != 0:  # Ping
+        #     functions_list.append({"func": "ping", "class_for_account_functions": BuffSeller})
 
-        if manager.ping_global_time != 0:  # Ping
-            functions_list.append({"func": "ping", "class_for_account_functions": BuffSeller})
+        if manager.visible_store_global_time != 0:  # Visible Store
+            functions_list.append({"func": "visible_store", "class_for_account_functions": BuffSeller})
         return functions_list
 
 

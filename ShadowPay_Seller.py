@@ -27,6 +27,9 @@ class ShadowPaySeller(ShadowPayGeneral, ShadowPayOnline, ShadowPayItems, ShadowP
         if manager.restart_bots_global_time != 0:    # Restart Bots
             functions_list.append({"func": "restart_bots", "class_for_many_functions": ShadowPaySeller})
 
+        if manager.visible_store_global_time != 0:  # Visible Store
+            functions_list.append({"func": "visible_store", "class_for_account_functions": ShadowPaySeller})
+
         return functions_list
 
 

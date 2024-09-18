@@ -10,6 +10,7 @@ class BuffOnline(SteamManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
         self.ping_alert = False
+        self.inventory_errors = self.listed_errors = 0
 
     def ping(self):  # Global Function (class_for_account_functions)
         while True:
@@ -58,3 +59,98 @@ class BuffOnline(SteamManager):
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Restart Store Global Error: {e}", self.steamclient.username)
             time.sleep(self.restart_store_global_time)
+
+    # region Visible Store
+    def visible_store(self):  # Global Function (class_for_account_functions)
+        while True:
+            time.sleep(self.visible_store_global_time)
+            try:
+                if self.active_session:
+                    self.visible_store_inventory()
+                    self.visible_store_listed()
+            except ExitException:
+                break
+            except Exception as e:
+                Logs.notify_except(self.tg_info, f"Visible Store Global Error: {e}", self.steamclient.username)
+
+    def visible_store_inventory(self):
+        page_num = 1
+        my_inventory = []
+        while True:
+            try:
+                my_inventory_url = (f'{self.site_url}/api/market/steam_inventory?game=csgo&force=0&page_num={page_num}'
+                                    f'&page_size=500&search=&state=tradable&sort_by=price.desc&_={int(time.time() * 1000)}')
+                my_inventory_response = requests.get(my_inventory_url, timeout=15).json()
+
+                if (isinstance(my_inventory_response, dict) and "code" in my_inventory_response
+                        and my_inventory_response["code"] == 'OK'):
+                    if my_inventory_response["data"]["total_page"] < page_num:
+                        break
+                    for item in my_inventory_response["data"]["items"]:
+                        if (item["state_toast"] is None and item["progress_text"] == 'Idle'
+                                and item["state_text"] == 'Tradable'):
+                            my_inventory.append(item)
+                    page_num += 1
+                else:
+                    break
+            except:
+                break
+
+        tradable_inventory = []
+        for item in my_inventory:
+            if 'tradable' in item and item['tradable'] == 1:
+                tradable_inventory.append(item)
+
+        if len(tradable_inventory) > self.visible_store_max_number_of_inv_items:
+            self.inventory_errors += 1
+        else:
+            self.inventory_errors = 0
+
+        if self.inventory_errors > self.visible_store_max_number_of_errors:
+            Logs.notify(self.tg_info, f"Visible Store: {len(tradable_inventory)} items not listed on sale",
+                        self.steamclient.username)
+            raise ExitException
+        time.sleep(1)
+
+    def visible_store_listed(self):
+        items_on_sale = []
+        try:
+            items_url = (f'{self.site_url}/api/market/steam_inventory?game=csgo&force=0&page_num=1&page_size=500&'
+                         f'search=&state=tradable&sort_by=price.desc&_={int(time.time() * 1000)}')
+            response = requests.get(items_url, timeout=15).json()
+            if isinstance(response, dict) and "code" in response and response["code"] == 'OK':
+                for item in response["data"]["items"]:
+                    if item["items_on_sale"] == 'On sale' and item["state_toast"] == 'This item is on sale':
+                        items_on_sale.append(item)
+        except:
+            items_on_sale = None
+
+        if items_on_sale and len(items_on_sale) != 0:
+                for _ in range(len(items_on_sale)):
+                    random_item = random.choice(items_on_sale)
+                    if random_item['status'] == '1':
+                        hash_name = random_item['market_hash_name']
+                        item_id = random_item['item_id']
+                        try:
+                            search_url = (f'{self.site_url}api/market/shop/U1082110527/sell_order?tab=selling&game=csgo&page_num=НОМЕР_СТРАНИЦ&page_size=500&_={int(time.time() * 1000)}')
+                            search_response = requests.get(search_url, timeout=15).json()
+                            search_list = search_response['data'][hash_name]
+                        except:
+                            search_list = None
+
+                        search_result = False
+                        if search_list:
+                            for dictionary in search_list:
+                                if 'id' in dictionary and str(dictionary['id']) == str(item_id):
+                                    search_result = True
+                                    break
+
+                            if not search_result:
+                                self.listed_errors += 1
+                            else:
+                                self.listed_errors = 0
+                        break
+        if self.listed_errors > self.visible_store_max_number_of_errors:
+            Logs.notify(self.tg_info, 'Visible Store: Items not visible in store', self.steamclient.username)
+            raise ExitException
+    # endregion
