@@ -62,7 +62,6 @@ class ThreadManager(Mongo):
     def create_work_threads(class_obj, func: str, args=None):
         func_to_call = getattr(class_obj, func)
         if args:
-            thread = threading.Thread(target=func_to_call, args=args)
+            threading.Thread(target=func_to_call, args=args).start()
         else:
-            thread = threading.Thread(target=func_to_call)
-        thread.start()
+            threading.Thread(target=func_to_call).start()

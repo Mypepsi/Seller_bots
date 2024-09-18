@@ -14,7 +14,9 @@ class CSGO500Items(SessionManager):
             try:
                 if self.active_session:
                     self.update_database_info(prices=True, settings=True)
-                    filtered_inventory = self.add_to_sale_inventory()
+                    inventory = self.add_to_sale_inventory()
+                    max_items_count = 20
+                    filtered_inventory = [inventory[i:i + max_items_count] for i in range(0, len(inventory), max_items_count)]
                     seller_value = self.get_information_for_price()
                     if filtered_inventory and seller_value:
                         for list_of_asset_id in filtered_inventory:
@@ -54,8 +56,7 @@ class CSGO500Items(SessionManager):
             filtered_inventory = [
                 item for item in my_inventory_list if int(item['assetId']) in acc_data_inventory_assets_id
             ]
-            chunk = 20
-            return [filtered_inventory[i:i + chunk] for i in range(0, len(filtered_inventory), chunk)]
+            return filtered_inventory
         except:
             return None
 
@@ -128,21 +129,16 @@ class CSGO500Items(SessionManager):
             time.sleep(self.change_price_global_time)
 
     def change_price_delete_items(self, items_on_sale):
-        asset_id_to_delete = []
-        items_to_delete = []
-        asset_id_on_sale = [item['item']["assetId"] for item in items_on_sale]
+        items_id_to_delete = []
         tradable_asset_id = list(self.steam_inventory_tradable.keys())
-        for assetid in asset_id_on_sale:
-            if assetid not in tradable_asset_id:
-                asset_id_to_delete.append(assetid)
-                for item in items_on_sale:
-                    if assetid == item['item']["assetId"]:
-                        items_to_delete.append([item["id"]])
-                        break
-        self.request_delete_items(items_to_delete)
+        for item in items_on_sale:
+            if item['item']['assetId'] not in tradable_asset_id:
+                items_id_to_delete.append(item["id"])
+        if len(items_id_to_delete) > 0:
+            self.request_delete_items(items_id_to_delete)
         filtered_items = []
         for item in items_on_sale:
-            if 'item' in item and 'assetId' in item['item'] and item['item']['assetId'] not in asset_id_to_delete:
+            if "id" in item and item["id"] not in items_id_to_delete:
                 filtered_items.append(item)
         return filtered_items
 

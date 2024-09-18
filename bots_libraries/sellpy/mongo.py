@@ -116,6 +116,8 @@ class Mongo:
             self.tm_settings_online = self.get_key(self.content_tm_settings, 'online')
             self.ping_global_time = self.get_key(self.tm_settings_online, 'ping global time')
             self.visible_store_max_number_of_inv_items = self.get_key(self.tm_settings_online, 'visible store max number of inv items')
+            self.visible_store_max_number_of_errors = self.get_key(self.tm_settings_online,
+                                                                   'visible store max number of errors')
             self.visible_store_global_time = self.get_key(self.tm_settings_online, 'visible store global time')
 
             self.tm_settings_items = self.get_key(self.content_tm_settings, 'items')
@@ -126,12 +128,14 @@ class Mongo:
 
             self.tm_settings_steam = self.get_key(self.content_tm_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.tm_settings_steam, 'steam send offers global time')
+            self.steam_detect_unconfirmed_offer_time = self.get_key(self.tm_settings_steam, 'steam detect unconfirmed offer time')
             self.steam_cancel_offers_sites_name = self.get_key(self.tm_settings_steam, 'steam cancel offers sites name')  # list of dict
             self.steam_cancel_offers_global_time = self.get_key(self.tm_settings_steam, 'steam cancel offers global time')
 
             self.tm_settings_history = self.get_key(self.content_tm_settings, 'history')
             self.history_tg_token = self.get_key(self.tm_settings_history, 'history tg token')
             self.history_tg_id = self.get_key(self.tm_settings_history, 'history tg id')
+            self.history_detect_steam_offer_time = self.get_key(self.tm_settings_history, 'history detect steam offer time')
             self.history_global_time = self.get_key(self.tm_settings_history, 'history global time')
             if self.history_tg_token:
                 self.history_tg_bot = telebot.TeleBot(self.history_tg_token)
@@ -170,6 +174,8 @@ class Mongo:
             self.waxpeer_settings_online = self.get_key(self.content_waxpeer_settings, 'online')
             self.ping_global_time = self.get_key(self.waxpeer_settings_online, 'ping global time')
             self.visible_store_max_number_of_inv_items = self.get_key(self.waxpeer_settings_online, 'visible store max number of inv items')
+            self.visible_store_max_number_of_errors = self.get_key(self.waxpeer_settings_online,
+                                                                   'visible store max number of errors')
             self.visible_store_global_time = self.get_key(self.waxpeer_settings_online, 'visible store global time')
 
             self.waxpeer_settings_items = self.get_key(self.content_waxpeer_settings, 'items')
@@ -180,12 +186,14 @@ class Mongo:
 
             self.waxpeer_settings_steam = self.get_key(self.content_waxpeer_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.waxpeer_settings_steam, 'steam send offers global time')
+            self.steam_detect_unconfirmed_offer_time = self.get_key(self.waxpeer_settings_steam, 'steam detect unconfirmed offer time')
             self.steam_cancel_offers_sites_name = self.get_key(self.waxpeer_settings_steam, 'steam cancel offers sites name')  # list of dict
             self.steam_cancel_offers_global_time = self.get_key(self.waxpeer_settings_steam, 'steam cancel offers global time')
 
             self.waxpeer_settings_history = self.get_key(self.content_waxpeer_settings, 'history')
             self.history_tg_token = self.get_key(self.waxpeer_settings_history, 'history tg token')
             self.history_tg_id = self.get_key(self.waxpeer_settings_history, 'history tg id')
+            self.history_detect_steam_offer_time = self.get_key(self.waxpeer_settings_history, 'history detect steam offer time')
             self.history_global_time = self.get_key(self.waxpeer_settings_history, 'history global time')
             if self.history_tg_token:
                 self.history_tg_bot = telebot.TeleBot(self.history_tg_token)
@@ -226,6 +234,7 @@ class Mongo:
             self.csgoempire_settings_online = self.get_key(self.content_csgoempire_settings, 'online')
             self.ping_global_time = self.get_key(self.csgoempire_settings_online, 'ping global time')
             self.visible_store_max_number_of_inv_items = self.get_key(self.csgoempire_settings_online, 'visible store max number of inv items')
+            self.visible_store_max_number_of_errors = self.get_key(self.csgoempire_settings_online, 'visible store max number of errors')
             self.visible_store_global_time = self.get_key(self.csgoempire_settings_online, 'visible store global time')
 
             self.csgoempire_settings_items = self.get_key(self.content_csgoempire_settings, 'items')
@@ -236,12 +245,14 @@ class Mongo:
 
             self.csgoempire_settings_steam = self.get_key(self.content_csgoempire_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.csgoempire_settings_steam, 'steam send offers global time')
+            self.steam_detect_unconfirmed_offer_time = self.get_key(self.csgoempire_settings_steam, 'steam detect unconfirmed offer time')
             self.steam_cancel_offers_sites_name = self.get_key(self.csgoempire_settings_steam, 'steam cancel offers sites name')  # list of dict
             self.steam_cancel_offers_global_time = self.get_key(self.csgoempire_settings_steam, 'steam cancel offers global time')
 
             self.csgoempire_settings_history = self.get_key(self.content_csgoempire_settings, 'history')
             self.history_tg_token = self.get_key(self.csgoempire_settings_history, 'history tg token')
             self.history_tg_id = self.get_key(self.csgoempire_settings_history, 'history tg id')
+            self.history_detect_steam_offer_time = self.get_key(self.csgoempire_settings_history, 'history detect steam offer time')
             self.history_global_time = self.get_key(self.csgoempire_settings_history, 'history global time')
             if self.history_tg_token:
                 self.history_tg_bot = telebot.TeleBot(self.history_tg_token)
@@ -282,6 +293,7 @@ class Mongo:
             self.csgo500_settings_online = self.get_key(self.content_csgo500_settings, 'online')
             self.ping_global_time = self.get_key(self.csgo500_settings_online, 'ping global time')
             self.visible_store_max_number_of_inv_items = self.get_key(self.csgo500_settings_online, 'visible store max number of inv items')
+            self.visible_store_max_number_of_errors = self.get_key(self.csgo500_settings_online, 'visible store max number of errors')
             self.visible_store_global_time = self.get_key(self.csgo500_settings_online, 'visible store global time')
 
             self.csgo500_settings_items = self.get_key(self.content_csgo500_settings, 'items')
@@ -292,12 +304,14 @@ class Mongo:
 
             self.csgo500_settings_steam = self.get_key(self.content_csgo500_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.csgo500_settings_steam, 'steam send offers global time')
+            self.steam_detect_unconfirmed_offer_time = self.get_key(self.csgo500_settings_steam, 'steam detect unconfirmed offer time')
             self.steam_cancel_offers_sites_name = self.get_key(self.csgo500_settings_steam, 'steam cancel offers sites name')  # list of dict
             self.steam_cancel_offers_global_time = self.get_key(self.csgo500_settings_steam, 'steam cancel offers global time')
 
             self.csgo500_settings_history = self.get_key(self.content_csgo500_settings, 'history')
             self.history_tg_token = self.get_key(self.csgo500_settings_history, 'history tg token')
             self.history_tg_id = self.get_key(self.csgo500_settings_history, 'history tg id')
+            self.history_detect_steam_offer_time = self.get_key(self.csgo500_settings_history, 'history detect steam offer time')
             self.history_global_time = self.get_key(self.csgo500_settings_history, 'history global time')
             if self.history_tg_token:
                 self.history_tg_bot = telebot.TeleBot(self.history_tg_token)
@@ -337,6 +351,7 @@ class Mongo:
             self.ping_global_time = self.get_key(self.shadowpay_settings_online, 'ping global time')
             self.visible_store_max_number_of_inv_items = self.get_key(self.shadowpay_settings_online,
                                                                       'visible store max number of inv items')
+            self.visible_store_max_number_of_errors = self.get_key(self.shadowpay_settings_online, 'visible store max number of errors')
             self.visible_store_global_time = self.get_key(self.shadowpay_settings_online, 'visible store global time')
 
             self.shadowpay_settings_items = self.get_key(self.content_shadowpay_settings, 'items')
@@ -347,6 +362,7 @@ class Mongo:
 
             self.shadowpay_settings_steam = self.get_key(self.content_shadowpay_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.shadowpay_settings_steam, 'steam send offers global time')
+            self.steam_detect_unconfirmed_offer_time = self.get_key(self.shadowpay_settings_steam, 'steam detect unconfirmed offer time')
             self.steam_cancel_offers_sites_name = self.get_key(self.shadowpay_settings_steam,
                                                                'steam cancel offers sites name')  # list of dict
             self.steam_cancel_offers_global_time = self.get_key(self.shadowpay_settings_steam,
@@ -355,6 +371,7 @@ class Mongo:
             self.shadowpay_settings_history = self.get_key(self.content_shadowpay_settings, 'history')
             self.history_tg_token = self.get_key(self.shadowpay_settings_history, 'history tg token')
             self.history_tg_id = self.get_key(self.shadowpay_settings_history, 'history tg id')
+            self.history_detect_steam_offer_time = self.get_key(self.shadowpay_settings_history, 'history detect steam offer time')
             self.history_global_time = self.get_key(self.shadowpay_settings_history, 'history global time')
             if self.history_tg_token:
                 self.history_tg_bot = telebot.TeleBot(self.history_tg_token)
@@ -393,6 +410,7 @@ class Mongo:
             self.buff_settings_online = self.get_key(self.content_buff_settings, 'online')
             self.ping_global_time = self.get_key(self.buff_settings_online, 'ping global time')
             self.visible_store_max_number_of_inv_items = self.get_key(self.buff_settings_online, 'visible store max number of inv items')
+            self.visible_store_max_number_of_errors = self.get_key(self.buff_settings_online, 'visible store max number of errors')
             self.visible_store_global_time = self.get_key(self.buff_settings_online, 'visible store global time')
 
             self.buff_settings_items = self.get_key(self.content_buff_settings, 'items')
@@ -403,12 +421,14 @@ class Mongo:
 
             self.buff_settings_steam = self.get_key(self.content_buff_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.buff_settings_steam, 'steam send offers global time')
+            self.steam_detect_unconfirmed_offer_time = self.get_key(self.buff_settings_steam, 'steam detect unconfirmed offer time')
             self.steam_cancel_offers_sites_name = self.get_key(self.buff_settings_steam, 'steam cancel offers sites name')  # list of dict
             self.steam_cancel_offers_global_time = self.get_key(self.buff_settings_steam, 'steam cancel offers global time')
 
             self.buff_settings_history = self.get_key(self.content_buff_settings, 'history')
             self.history_tg_token = self.get_key(self.buff_settings_history, 'history tg token')
             self.history_tg_id = self.get_key(self.buff_settings_history, 'history tg id')
+            self.history_detect_steam_offer_time = self.get_key(self.buff_settings_history, 'history detect steam offer time')
             self.history_global_time = self.get_key(self.buff_settings_history, 'history global time')
             if self.history_tg_token:
                 self.history_tg_bot = telebot.TeleBot(self.history_tg_token)
@@ -453,13 +473,15 @@ class Mongo:
             return {}
 
     @staticmethod
-    def get_all_docs_from_mongo_collection(collection):
+    def get_all_docs_from_mongo_collection(collection, except_return_none=False):
         results_list = []
         try:
             results = collection.find({})
             for result in results:
                 results_list.append(result)
         except:
+            if except_return_none:
+                return None
             pass
         return results_list
 
@@ -512,23 +534,22 @@ class Mongo:
 
     # region Price Info
     def get_information_for_price(self):
+        seller_value = None
         try:
             database_setting_bots = self.content_database_settings['DataBaseSettings']['Sellers_SalePrice']['bots']
-            seller_value = None
             for key, value in database_setting_bots.items():
                 if self.saleprice_bot_name in key:
                     seller_value = value
                     break
-            return seller_value
         except Exception as e:
             Logs.notify_except(self.tg_info, f"MongoDB: Error during receiving Sellers_SalePrice: {e}", '')
-            return None
+        return seller_value
 
     @staticmethod
     def find_matching_key(wanted, dictionary):
+        found_key = None
         try:
             keys = sorted([float(k) for k in dictionary.keys()])
-            found_key = None
             for i in range(len(keys) - 1):
                 if keys[i] <= wanted < keys[i + 1]:
                     if keys[i].is_integer():
@@ -541,9 +562,9 @@ class Mongo:
                     found_key = str(int(keys[-1]))
                 else:
                     found_key = str(keys[-1])
-            return found_key
         except:
-            return None
+            pass
+        return found_key
     # endregion
 
     # region Update Info

@@ -23,26 +23,26 @@ class CreatorSteam(SessionManager):
         while True:
             self.update_account_settings_info()
             self.update_account_data_info()
-            for acc in self.content_acc_settings_list:
+            for acc_info in self.content_acc_settings_list:
                 username = None
                 try:
-                    if self.take_session(acc):
+                    if self.take_session(acc_info):
                         user_agent = self.steamclient.user_agent
                     else:
                         user_agent = self.ua.random
                     self.steamclient = SteamClient('', user_agent=user_agent)
-                    username = acc['username']
-                    password = acc['password']
-                    steam_id = acc['steam id']
-                    shared_secret = acc['shared secret']
-                    identity_secret = acc['identity secret']
+                    username = acc_info['username']
+                    password = acc_info['password']
+                    steam_id = acc_info['steam id']
+                    shared_secret = acc_info['shared secret']
+                    identity_secret = acc_info['identity secret']
                     steam_guard = {
                         "steamid": steam_id,
                         "shared_secret": shared_secret,
                         "identity_secret": identity_secret
                     }
 
-                    proxy = acc['proxy']
+                    proxy = acc_info['proxy']
                     if proxy == "proxy":
                         proxies = {"NoProxy": 1}
                     else:
@@ -227,6 +227,7 @@ class CreatorSteam(SessionManager):
         Logs.log(f"Steam Access Token: thread are running", '')
         while True:
             time.sleep(self.steam_access_token_global_time)
+            self.update_account_settings_info()
             self.update_account_data_info()
             for acc in self.content_acc_data_list:
                 try:
@@ -259,6 +260,7 @@ class CreatorSteam(SessionManager):
     def steam_apikey(self):  # Global Function (class_for_single_function)
         Logs.log(f"Steam Apikey: thread are running", '')
         while True:
+            self.update_account_settings_info()
             self.update_account_data_info()
             for acc in self.content_acc_data_list:
                 try:

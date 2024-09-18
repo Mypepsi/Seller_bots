@@ -60,7 +60,6 @@ class TMItems(SteamManager):
             my_inventory_list = [item['id'] for item in tradable_inventory]
             acc_data_inventory_assets_id = [item['asset_id'] for item in self.steam_inventory_tradable.values()]
             filtered_inventory = [item for item in my_inventory_list if item in acc_data_inventory_assets_id]
-
             return filtered_inventory
         except:
             return None
@@ -134,25 +133,16 @@ class TMItems(SteamManager):
             time.sleep(self.change_price_global_time)
 
     def change_price_delete_items(self, items_on_sale):
-        asset_id_to_delete = []
-        item_id_to_delete = {}
-        asset_id_on_sale = [item["assetid"] for item in items_on_sale]
+        items_id_to_delete = {}
         tradable_asset_id = list(self.steam_inventory_tradable.keys())
         for item in items_on_sale:
             if item['assetid'] not in tradable_asset_id:
-                asset_id_to_delete.append(item['assetid'])
-                item_id_to_delete[item["item_id"]] = 0
-        for assetid in asset_id_on_sale:
-            if assetid not in tradable_asset_id:
-                asset_id_to_delete.append(assetid)
-                for item in items_on_sale:
-                    if assetid == item["assetid"]:
-                        item_id_to_delete[item["item_id"]] = 0
-                        break
-        self.request_to_change_price(item_id_to_delete)
+                items_id_to_delete[item["item_id"]] = 0
+        if len(items_id_to_delete) > 0:
+            self.request_to_change_price(items_id_to_delete)
         filtered_items = []
         for item in items_on_sale:
-            if 'assetid' in item and item["assetid"] not in asset_id_to_delete:
+            if 'item_id' in item and item["item_id"] not in items_id_to_delete:
                 filtered_items.append(item)
         return filtered_items
 

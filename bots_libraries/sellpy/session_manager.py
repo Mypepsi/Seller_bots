@@ -80,12 +80,7 @@ class SessionManager(Mongo):
                 )
                 self.csgo500_jwt_apikey = {'x-500-auth': self.jwt_api_key}
                 self.shadowpay_apikey = self.content_acc_settings_dict[self.steamclient.username]['shadowpay apikey']
-                raw_cookies = self.content_acc_settings_dict[self.steamclient.username]['buff cookie']
-                if raw_cookies:
-                    self.buff_cookie = dict(pair.split("=", 1) for pair in raw_cookies.split("; "))
-                else:
-                    self.buff_cookie = None
-
+                self.buff_cookie = self.rework_buff_session
                 # Info from account_data
                 self.steamclient._api_key = self.content_acc_data_dict[self.steamclient.username]['steam apikey']
                 self.steam_inventory_tradable = (
@@ -101,4 +96,12 @@ class SessionManager(Mongo):
         except Exception as e:
             Logs.notify_except(self.tg_info, f'MongoDB: Error while taking Account Session: {e}', username)
             return False
+
+    def rework_buff_session(self):
+        raw_cookies = self.content_acc_settings_dict[self.steamclient.username]['buff cookie']
+        cookie_dict = {pair.split('=')[0]: pair.split('=')[1] for pair in raw_cookies.split('; ') if '=' in pair}
+        if 'Locale-Supported' not in cookie_dict or cookie_dict['Locale-Supported'] != 'en':
+            cookie_dict['Locale-Supported'] = 'en'
+        updated_cookies = '; '.join([f'{key}={value}' for key, value in cookie_dict.items()])
+        return updated_cookies
     # endregion

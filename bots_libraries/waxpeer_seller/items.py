@@ -18,7 +18,9 @@ class WaxpeerItems(SteamManager):
             try:
                 if self.active_session:
                     self.update_database_info(prices=True, settings=True)
-                    filtered_inventory = self.add_to_sale_inventory()
+                    inventory = self.add_to_sale_inventory()
+                    max_items_count = 100
+                    filtered_inventory = [inventory[i:i + max_items_count] for i in range(0, len(inventory), max_items_count)]
                     seller_value = self.get_information_for_price()
                     if filtered_inventory and seller_value:
                         for list_of_asset_id in filtered_inventory:
@@ -33,7 +35,7 @@ class WaxpeerItems(SteamManager):
                                 requests.post(list_items_steam_url, json=data, timeout=15)
                             except:
                                 Logs.notify(self.tg_info,
-                                            f"Add To Sale: Failed to add item on sale: {data} assetID`s",
+                                            f"Add To Sale: Failed to list {max_items_count} items on sale",
                                             self.steamclient.username)
                             time.sleep(5)
             except Exception as e:
@@ -55,8 +57,7 @@ class WaxpeerItems(SteamManager):
             my_inventory_list = [item['item_id'] for item in my_inventory_items]
             acc_data_inventory_assets_id = [int(item['asset_id']) for item in self.steam_inventory_tradable.values()]
             filtered_inventory = [item for item in my_inventory_list if item in acc_data_inventory_assets_id]
-            chunk = 100
-            return [filtered_inventory[i:i + chunk] for i in range(0, len(filtered_inventory), chunk)]
+            return filtered_inventory
         except:
             return None
 

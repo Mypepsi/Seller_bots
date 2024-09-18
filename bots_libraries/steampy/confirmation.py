@@ -115,7 +115,7 @@ class ConfirmationExecutor:
                 str += cookie.name + '=' + cookie.value + '; '
         return str[0: len(str) - 2]
 
-    def _fetch_confirmations_page_api_key(self) -> requests.Response:
+    def _fetch_confirmations_page_api_key(self) -> dict:
         tag = Tag.CONF.value
         params = self._create_confirmation_params(tag)
 

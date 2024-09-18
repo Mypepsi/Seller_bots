@@ -195,10 +195,12 @@ class SteamClient:
             return None
 
     @login_required
-    def confirm_trade_offer(self, response):
-        if response is not None and 'tradeofferid' in response:
-            response.update(self._confirm_transaction(response['tradeofferid']))
-        return response
+    def confirm_trade_offer(self, trade_offer_id: str):
+        try:
+            self._confirm_transaction(trade_offer_id)
+        except:
+            pass
+
 
     def get_trade_offers(self,
                          get_sent_offers=0,
@@ -231,7 +233,7 @@ class SteamClient:
             response = self.api_call('GET', 'IEconService', 'GetTradeOffer', 'v1', params).json()
             return response
         except:
-            return False
+            return None
 
     @login_required
     def cancel_trade_offer(self, trade_offer_id: str):
@@ -241,6 +243,23 @@ class SteamClient:
             return response
         except:
             return None
+
+    @login_required
+    def accept_trade_offer(self, trade_offer_id: str, steam_id):
+        accept_url = SteamUrl.COMMUNITY_URL + '/tradeoffer/' + trade_offer_id + '/accept'
+        params = {'sessionid': self._get_session_id(),
+                  'tradeofferid': trade_offer_id,
+                  'serverid': '1',
+                  'partner': str(steam_id),
+                  'captcha': ''}
+        headers = {'Referer': self._get_trade_offer_url(trade_offer_id)}
+        try:
+            response = self._session.post(accept_url, data=params, headers=headers, timeout=15).json()
+            if response.get('needs_mobile_confirmation', False):
+                self._confirm_transaction(trade_offer_id)
+        except:
+            return None
+        return trade_offer_id
 
     def get_trade_offers_summary(self) -> dict:
         params = {'key': self._api_key}
@@ -285,35 +304,6 @@ class SteamClient:
         for item in texts_between(html, "oItem = ", ";\r\n\toItem"):
             items.append(json.loads(item))
         return items
-
-    @login_required
-    def accept_trade_offer(self, trade_offer_id: str, steam_id) -> dict:
-        trade = self.get_trade_offer(trade_offer_id)
-        trade_offer_state = TradeOfferState(trade['response']['offer']['trade_offer_state'])
-        if trade_offer_state is not TradeOfferState.Active:
-            raise ApiException("Invalid trade offer state: {} ({})".format(trade_offer_state.name,
-                                                                           trade_offer_state.value))
-        partner = str(steam_id)
-        session_id = self._get_session_id()
-        accept_url = SteamUrl.COMMUNITY_URL + '/tradeoffer/' + trade_offer_id + '/accept'
-        params = {'sessionid': session_id,
-                  'tradeofferid': trade_offer_id,
-                  'serverid': '1',
-                  'partner': partner,
-                  'captcha': ''}
-        headers = {'Referer': self._get_trade_offer_url(trade_offer_id)}
-
-        response = self._session.post(accept_url, data=params, headers=headers, timeout=15)
-        try:
-            response = response.json()
-        except Exception:
-            pass
-        try:
-            if response.get('needs_mobile_confirmation', False):
-                return self._confirm_transaction(trade_offer_id)
-        except Exception:
-            pass
-        return response
 
     @login_required
     def decline_trade_offer(self, trade_offer_id: str) -> dict:

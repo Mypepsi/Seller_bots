@@ -1,6 +1,7 @@
 import time
 import requests
-from bots_libraries.sellpy.logs import Logs
+from bots_libraries.steampy.client import SteamClient
+from bots_libraries.sellpy.logs import Logs, ExitException
 from bots_libraries.sellpy.steam_manager import SteamManager
 
 
@@ -21,34 +22,52 @@ class TMSteam(SteamManager):
                         request_site_offers = None
 
                     if request_site_offers and isinstance(request_site_offers, list) and len(request_site_offers) > 0:
-                        send_offers = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
+                        history_docs = self.get_all_docs_from_mongo_collection(self.acc_history_collection,
+                                                                               except_return_none=True)
+                        if history_docs is not None:
+                            for i in range(len(request_site_offers)):
+                                unique_site_id = request_site_offers[i]['tradeoffermessage']
+                                partner = request_site_offers[i]['partner']
+                                token = request_site_offers[i]['token']
+                                trade_offer_url = f'https://steamcommunity.com/tradeoffer/new/?partner={partner}&token={token}'
 
-                        for i in range(len(request_site_offers)):
-                            unique_site_id = request_site_offers[i]['tradeoffermessage']
-                            partner = request_site_offers[i]['partner']
-                            token = request_site_offers[i]['token']
-                            items_list = [item['assetid'] for item in request_site_offers[i]['items']]
-                            self.request_trade_ready(send_offers, unique_site_id)
-                            successfully_send = self.send_steam_offer(request_site_offers[i],
-                                                                      send_offers, unique_site_id)
-                            if not successfully_send:
-                                self.resend_steam_offer(request_site_offers[i], send_offers, unique_site_id)
+                                steam_id = SteamClient.get_steam_id_from_url(trade_offer_url)
+                                items_list = [item['assetid'] for item in request_site_offers[i]['items']]
+                                successfully_send = self.send_steam_offer(history_docs, unique_site_id, trade_offer_url,
+                                                                          steam_id, items_list)
+
+                                offer_info = self.get_steam_offer_state(history_docs, unique_site_id)
+                                offer_status = offer_info['offer status']
+                                latest_offer = offer_info['latest offer']
+                                if not successfully_send and offer_status and int(offer_status) not in [1, 4, 8, 10]:
+                                    self.make_steam_offer(history_docs, unique_site_id, trade_offer_url, steam_id,
+                                                          items_list)
+                                self.confirm_steam_offer(offer_status, latest_offer)
+                        else:
+                            raise ExitException
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Steam Send Offers Global Error: {e}", self.steamclient.username)
             time.sleep(self.steam_send_offers_global_time)
 
-    def request_trade_ready(self, send_offers, unique_site_id):
-        trade_ready_list = [offer for offer in send_offers if str(offer.get('site id')) == str(unique_site_id)]
-
-        if len(trade_ready_list) > 0:
-            latest_offer = max(trade_ready_list, key=lambda t: t['time'])
-            trade_id = latest_offer['trade id']
-            if trade_id is not None:
-                try:
-                    trade_ready_url = f'{self.site_url}/api/v2/trade-ready?key={self.tm_apikey}&tradeoffer={trade_id}'
-                    requests.get(trade_ready_url, timeout=5)
-                except:
-                    pass
+    def confirm_steam_offer(self, offer_status, latest_offer):
+        trade_id = latest_offer['trade id']
+        if offer_status:
+            if int(offer_status) == 9:
+                self.steamclient.confirm_trade_offer(trade_id)
+                if int(time.time()) - latest_offer['time'] >= self.steam_detect_unconfirmed_offer_time:
+                    Logs.notify(self.tg_info, f"Steam Send Offers: "
+                                              f"Unconfirmed {trade_id} tradeID",
+                                self.steamclient.username)
+        try:
+            site_url = f'{self.site_url}/api/v2/trade-ready?key={self.tm_apikey}&tradeoffer={trade_id}'
+            response = requests.get(site_url, timeout=30)
+            if response['error'] in ["error InvalidResponseException", "error get info about trade",
+                                     "error not active offers"]:
+                Logs.notify(self.tg_info, f"Steam Send Offers: Site didn't see {trade_id} tradeID:"
+                                          f" {response['error']}", self.steamclient.username)
+                if self.steamclient.cancel_trade_offer(trade_id):
+                    Logs.log(f'Steam Send Offers: {trade_id} tradeID cancelled', self.steamclient.username)
                 time.sleep(1)
-
+        except:
+            pass
     # endregion
