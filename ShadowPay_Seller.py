@@ -18,18 +18,23 @@ class ShadowPaySeller(ShadowPayGeneral, ShadowPayOnline, ShadowPayItems, ShadowP
     @staticmethod
     def collect_work_functions():
         functions_list = []
-        if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
-            functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": ShadowPaySeller})
+        # if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
+        #     functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": ShadowPaySeller})
+        #
+        # if manager.restart_server_global_time != 0:  # Restart Server
+        #     functions_list.append({"func": "restart_server", "class_for_many_functions": ShadowPaySeller})
+        #
+        # if manager.restart_bots_global_time != 0:    # Restart Bots
+        #     functions_list.append({"func": "restart_bots", "class_for_many_functions": ShadowPaySeller})
+        #
+        # if manager.visible_store_global_time != 0:  # Visible Store
+        #     functions_list.append({"func": "visible_store", "class_for_account_functions": ShadowPaySeller})
+        #
+        # if manager.add_to_sale_global_time != 0:  # Add To Sale
+        #     functions_list.append({"func": "add_to_sale", "class_for_account_functions": ShadowPaySeller})
 
-        if manager.restart_server_global_time != 0:  # Restart Server
-            functions_list.append({"func": "restart_server", "class_for_many_functions": ShadowPaySeller})
-
-        if manager.restart_bots_global_time != 0:    # Restart Bots
-            functions_list.append({"func": "restart_bots", "class_for_many_functions": ShadowPaySeller})
-
-        if manager.visible_store_global_time != 0:  # Visible Store
-            functions_list.append({"func": "visible_store", "class_for_account_functions": ShadowPaySeller})
-
+        if manager.change_price_global_time != 0:  # Change Price
+            functions_list.append({"func": "change_price", "class_for_account_functions": ShadowPaySeller})
         return functions_list
 
 
@@ -50,7 +55,7 @@ if __name__ == '__main__':
 
         Logs.log(f'{bot_name} STARTED ({len(manager.content_acc_data_list)} in Account Data '
                  f'and {len(manager.content_acc_settings_list)} in Account Settings)', '')
-        time.sleep(manager.waiting_start_time)
+        # time.sleep(manager.waiting_start_time)
         manager.start_work_functions(functions)
 
     except ServerSelectionTimeoutError as e:

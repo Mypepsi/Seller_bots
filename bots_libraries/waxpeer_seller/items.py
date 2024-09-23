@@ -80,18 +80,18 @@ class WaxpeerItems(SteamManager):
                     phases_key = self.find_matching_key(phases_difference, condition['days from'])
                     all_prices = self.content_database_prices['DataBasePrices']
                     for price in all_prices:
-                        if hash_name in price and phases_key:
+                        if hash_name in price and phases_key is not None:
                             site_price = 0
                             max_price = float(price[hash_name]["max_price"])
                             price_range = self.find_matching_key(max_price,
                                                                  condition['days from'][phases_key]['prices'])
-                            if price_range:
+                            if price_range is not None:
                                 max_price_with_margin = max_price * condition['days from'][phases_key]['prices'][
                                     price_range]
                                 max_price_with_margin_limits = (max_price_with_margin * condition['days from'][
                                     phases_key]['limits'][limits_value])
 
-                                site_price = round(max_price_with_margin_limits * 1000 / commission)
+                                site_price = round(max_price_with_margin_limits * 1000 / commission, 2)
                             return site_price
         return None
 
@@ -120,7 +120,7 @@ class WaxpeerItems(SteamManager):
                             for i in range(0, len(filtered_items), items_count):
                                 items_list = filtered_items[i:i + items_count]
                                 parsed_info = self.threads_parsing_prices(items_list, another_apis_list)
-                                self.change_price_below_opponent(items_list, parsed_info, seller_value, listed_items)
+                                self.change_price_below_opponent(items_list, parsed_info, seller_value)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Change Price Global Error: {e}", self.steamclient.username)
             time.sleep(self.change_price_global_time)
@@ -163,7 +163,7 @@ class WaxpeerItems(SteamManager):
                 pass
             time.sleep(5)
 
-    def change_price_below_opponent(self, items_list, parsed_info, seller_value, listed_items):
+    def change_price_below_opponent(self, items_list, parsed_info, seller_value):
         my_prices = {}
         items_id_list = [item["item_id"] for item in items_list]
         for item in range(len(items_list)):
@@ -201,10 +201,8 @@ class WaxpeerItems(SteamManager):
                                                   f"{self.steam_inventory_phases[items_list[item]['assetid']]} assetID",
                                     self.steamclient.username)
                         break
-                    for item_ in listed_items:
-                        if item_['item_id'] == item_id and item_['price'] != my_price:
-                            my_prices[items_list[item]["item_id"]] = my_price
-                            break
+                    if items_list[item]['price'] != my_price / 100:
+                        my_prices[items_list[item]["item_id"]] = my_price
                     break
         if len(my_prices) > 0:
             self.request_to_change_price(my_prices)

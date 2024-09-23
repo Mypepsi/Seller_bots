@@ -80,7 +80,7 @@ class SessionManager(Mongo):
                 )
                 self.csgo500_jwt_apikey = {'x-500-auth': self.jwt_api_key}
                 self.shadowpay_apikey = self.content_acc_settings_dict[self.steamclient.username]['shadowpay apikey']
-                self.buff_cookie = self.rework_buff_session
+                self.buff_cookie = self.rework_buff_session()
                 # Info from account_data
                 self.steamclient._api_key = self.content_acc_data_dict[self.steamclient.username]['steam apikey']
                 self.steam_inventory_tradable = (
@@ -99,9 +99,7 @@ class SessionManager(Mongo):
 
     def rework_buff_session(self):
         raw_cookies = self.content_acc_settings_dict[self.steamclient.username]['buff cookie']
-        cookie_dict = {pair.split('=')[0]: pair.split('=')[1] for pair in raw_cookies.split('; ') if '=' in pair}
-        if 'Locale-Supported' not in cookie_dict or cookie_dict['Locale-Supported'] != 'en':
-            cookie_dict['Locale-Supported'] = 'en'
-        updated_cookies = '; '.join([f'{key}={value}' for key, value in cookie_dict.items()])
-        return updated_cookies
+        cookie_dict = dict(pair.split('=') for pair in raw_cookies.split('; ') if '=' in pair)
+        cookie_dict['Locale-Supported'] = 'en'
+        return cookie_dict
     # endregion

@@ -375,10 +375,10 @@ class SteamManager(SessionManager):
                                 if condition['date to'] >= start_sale_time >= condition['date from']:
                                     phases_difference = time_difference / 86400
                                     phases_key = self.find_matching_key(phases_difference, condition['days from'])
-                                    if phases_key:
+                                    if phases_key is not None:
                                         price_range = self.find_matching_key(max_price, condition['days from'][
                                                                                  phases_key]['prices'])
-                                        if price_range:
+                                        if price_range is not None:
                                             max_price_with_margin = round(max_price * condition['days from'][phases_key]['prices'][
                                                 price_range], 3)
                                             site_price_with_margin = site_price * condition['days from'][phases_key]['prices'][price_range]

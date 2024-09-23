@@ -140,12 +140,12 @@ class CSGOEmpireItems(SteamManager):
                     phases_key = self.find_matching_key(phases_difference, condition['days from'])
                     all_prices = self.content_database_prices['DataBasePrices']
                     for price in all_prices:
-                        if hash_name in price and phases_key:
+                        if hash_name in price and phases_key is not None:
                             site_price = 0
                             max_price = float(price[hash_name]["max_price"])
                             price_range = self.find_matching_key(max_price,
                                                                  condition['days from'][phases_key]['prices'])
-                            if price_range:
+                            if price_range is not None:
                                 max_price_with_margin = max_price * condition['days from'][phases_key]['prices'][
                                     price_range]
                                 max_price_with_margin_limits = (max_price_with_margin * condition['days from'][
@@ -190,7 +190,7 @@ class CSGOEmpireItems(SteamManager):
                                             break
                                 if len(my_prices) > 0:
                                     my_prices_to_delete = [int(key) for key in my_prices.keys()]
-                                    self.request_delete_items(my_prices_to_delete)
+                                    self.request_to_delete_items(my_prices_to_delete)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Change Price Global Error: {e}", self.steamclient.username)
             time.sleep(self.change_price_global_time)
@@ -202,14 +202,14 @@ class CSGOEmpireItems(SteamManager):
             if item['item']['asset_id'] not in tradable_asset_id:
                 items_id_to_delete.append(item["id"])
         if len(items_id_to_delete) > 0:
-            self.request_delete_items(items_id_to_delete)
+            self.request_to_delete_items(items_id_to_delete)
         filtered_items = []
         for item in items_on_sale:
             if 'id' in item and item["id"] not in items_id_to_delete:
                 filtered_items.append(item)
         return filtered_items
 
-    def request_delete_items(self, items_id_to_delete):
+    def request_to_delete_items(self, items_id_to_delete):
         items_count_in_request = self.change_price_items_count_in_request
         for i in range(0, len(items_id_to_delete), items_count_in_request):
             sublist = items_id_to_delete[i:i + items_count_in_request]

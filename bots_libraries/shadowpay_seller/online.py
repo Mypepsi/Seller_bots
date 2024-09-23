@@ -19,6 +19,7 @@ class ShadowPayOnline(SteamManager):
                 if self.active_session:
                     self.visible_store_inventory()
                     self.visible_store_listed()
+                print(f'{self.inventory_errors} = {self.listed_errors}')
             except ExitException:
                 break
             except Exception as e:

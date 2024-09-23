@@ -64,10 +64,6 @@ class Mongo:
             self.update_session_global_time = self.get_key(self.creator_settings_start, 'update session global time')
 
             self.creator_settings_general = self.get_key(self.content_creator_settings, 'general')
-            self.waiting_start_time = self.get_key(self.creator_settings_general, 'waiting start time')
-            self.function_start_time = self.get_key(self.creator_settings_general, 'function start time')
-            self.account_start_time = self.get_key(self.creator_settings_general, 'account start time')
-            self.update_session_global_time = self.get_key(self.creator_settings_general, 'update session global time')
             self.proxy_url = f"https://{self.get_key(self.creator_settings_general, 'proxy url')}"
             self.proxy_global_time = self.get_key(self.creator_settings_general, 'proxy global time')
             self.mongodb_global_time = self.get_key(self.creator_settings_general, 'mongodb global time')
@@ -357,8 +353,8 @@ class Mongo:
             self.shadowpay_settings_items = self.get_key(self.content_shadowpay_settings, 'items')
             self.add_to_sale_global_time = self.get_key(self.shadowpay_settings_items, 'add to sale global time')
             self.change_price_global_time = self.get_key(self.shadowpay_settings_items, 'change price global time')
-            self.change_price_items_count = self.get_key(self.tm_settings_items, 'change price items count')
-            self.change_price_items_count_in_request = self.get_key(self.tm_settings_items, 'change price items count in request')
+            self.change_price_items_count = self.get_key(self.shadowpay_settings_items, 'change price items count')
+            self.change_price_items_count_in_request = self.get_key(self.shadowpay_settings_items, 'change price items count in request')
 
             self.shadowpay_settings_steam = self.get_key(self.content_shadowpay_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.shadowpay_settings_steam, 'steam send offers global time')
@@ -416,8 +412,8 @@ class Mongo:
             self.buff_settings_items = self.get_key(self.content_buff_settings, 'items')
             self.add_to_sale_global_time = self.get_key(self.buff_settings_items, 'add to sale global time')
             self.change_price_global_time = self.get_key(self.buff_settings_items, 'change price global time')
-            self.change_price_items_count = self.get_key(self.tm_settings_items, 'change price items count')
-            self.change_price_items_count_in_request = self.get_key(self.tm_settings_items, 'change price items count in request')
+            self.change_price_items_count = self.get_key(self.buff_settings_items, 'change price items count')
+            self.change_price_items_count_in_request = self.get_key(self.buff_settings_items, 'change price items count in request')
 
             self.buff_settings_steam = self.get_key(self.content_buff_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.buff_settings_steam, 'steam send offers global time')

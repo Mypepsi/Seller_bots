@@ -83,12 +83,12 @@ class TMItems(SteamManager):
                     phases_key = self.find_matching_key(phases_difference, condition['days from'])
                     all_prices = self.content_database_prices['DataBasePrices']
                     for price in all_prices:
-                        if hash_name in price and phases_key:
+                        if hash_name in price and phases_key is not None:
                             site_price = 0
                             max_price = float(price[hash_name]["max_price"])
                             price_range = self.find_matching_key(max_price,
                                                                  condition['days from'][phases_key]['prices'])
-                            if price_range:
+                            if price_range is not None:
                                 max_price_with_margin = max_price * condition['days from'][phases_key]['prices'][price_range]
                                 max_price_with_margin_limits = (max_price_with_margin *
                                                            condition['days from'][phases_key]['limits'][limits_value])
@@ -127,7 +127,7 @@ class TMItems(SteamManager):
                                 for i in range(0, len(filtered_items), items_count):
                                     items_list = filtered_items[i:i + items_count]
                                     parsed_info = self.threads_parsing_prices(items_list, another_apis_list)
-                                    self.change_price_below_opponent(items_list, parsed_info, seller_value, listed_items)
+                                    self.change_price_below_opponent(items_list, parsed_info, seller_value)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Change Price Global Error: {e}", self.steamclient.username)
             time.sleep(self.change_price_global_time)
@@ -160,12 +160,11 @@ class TMItems(SteamManager):
                 pass
             time.sleep(60)
 
-    def change_price_below_opponent(self, items_list, parsed_info, seller_value, listed_items):
+    def change_price_below_opponent(self, items_list, parsed_info, seller_value):
         my_prices = {}
         items_id_list = [item["item_id"] for item in items_list]
         for item in range(len(items_list)):
             item_name = items_list[item]['market_hash_name']
-            item_id = items_list[item]['item_id']
             for el in parsed_info.keys():
                 if el == item_name:
                     filtered_dict = {
@@ -198,10 +197,8 @@ class TMItems(SteamManager):
                                                   f"{self.steam_inventory_phases[items_list[item]['assetid']]} assetID",
                                     self.steamclient.username)
                         break
-                    for item_ in listed_items:
-                        if item_['item_id'] == item_id and item_['price'] != my_price / 100:
-                            my_prices[items_list[item]["item_id"]] = my_price
-                            break
+                    if items_list[item]['price'] != my_price / 100:
+                        my_prices[items_list[item]["item_id"]] = my_price
                     break
         if len(my_prices) > 0:
             self.request_to_change_price(my_prices)
@@ -249,7 +246,7 @@ class TMItems(SteamManager):
             search_hash_name_url = (f'{self.site_url}/api/v2/search-list-items-by-hash-name-all?'
                                     f'key={api_key}{list_hash_names}')
             parsed_info = requests.get(search_hash_name_url, timeout=30).json()
-            if parsed_info['success'] and parsed_info['currency'] == 'RUB':
+            if parsed_info['success'] and parsed_info['currency'] == 'RUB' and len(parsed_info['data']) > 0:
                 info_to_write = parsed_info['data']
                 with results_lock:
                     results.update(info_to_write)

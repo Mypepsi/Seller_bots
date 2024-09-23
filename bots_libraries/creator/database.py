@@ -141,7 +141,7 @@ class CreatorDataBase(SessionManager):
                             "service_max_price": service_max_price
                         })
             db_list.append(data_dict)
-            return db_list
+        return db_list
     # endregion
 
     def database_settings(self):  # Global Function (class_for_many_functions)

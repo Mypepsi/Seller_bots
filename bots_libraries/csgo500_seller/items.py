@@ -79,12 +79,12 @@ class CSGO500Items(SessionManager):
                     phases_key = self.find_matching_key(phases_difference, condition['days from'])
                     all_prices = self.content_database_prices['DataBasePrices']
                     for price in all_prices:
-                        if hash_name in price and phases_key:
+                        if hash_name in price and phases_key is not None:
                             site_price = 0
                             max_price = float(price[hash_name]["max_price"])
                             price_range = self.find_matching_key(max_price,
                                                                  condition['days from'][phases_key]['prices'])
-                            if price_range:
+                            if price_range is not None:
                                 max_price_with_margin = max_price * condition['days from'][phases_key]['prices'][
                                     price_range]
                                 max_price_with_margin_limits = (max_price_with_margin * condition['days from'][
@@ -135,14 +135,14 @@ class CSGO500Items(SessionManager):
             if item['item']['assetId'] not in tradable_asset_id:
                 items_id_to_delete.append(item["id"])
         if len(items_id_to_delete) > 0:
-            self.request_delete_items(items_id_to_delete)
+            self.request_to_delete_items(items_id_to_delete)
         filtered_items = []
         for item in items_on_sale:
             if "id" in item and item["id"] not in items_id_to_delete:
                 filtered_items.append(item)
         return filtered_items
 
-    def request_delete_items(self, items_to_delete):
+    def request_to_delete_items(self, items_to_delete):
         for i in range(len(items_to_delete)):
             try:
                 delete_url = f'{self.site_url}/api/v1/market/listing/cancel'
