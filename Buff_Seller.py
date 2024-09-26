@@ -30,14 +30,14 @@ class BuffSeller(BuffGeneral, BuffOnline, BuffItems, BuffSteam, BuffHistory, Res
         # if manager.ping_global_time != 0:  # Ping
         #     functions_list.append({"func": "ping", "class_for_account_functions": BuffSeller})
 
-        if manager.visible_store_global_time != 0:  # Visible Store
-            functions_list.append({"func": "visible_store", "class_for_account_functions": BuffSeller})
+        # if manager.visible_store_global_time != 0:  # Visible Store
+        #     functions_list.append({"func": "visible_store", "class_for_account_functions": BuffSeller})
 
         # if manager.add_to_sale_global_time != 0:  # Add To Sale
         #     functions_list.append({"func": "add_to_sale", "class_for_account_functions": BuffSeller})
         #
-        # if manager.change_price_global_time != 0:  # Change Price
-        #     functions_list.append({"func": "change_price", "class_for_account_functions": BuffSeller})
+        if manager.change_price_global_time != 0:  # Change Price
+            functions_list.append({"func": "change_price", "class_for_account_functions": BuffSeller})
         return functions_list
 
 

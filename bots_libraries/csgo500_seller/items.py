@@ -160,7 +160,7 @@ class CSGO500Items(SessionManager):
                 }
             try:
                 url_change_price = f'{self.site_url}/api/v1/market/listing/edit-value'
-                requests.post(url_change_price, headers=self.csgo500_jwt_apikey, data=data, timeout=15)
+                requests.post(url_change_price, headers=self.csgo500_jwt_apikey, data=data, timeout=15)  # data != json
             except:
                 pass
             time.sleep(51)

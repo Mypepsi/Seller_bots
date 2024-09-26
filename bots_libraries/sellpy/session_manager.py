@@ -23,6 +23,7 @@ class SessionManager(Mongo):
         self.csgo500_jwt_apikey = None
         self.shadowpay_apikey = None
         self.buff_cookie = None
+        self.buff_user_id = None
 
         self.steam_inventory_tradable = self.steam_inventory_full = self.steam_inventory_phases = {}
 
@@ -81,6 +82,8 @@ class SessionManager(Mongo):
                 self.csgo500_jwt_apikey = {'x-500-auth': self.jwt_api_key}
                 self.shadowpay_apikey = self.content_acc_settings_dict[self.steamclient.username]['shadowpay apikey']
                 self.buff_cookie = self.rework_buff_session()
+                self.buff_user_id = self.content_acc_settings_dict[self.steamclient.username]['buff user id']
+
                 # Info from account_data
                 self.steamclient._api_key = self.content_acc_data_dict[self.steamclient.username]['steam apikey']
                 self.steam_inventory_tradable = (

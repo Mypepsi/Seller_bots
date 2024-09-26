@@ -1,6 +1,4 @@
+import math
+print(math.floor(3.999))
 
-try:
-    print('try')
-    raise TypeError
-finally:
-    print('finally')
+print(math.ceil(3.999))
