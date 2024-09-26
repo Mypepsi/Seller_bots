@@ -195,41 +195,14 @@ class BuffItems(SteamManager):
             if 'item_id' in item and item["item_id"] not in items_id_to_delete:
                 filtered_items.append(item)
         return filtered_items
-    #
-    # def request_to_delete_items(self, items_to_delete):
-    #     items_count_in_request = self.change_price_items_count_in_request
-    #     for i in range(0, len(items_to_delete), items_count_in_request):
-    #         json_data = {
-    #             "game": "csgo",
-    #             "sell_orders": items_to_delete[i:i + items_count_in_request]
-    #         }
-    #
-    #         headers = {
-    #             "Host": "buff.163.com",
-    #             "Origin": "https://buff.163.com",
-    #             "Referer": "https://buff.163.com/market/sell_order/on_sale?game=csgo&mode=2,5",
-    #             "X-CSRFToken": self.buff_cookie.get("csrf_token")
-    #         }
-    #         try:
-    #             delete_url = f'{self.site_url}/api/market/sell_order/cancel'
-    #             requests.post(delete_url, headers=headers, data=json_data, timeout=15)
-    #         except:
-    #             pass
-    #         time.sleep(2)
 
     def change_price_below_opponent(self, items_list, parsed_info, seller_value, listed_items):
-        print(f'items_list= {items_list}')
-        print(f'parsed_info= {parsed_info}')
-        print(f'seller_value= {seller_value}')
-        print(f'listed_items= {listed_items}')
         my_prices = []
         items_id_list = [item['asset_info']['assetid'] for item in items_list]
         for item in range(len(items_list)):
             market_hash_name = items_list[item]['market_hash_name']
             assetid = items_list[item]['asset_info']['assetid']
             for el in parsed_info.keys():
-                print(el)
-                print(assetid)
                 if el == market_hash_name:
                     filtered_dict = {
                         item['asset_info']['assetid']: item for item in parsed_info[el]
@@ -242,9 +215,6 @@ class BuffItems(SteamManager):
 
                     min_site_price = self.get_site_price(
                         self.steam_inventory_phases[items_list[item]['asset_info']['assetid']], seller_value, 'min')
-                    print(len(item_prices_opponent))
-                    print(min_site_price)
-                    print(max_site_price)
                     if len(item_prices_opponent) > 0 and min_site_price is not None and max_site_price is not None:
                         lower_market_price_opponent = min([float(price) for price in item_prices_opponent])
                         min_price_opponent = (lower_market_price_opponent - 0.01)
@@ -282,7 +252,6 @@ class BuffItems(SteamManager):
                             break
                     break
         if len(my_prices) > 0:
-            print(my_prices)
             self.process_items(my_prices, only_remove=False)
 
     def process_items(self, items, only_remove=True):
@@ -298,7 +267,6 @@ class BuffItems(SteamManager):
                 "game": "csgo",
                 "sell_orders": items[i:i + items_count_in_request]
             }
-            print(data)
             headers = {
                 "Host": "buff.163.com",
                 "Origin": "https://buff.163.com",
@@ -306,8 +274,7 @@ class BuffItems(SteamManager):
                 "X-CSRFToken": self.buff_cookie.get("csrf_token")
             }
             try:
-                r = requests.post(url, cookies=self.buff_cookie, headers=headers, json=data, timeout=15)
-                print(r.json())
+                requests.post(url, cookies=self.buff_cookie, headers=headers, json=data, timeout=15)
             except:
                 pass
 
