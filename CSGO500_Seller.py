@@ -38,9 +38,12 @@ class CSGO500Seller(CSGO500General, CSGO500Online, CSGO500Items, CSGO500Steam, C
         #
         # if manager.add_to_sale_global_time != 0:  # Add To Sale
         #     functions_list.append({"func": "add_to_sale", "class_for_account_functions": CSGO500Seller})
-
-        if manager.change_price_global_time != 0:  # Change Price
-            functions_list.append({"func": "change_price", "class_for_account_functions": CSGO500Seller})
+        #
+        # if manager.change_price_global_time != 0:  # Change Price
+        #     functions_list.append({"func": "change_price", "class_for_account_functions": CSGO500Seller})
+        #
+        if manager.steam_send_offers_global_time != 0:  # Steam Send Offers
+            functions_list.append({"func": "steam_send_offers", "class_for_account_functions": CSGO500Seller})
         return functions_list
 
 
