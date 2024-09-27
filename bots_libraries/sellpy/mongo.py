@@ -244,6 +244,7 @@ class Mongo:
             self.steam_detect_unconfirmed_offer_time = self.get_key(self.csgoempire_settings_steam, 'steam detect unconfirmed offer time')
             self.steam_cancel_offers_sites_name = self.get_key(self.csgoempire_settings_steam, 'steam cancel offers sites name')  # list of dict
             self.steam_cancel_offers_global_time = self.get_key(self.csgoempire_settings_steam, 'steam cancel offers global time')
+            self.steam_detect_unchanged_site_status_time = self.get_key(self.csgoempire_settings_steam, 'steam detect unchanged site status time')
 
             self.csgoempire_settings_history = self.get_key(self.content_csgoempire_settings, 'history')
             self.history_tg_token = self.get_key(self.csgoempire_settings_history, 'history tg token')
@@ -303,6 +304,7 @@ class Mongo:
             self.steam_detect_unconfirmed_offer_time = self.get_key(self.csgo500_settings_steam, 'steam detect unconfirmed offer time')
             self.steam_cancel_offers_sites_name = self.get_key(self.csgo500_settings_steam, 'steam cancel offers sites name')  # list of dict
             self.steam_cancel_offers_global_time = self.get_key(self.csgo500_settings_steam, 'steam cancel offers global time')
+            self.steam_detect_unchanged_site_status_time = self.get_key(self.csgo500_settings_steam, 'steam detect unchanged site status time')
 
             self.csgo500_settings_history = self.get_key(self.content_csgo500_settings, 'history')
             self.history_tg_token = self.get_key(self.csgo500_settings_history, 'history tg token')

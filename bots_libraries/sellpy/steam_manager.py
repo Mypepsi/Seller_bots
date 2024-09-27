@@ -36,7 +36,7 @@ class SteamManager(SessionManager):
                 pass
         return {'offer status': offer_status, 'latest offer': latest_offer}
 
-    def make_steam_offer(self, history_docs, unique_site_id, trade_offer_url, steam_id, assets_list):
+    def make_steam_offer(self, history_docs, unique_site_id, trade_offer_url, steam_id, assets_list, site_item_id=None):
         try:
             name_list = []
             assets_for_offer = []
@@ -55,11 +55,12 @@ class SteamManager(SessionManager):
                 trade_id = steam_response['tradeofferid']
 
             if trade_id is not None:
-                self.add_doc_in_history(history_docs, assets_list, name_list, unique_site_id, trade_id, steam_id)
+                self.add_doc_in_history(history_docs, assets_list, name_list, unique_site_id, trade_id, steam_id,
+                                        site_item_id)
                 Logs.log(f"Make Steam Offer: Trade sent: {name_list}", self.steamclient.username)
             else:
                 self.add_doc_in_history(history_docs, assets_list, name_list, unique_site_id, trade_id, steam_id,
-                                        success=False)
+                                        site_item_id, success=False)
                 Logs.log(f"Make Steam Offer: Error send trade: {name_list}", self.steamclient.username)
         except Exception as e:
             Logs.notify_except(self.tg_info, f"Make Steam Offer Global Error: {e}", self.steamclient.username)
@@ -109,7 +110,7 @@ class SteamManager(SessionManager):
             time.sleep(self.steam_cancel_offers_global_time)
 
     def add_doc_in_history(self, history_docs, asset_list, name_list, unique_site_id, trade_id, steam_id,
-                           site_item_id=None, success=True):
+                           site_item_id, success=True):
         current_timestamp = int(time.time())
         current_timestamp_unique = int(time.time())
         if success:
