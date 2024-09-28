@@ -38,6 +38,9 @@ class WaxpeerSeller(WaxpeerGeneral, WaxpeerOnline, WaxpeerItems, WaxpeerSteam, W
 
         if manager.change_price_global_time != 0:  # Change Price
             functions_list.append({"func": "change_price", "class_for_account_functions": WaxpeerSeller})
+
+        if manager.steam_send_offers_global_time != 0:  # Steam Send Offers
+            functions_list.append({"func": "steam_send_offers", "class_for_account_functions": WaxpeerSeller})
         return functions_list
 
 
