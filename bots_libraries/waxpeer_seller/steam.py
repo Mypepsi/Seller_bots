@@ -13,6 +13,7 @@ class WaxpeerSteam(SteamManager):
         super().__init__(main_tg_info)
         self.socket = None
         self.socket_thread = None
+        self.waiting_for_pong = False
 
     # region Steam Send Offers
     def steam_send_offers(self):  # Global Function (class_for_account_functions)
@@ -80,85 +81,51 @@ class WaxpeerSteam(SteamManager):
 
     # region Site Socket
     def site_socket(self):  # Local Function by Steam Send Offers
-        while True:
-            try:
-                if self.socket is None:
-                    self.connect_socket()
+        self.ws_app = websocket.WebSocketApp(
+            "wss://echo.websocket.events",  # Приклад WebSocket-сервера
+            on_message=self.on_message,  # Функція для обробки отриманих повідомлень
+            on_error=self.on_error,  # Функція для обробки помилок
+            on_close=self.on_close  # Функція для обробки закриття з'єднання
+        )
 
-                string = json.dumps({
-                    "name": "auth",
-                    "steamid": self.steamclient.steam_guard['steamid'],
-                    "apiKey": self.waxpeer_apikey,
-                    "tradeurl": self.trade_url
-                })
-                online_send = json.dumps({"name": "ping"})
-                print(0)
-                self.socket.send(online_send)
-                print(1)
-                time.sleep(6)
-                print(2)
-                self.send_socket_events(string)
+        # Встановлюємо функцію для обробки відкриття з'єднання
+        self.ws_app.on_open = self.on_open
 
-                time.sleep(self.restart_site_socket_global_time)
-                self.close_socket()
-                time.sleep(1)
-                self.connect_socket()
+        # Запускаємо WebSocket-з'єднання
+        self.ws_app.run_forever()
 
-            except Exception as e:
-                print(e)
-                if self.socket:
-                    self.close_socket()
-                Logs.notify_except(self.tg_info, f"Site Socket Global Error: {e}", self.steamclient.username)
-            time.sleep(30)
 
-    def connect_socket(self):
-        try:
-            self.socket = websocket.WebSocketApp(
-                "wss://wssex.waxpeer.com",
-                on_message=self.receive_socket_events,
-                on_error=self.on_socket_error,
-                on_close=self.on_socket_close,
-                timeout=40
-            )
-            self.socket.on_open = self.on_socket_open
-            threading.Thread(target=self.socket.run_forever).start()
-            counter = 0
-            while counter < 25:
-                if self.socket.sock.connected:
-                    break
+    # Функція, яка буде викликана при отриманні повідомлення
+    def on_message(self, ws, message):
+        if message == "ping":
+            print("Received 'ping'")
+            self.waiting_for_pong = False  # Отримали відповідь на наш запит, тому скидаємо прапор
+        else:
+            print("Received 'pong' (any other message)")
+            self.waiting_for_pong = False  # Отримали відповідь на наш запит, тому скидаємо прапор
+
+    # Функція для обробки помилок
+    def on_error(self, ws, error):
+        print(f"Error: {error}")
+
+    # Функція, яка викликається при закритті WebSocket-з'єднання
+    def on_close(self, ws, close_status_code, close_msg):
+        print("WebSocket connection closed")
+
+    # Функція, яка викликається при відкритті з'єднання
+    def on_open(self, ws):
+        def run(*args):
+            while True:
+                if not self.waiting_for_pong:  # Якщо не чекаємо відповіді, можна відправляти новий ping
+                    ws.send("ping")
+                    print("Sent 'ping' to server")
+                    self.waiting_for_pong = True  # Встановлюємо прапор, що чекаємо на відповідь
                 else:
-                    time.sleep(1)
-                    counter += 1
-            print(self.socket.sock.connected)
-            Logs.log("Socket connected", self.steamclient.username)
+                    print("No response to previous ping, still waiting...")
 
-        except Exception as e:
-            Logs.notify_except(self.tg_info, f"Error while connecting to WebSocket: {e}", self.steamclient.username)
+                time.sleep(5)  # Відправляємо 'ping' кожні 5 секунд або перевіряємо, чи є відповідь
 
-    def close_socket(self):
-        if self.socket:
-            self.socket.close()
-            self.socket = None
-            Logs.log("Socket closed", self.steamclient.username)
-
-    def on_socket_error(self, ws, error):
-        Logs.log(f"WebSocket error: {error}", self.steamclient.username)
-        self.close_socket()
-
-    def on_socket_close(self, ws, close_status_code, close_msg):
-        Logs.log("WebSocket connection closed", self.steamclient.username)
-
-    def on_socket_open(self, ws):
-        self.send_socket_events()
-
-    def send_socket_events(self):
-        if self.socket:
-            self.socket.send('ping')
-
-    def receive_socket_events(self, message):
-        print('\n\n\n')
-        Logs.log(f"Received message: {message}", self.steamclient.username)
-        print('\n\n\n')
+        threading.Thread(target=run)
 
     def wait_socket_response(self, name_response: str):
         socket_response = self.socket.check_response(name_response)

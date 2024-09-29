@@ -41,7 +41,7 @@ class BuffSteam(SteamManager):
                                         if offer_status == 2:
                                             response = self.steamclient.accept_trade_offer(tradeofferid, steam_id)
 
-                                            if response
+                                            if response:
                                                 self.add_doc_in_history(history_docs, item_list, name_list, unique_site_id,
                                                                         tradeofferid, steam_id, site_item_id)
                                                 Logs.log(f"Make Steam Offer: Trade sent: {name_list}",
