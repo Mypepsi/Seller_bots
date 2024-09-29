@@ -11,9 +11,15 @@ from bots_libraries.steampy.client import SteamClient
 class WaxpeerSteam(SteamManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
-        self.socket = None
-        self.socket_thread = None
-        self.waiting_for_pong = False
+        self.site_offers_send = []
+        self.site_offers_cancel = []
+        self.ws = None
+        # self.string = json.dumps({
+        #     "name": "auth",
+        #     "steamid": self.steamclient.steam_guard['steamid'],
+        #     "apiKey": self.waxpeer_apikey,
+        #     "tradeurl": self.trade_url
+        # })
 
     # region Steam Send Offers
     def steam_send_offers(self):  # Global Function (class_for_account_functions)
@@ -81,58 +87,85 @@ class WaxpeerSteam(SteamManager):
 
     # region Site Socket
     def site_socket(self):  # Local Function by Steam Send Offers
-        self.ws_app = websocket.WebSocketApp(
-            "wss://echo.websocket.events",  # Приклад WebSocket-сервера
-            on_message=self.on_message,  # Функція для обробки отриманих повідомлень
-            on_error=self.on_error,  # Функція для обробки помилок
-            on_close=self.on_close  # Функція для обробки закриття з'єднання
-        )
+        self.socket_connect()
 
-        # Встановлюємо функцію для обробки відкриття з'єднання
-        self.ws_app.on_open = self.on_open
+        send_ping_thread = threading.Thread(target=self.send_ping)
+        send_auth_thread = threading.Thread(target=self.send_auth)
+        receive_messages_thread = threading.Thread(target=self.receive_messages)
 
-        # Запускаємо WebSocket-з'єднання
-        self.ws_app.run_forever()
+        send_ping_thread.start()
+        send_auth_thread.start()
+        receive_messages_thread.start()
 
+        send_ping_thread.join()
+        send_auth_thread.join()
+        receive_messages_thread.join()
 
-    # Функція, яка буде викликана при отриманні повідомлення
-    def on_message(self, ws, message):
-        if message == "ping":
-            print("Received 'ping'")
-            self.waiting_for_pong = False  # Отримали відповідь на наш запит, тому скидаємо прапор
-        else:
-            print("Received 'pong' (any other message)")
-            self.waiting_for_pong = False  # Отримали відповідь на наш запит, тому скидаємо прапор
+    def send_auth(self):
+        while True:
+            if self.ws:
+                string = json.dumps({
+                    "name": "auth",
+                    "steamid": self.steamclient.steam_guard['steamid'],
+                    "waxApi": self.waxpeer_apikey,
+                    "tradeurl": self.trade_url
+                })
+                self.ws.send(string)
+                print("Sent 'auth' to server")
+                time.sleep(15)
 
-    # Функція для обробки помилок
-    def on_error(self, ws, error):
-        print(f"Error: {error}")
+    def send_ping(self):
+        while True:
+            if self.ws:
+                online_send = json.dumps({"name": "ping"})
+                self.ws.send(online_send)
+                print("Sent 'ping' to server")
+                time.sleep(10)
 
-    # Функція, яка викликається при закритті WebSocket-з'єднання
-    def on_close(self, ws, close_status_code, close_msg):
-        print("WebSocket connection closed")
+    def receive_messages(self):
+        while True:
+            try:
+                message = self.ws.recv()
+                message = json.loads(message)
+                if 'name' in message and 'data' in message:
+                    message_name = message['name']
+                    message_data = message['data']
+                    if message_name == 'pong':  # {'name': 'pong', 'data': {'msg': '1'}}
+                        if 'msg' in message_data and message['data']['msg'] != '1':
+                            Logs.notify(self.tg_info, f"Error during ping", self.steamclient.username)
+                    if message == {'name': 'pong', 'data': {'msg': '1'}}:  #t
+                        print(f'pong success')  #t
 
-    # Функція, яка викликається при відкритті з'єднання
-    def on_open(self, ws):
-        def run(*args):
-            while True:
-                if not self.waiting_for_pong:  # Якщо не чекаємо відповіді, можна відправляти новий ping
-                    ws.send("ping")
-                    print("Sent 'ping' to server")
-                    self.waiting_for_pong = True  # Встановлюємо прапор, що чекаємо на відповідь
-                else:
-                    print("No response to previous ping, still waiting...")
+                    if message_name == 'user_change':  # {"name": "user_change", "data": {"can_p2p": True}}
+                        if 'can_p2p' in message_data and not message_data['can_p2p']:
+                            Logs.notify(self.tg_info, f"Error during auth", self.steamclient.username)
+                    if message == {"name": "user_change", "data": {"can_p2p": True}}:  #t
+                        print(f'user_change success')  #t
 
-                time.sleep(5)  # Відправляємо 'ping' кожні 5 секунд або перевіряємо, чи є відповідь
+                    if message_name == 'send-trade':  # '{"name": "send-trade", "data": {"waxid": "d25s5f63-190s-46b4-8184-b9ec3d326932", "wax_id": "1234567", "json_tradeoffer": {"newversion": true, "version": 2, "me": {"assets": [{"appid": 730, "contextid": "2", "amount": 1, "assetid": "27509261111"}], "currency": [], "ready": false}, "them": {"assets": [{"appid": 730, "contextid": "2", "amount": 1, "assetid": "27509261111"}], "currency": [], "ready": false}}, "tradeoffermessage": "", "tradelink": "https://steamcommunity.com/tradeoffer/new/?partner=1234567890&token=asd1-5zF", "partner": "76561199059254XXX", "created": "2022-11-02T16:00:59.921Z", "now": "2022-11-02T16:01:16.311Z", "send_until": "2022-11-02T16:05:59.921Z"}}
+                        if message_data not in self.site_offers_send:
+                            self.site_offers_send.append(message_data)
 
-        threading.Thread(target=run)
+                    if message_name == 'cancelTrade':  # {"name":"cancelTrade","data":{"trade_id":"5521581234","seller_steamid":"76561199059254XXX"}}
+                        if message_data not in self.site_offers_cancel:
+                            self.site_offers_cancel.append(message_data)
+            except Exception as e:
+                self.socket_restart()
+                print(f"Error receiving message: {e}")
 
-    def wait_socket_response(self, name_response: str):
-        socket_response = self.socket.check_response(name_response)
-        if type(socket_response) == type(True):
-            time.sleep(1)
-        else:
-            return socket_response
+    def socket_connect(self):
+        if not self.ws:
+            self.ws = websocket.WebSocket()
+            self.ws.connect('wss://wssex.waxpeer.com', timeout=25)
 
+    def socket_close(self):
+        if self.ws:
+            print("WebSocket connection closed")
+
+    def socket_restart(self):
+        if self.ws:
+            self.socket_close()
+            time.sleep(5)
+            self.socket_connect()
 
     # endregion
