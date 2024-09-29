@@ -8,7 +8,6 @@ class BuffSteam(SteamManager):
 
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
-        self.sent_trades = []
 
     # region Steam Send Offers
     def steam_send_offers(self):  # Global Function (class_for_account_functions)
@@ -26,24 +25,32 @@ class BuffSteam(SteamManager):
                         history_docs = self.get_all_docs_from_mongo_collection(self.acc_history_collection,
                                                                                except_return_none=True)
                         if history_docs is not None:
-                            name_list = []
-                            trades_to_confirm = []
                             for trade in request_site_offers:
-                                trade_offer_id = str(trade["tradeofferid"])
-                                if trade_offer_id not in self.sent_trades:
-                                    trades_to_confirm.append(trade_offer_id)
-                            if len(trades_to_confirm) > 0:
-                                for trade in trades_to_confirm:
-                                    response = self.steamclient.accept_trade_offer(trade)
-                                    if response:
-                                        self.sent_trades.append(trade)
-                                        self.add_doc_in_history()
-                                        Logs.log(f"Make Steam Offer: Trade sent: {name_list}",
-                                                 self.steamclient.username)
-                                    else:
-                                        self.add_doc_in_history(success=False)
-                                        Logs.log(f"Make Steam Offer: Error send trade: "
-                                                 f"{name_list}", self.steamclient.username)
+                                if trade['state'] == 1:
+                                    name_list = []
+                                    tradeofferid = str(trade["tradeofferid"])
+                                    unique_site_id = str(trade['id'])
+                                    site_item_id = str(trade['id'])
+                                    item_list = [item['assetid'] for item in trade['items_to_trade']]
+                                    trade_offer = self.steamclient.get_trade_offer(tradeofferid)
+                                    if (isinstance(trade_offer, dict) and 'response' in trade_offer
+                                            and 'offer' in trade_offer['response']):
+                                        offer_status = trade_offer['response']['offer']['trade_offer_state']
+                                        steam_id = str(trade_offer['response']['offer']['accountid_other']
+                                                       + 76561197960265728)
+                                        if offer_status == 2:
+                                            response = self.steamclient.accept_trade_offer(tradeofferid, steam_id)
+
+                                            if response
+                                                self.add_doc_in_history(history_docs, item_list, name_list, unique_site_id,
+                                                                        tradeofferid, steam_id, site_item_id)
+                                                Logs.log(f"Make Steam Offer: Trade sent: {name_list}",
+                                                         self.steamclient.username)
+                                            else:
+                                                self.add_doc_in_history(history_docs, item_list, name_list, unique_site_id,
+                                                                        tradeofferid, steam_id, site_item_id, success=False)
+                                                Logs.log(f"Make Steam Offer: Error send trade: "
+                                                         f"{name_list}", self.steamclient.username)
 
                         else:
                             raise ExitException

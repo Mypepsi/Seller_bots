@@ -35,12 +35,15 @@ class WaxpeerSeller(WaxpeerGeneral, WaxpeerOnline, WaxpeerItems, WaxpeerSteam, W
         #
         # if manager.add_to_sale_global_time != 0:  # Add To Sale
         #     functions_list.append({"func": "add_to_sale", "class_for_account_functions": WaxpeerSeller})
-
-        if manager.change_price_global_time != 0:  # Change Price
-            functions_list.append({"func": "change_price", "class_for_account_functions": WaxpeerSeller})
+        #
+        # if manager.change_price_global_time != 0:  # Change Price
+        #     functions_list.append({"func": "change_price", "class_for_account_functions": WaxpeerSeller})
+        #
+        # if manager.steam_send_offers_global_time != 0:  # Steam Send Offers
+        #     functions_list.append({"func": "steam_send_offers", "class_for_account_functions": WaxpeerSeller})
 
         if manager.steam_send_offers_global_time != 0:  # Steam Send Offers
-            functions_list.append({"func": "steam_send_offers", "class_for_account_functions": WaxpeerSeller})
+            functions_list.append({"func": "site_socket", "class_for_account_functions": WaxpeerSeller})
         return functions_list
 
 

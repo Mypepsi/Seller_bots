@@ -28,7 +28,7 @@ class SteamManager(SessionManager):
         offer_status = None
         if trade_id is not None:
             try:
-                response_state = self.steamclient.get_trade_offer_state(trade_id)
+                response_state = self.steamclient.get_trade_offer(trade_id)
                 time.sleep(1)
                 if isinstance(response_state, dict) and 'response' in response_state and 'offer' in response_state['response']:
                     offer_status = response_state['response']['offer']['trade_offer_state']
@@ -109,7 +109,7 @@ class SteamManager(SessionManager):
                                    self.steamclient.username)
             time.sleep(self.steam_cancel_offers_global_time)
 
-    def add_doc_in_history(self, history_docs, asset_list, name_list, unique_site_id, trade_id, steam_id,
+    def add_doc_in_history(self, history_docs, item_list, name_list, unique_site_id, trade_id, steam_id,
                            site_item_id, success=True):
         current_timestamp = int(time.time())
         current_timestamp_unique = int(time.time())
@@ -128,7 +128,7 @@ class SteamManager(SessionManager):
                 doc_exist = True
                 break
 
-        for asset in asset_list:
+        for asset in item_list:
             name = ''
             for item in self.steam_inventory_phases.values():
                 if item['asset_id'] == asset:

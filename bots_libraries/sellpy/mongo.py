@@ -177,8 +177,8 @@ class Mongo:
             self.waxpeer_settings_items = self.get_key(self.content_waxpeer_settings, 'items')
             self.add_to_sale_global_time = self.get_key(self.waxpeer_settings_items, 'add to sale global time')
             self.change_price_global_time = self.get_key(self.waxpeer_settings_items, 'change price global time')
-            self.change_price_items_count = self.get_key(self.tm_settings_items, 'change price items count')
-            self.change_price_items_count_in_request = self.get_key(self.tm_settings_items, 'change price items count in request')
+            self.change_price_items_count = self.get_key(self.waxpeer_settings_items, 'change price items count')
+            self.change_price_items_count_in_request = self.get_key(self.waxpeer_settings_items, 'change price items count in request')
 
             self.waxpeer_settings_steam = self.get_key(self.content_waxpeer_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.waxpeer_settings_steam, 'steam send offers global time')
@@ -201,6 +201,7 @@ class Mongo:
 
             self.waxpeer_settings_restart = self.get_key(self.content_waxpeer_settings, 'restart')
             self.restart_store_global_time = self.get_key(self.waxpeer_settings_restart, 'restart store global time')
+            self.restart_site_socket_global_time = self.get_key(self.waxpeer_settings_restart, 'restart site socket global time')
             self.restart_server_validity_time = self.get_key(self.waxpeer_settings_restart, 'restart server validity time')
             self.restart_server_global_time = self.get_key(self.waxpeer_settings_restart, 'restart server global time')
             self.restart_bots_name = self.get_key(self.waxpeer_settings_restart, 'restart bots name')  # list of dict
@@ -236,8 +237,8 @@ class Mongo:
             self.csgoempire_settings_items = self.get_key(self.content_csgoempire_settings, 'items')
             self.add_to_sale_global_time = self.get_key(self.csgoempire_settings_items, 'add to sale global time')
             self.change_price_global_time = self.get_key(self.csgoempire_settings_items, 'change price global time')
-            self.change_price_items_count = self.get_key(self.tm_settings_items, 'change price items count')
-            self.change_price_items_count_in_request = self.get_key(self.tm_settings_items, 'change price items count in request')
+            self.change_price_items_count = self.get_key(self.csgoempire_settings_items, 'change price items count')
+            self.change_price_items_count_in_request = self.get_key(self.csgoempire_settings_items, 'change price items count in request')
 
             self.csgoempire_settings_steam = self.get_key(self.content_csgoempire_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.csgoempire_settings_steam, 'steam send offers global time')
@@ -261,6 +262,7 @@ class Mongo:
 
             self.csgoempire_settings_restart = self.get_key(self.content_csgoempire_settings, 'restart')
             self.restart_store_global_time = self.get_key(self.csgoempire_settings_restart, 'restart store global time')
+            self.restart_site_socket_global_time = self.get_key(self.csgoempire_settings_restart, 'restart site socket global time')
             self.restart_server_validity_time = self.get_key(self.csgoempire_settings_restart, 'restart server validity time')
             self.restart_server_global_time = self.get_key(self.csgoempire_settings_restart, 'restart server global time')
             self.restart_bots_name = self.get_key(self.csgoempire_settings_restart, 'restart bots name')  # list of dict
@@ -296,8 +298,8 @@ class Mongo:
             self.csgo500_settings_items = self.get_key(self.content_csgo500_settings, 'items')
             self.add_to_sale_global_time = self.get_key(self.csgo500_settings_items, 'add to sale global time')
             self.change_price_global_time = self.get_key(self.csgo500_settings_items, 'change price global time')
-            self.change_price_items_count = self.get_key(self.tm_settings_items, 'change price items count')
-            self.change_price_items_count_in_request = self.get_key(self.tm_settings_items, 'change price items count in request')
+            self.change_price_items_count = self.get_key(self.csgo500_settings_items, 'change price items count')
+            self.change_price_items_count_in_request = self.get_key(self.csgo500_settings_items, 'change price items count in request')
 
             self.csgo500_settings_steam = self.get_key(self.content_csgo500_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.csgo500_settings_steam, 'steam send offers global time')
@@ -381,6 +383,7 @@ class Mongo:
 
             self.shadowpay_settings_restart = self.get_key(self.content_shadowpay_settings, 'restart')
             self.restart_store_global_time = self.get_key(self.shadowpay_settings_restart, 'restart store global time')
+            self.restart_site_socket_global_time = self.get_key(self.shadowpay_settings_restart, 'restart site socket global time')
             self.restart_server_validity_time = self.get_key(self.shadowpay_settings_restart, 'restart server validity time')
             self.restart_server_global_time = self.get_key(self.shadowpay_settings_restart, 'restart server global time')
             self.restart_bots_name = self.get_key(self.shadowpay_settings_restart, 'restart bots name')  # list of dict

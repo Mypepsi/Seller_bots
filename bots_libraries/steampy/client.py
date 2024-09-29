@@ -201,7 +201,6 @@ class SteamClient:
         except:
             pass
 
-
     def get_trade_offers(self,
                          get_sent_offers=0,
                          get_received_offers=0,
@@ -224,11 +223,10 @@ class SteamClient:
         except:
             return None
 
-    def get_trade_offer_state(self, trade_offer_id: str):
-        params = {
-            'access_token': self.access_token,
-            'tradeofferid': trade_offer_id
-        }
+    def get_trade_offer(self, trade_offer_id: str):
+        params = {'access_token': self.access_token,
+                  'tradeofferid': trade_offer_id,
+                  'language': 'english'}
         try:
             response = self.api_call('GET', 'IEconService', 'GetTradeOffer', 'v1', params).json()
             return response
@@ -245,12 +243,12 @@ class SteamClient:
             return None
 
     @login_required
-    def accept_trade_offer(self, trade_offer_id: str, steam_id):
+    def accept_trade_offer(self, trade_offer_id: str, steam_id: str):
         accept_url = SteamUrl.COMMUNITY_URL + '/tradeoffer/' + trade_offer_id + '/accept'
         params = {'sessionid': self._get_session_id(),
                   'tradeofferid': trade_offer_id,
                   'serverid': '1',
-                  'partner': str(steam_id),
+                  'partner': steam_id,
                   'captcha': ''}
         headers = {'Referer': self._get_trade_offer_url(trade_offer_id)}
         try:
@@ -264,17 +262,6 @@ class SteamClient:
     def get_trade_offers_summary(self) -> dict:
         params = {'key': self._api_key}
         return self.api_call('GET', 'IEconService', 'GetTradeOffersSummary', 'v1', params).json()
-
-    def get_trade_offer(self, trade_offer_id: str, merge: bool = True) -> dict:
-        params = {'key': self._api_key,
-                  'tradeofferid': trade_offer_id,
-                  'language': 'english'}
-        response = self.api_call('GET', 'IEconService', 'GetTradeOffer', 'v1', params).json()
-        if merge and "descriptions" in response['response']:
-            descriptions = {get_description_key(offer): offer for offer in response['response']['descriptions']}
-            offer = response['response']['offer']
-            response['response']['offer'] = merge_items_with_descriptions_from_offer(offer, descriptions)
-        return response
 
     def get_trade_history(self,
                           max_trades=100,
