@@ -201,7 +201,6 @@ class Mongo:
 
             self.waxpeer_settings_restart = self.get_key(self.content_waxpeer_settings, 'restart')
             self.restart_store_global_time = self.get_key(self.waxpeer_settings_restart, 'restart store global time')
-            self.restart_site_socket_global_time = self.get_key(self.waxpeer_settings_restart, 'restart site socket global time')
             self.restart_server_validity_time = self.get_key(self.waxpeer_settings_restart, 'restart server validity time')
             self.restart_server_global_time = self.get_key(self.waxpeer_settings_restart, 'restart server global time')
             self.restart_bots_name = self.get_key(self.waxpeer_settings_restart, 'restart bots name')  # list of dict
@@ -262,7 +261,6 @@ class Mongo:
 
             self.csgoempire_settings_restart = self.get_key(self.content_csgoempire_settings, 'restart')
             self.restart_store_global_time = self.get_key(self.csgoempire_settings_restart, 'restart store global time')
-            self.restart_site_socket_global_time = self.get_key(self.csgoempire_settings_restart, 'restart site socket global time')
             self.restart_server_validity_time = self.get_key(self.csgoempire_settings_restart, 'restart server validity time')
             self.restart_server_global_time = self.get_key(self.csgoempire_settings_restart, 'restart server global time')
             self.restart_bots_name = self.get_key(self.csgoempire_settings_restart, 'restart bots name')  # list of dict
@@ -383,7 +381,6 @@ class Mongo:
 
             self.shadowpay_settings_restart = self.get_key(self.content_shadowpay_settings, 'restart')
             self.restart_store_global_time = self.get_key(self.shadowpay_settings_restart, 'restart store global time')
-            self.restart_site_socket_global_time = self.get_key(self.shadowpay_settings_restart, 'restart site socket global time')
             self.restart_server_validity_time = self.get_key(self.shadowpay_settings_restart, 'restart server validity time')
             self.restart_server_global_time = self.get_key(self.shadowpay_settings_restart, 'restart server global time')
             self.restart_bots_name = self.get_key(self.shadowpay_settings_restart, 'restart bots name')  # list of dict

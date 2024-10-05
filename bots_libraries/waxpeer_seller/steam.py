@@ -1,6 +1,7 @@
 import time
 import json
 import requests
+import calendar
 import websocket
 import threading
 from bots_libraries.sellpy.logs import Logs, ExitException
@@ -13,38 +14,48 @@ class WaxpeerSteam(SteamManager):
         super().__init__(main_tg_info)
         self.site_offers_send = []
         self.site_offers_cancel = []
-        self.ws = None
-        # self.string = json.dumps({
-        #     "name": "auth",
-        #     "steamid": self.steamclient.steam_guard['steamid'],
-        #     "apiKey": self.waxpeer_apikey,
-        #     "tradeurl": self.trade_url
-        # })
+        self.site_offers_cancelled = []
+        self.ws = websocket.WebSocket()
+        self.active_socket = False
 
     # region Steam Send Offers
     def steam_send_offers(self):  # Global Function (class_for_account_functions)
+        threading.Thread(target=self.site_socket).start()
         while True:
             try:
                 if self.active_session:
-                    try:
-                        url = f'{self.site_url}/api/v2/trade-request-give-p2p-all?key={self.tm_apikey}'
-                        request_site = requests.get(url, timeout=15).json()
-                        request_site_offers = request_site['offers']
-                    except:
-                        request_site_offers = None
-
-                    if request_site_offers and isinstance(request_site_offers, list) and len(request_site_offers) > 0:
+                    if len(self.site_offers_send) > 0:
                         history_docs = self.get_all_docs_from_mongo_collection(self.acc_history_collection,
                                                                                except_return_none=True)
                         if history_docs is not None:
-                            for i in range(len(request_site_offers)):
-                                unique_site_id = request_site_offers[i]['tradeoffermessage']
-                                partner = request_site_offers[i]['partner']
-                                token = request_site_offers[i]['token']
-                                trade_offer_url = f'https://steamcommunity.com/tradeoffer/new/?partner={partner}&token={token}'
+
+                            time_threshold = int(time.time()) - 30
+
+                            filtered_offers = [
+                                offer for offer in self.site_offers_send
+                                if (calendar.timegm(time.strptime(offer['send_until'], "%Y-%m-%dT%H:%M:%S.%fZ"))
+                                    > time_threshold)
+                            ]
+                            unique_offers = {}
+
+                            for offer in filtered_offers:
+                                waxid = offer['waxid']
+                                if waxid not in unique_offers:
+                                    unique_offers[waxid] = offer
+                                else:
+                                    existing_offer_time = int(calendar.timegm(time.strptime(unique_offers[waxid]['send_until'], "%Y-%m-%dT%H:%M:%S.%fZ")))
+                                    current_offer_time = int(calendar.timegm(time.strptime(offer['send_until'], "%Y-%m-%dT%H:%M:%S.%fZ")))
+                                    if current_offer_time > existing_offer_time:
+                                        unique_offers[waxid] = offer
+
+                            self.cancel_steam_offer()
+                            for key, value in unique_offers.items():
+                                unique_site_id = key
+                                site_item_id = key
+                                trade_offer_url = value['tradelink']
 
                                 steam_id = SteamClient.get_steam_id_from_url(trade_offer_url)
-                                items_list = [item['assetid'] for item in request_site_offers[i]['items']]
+                                items_list = [item['assetid'] for item in value['json_tradeoffer']['me']['assets']]
                                 successfully_send = self.send_steam_offer(history_docs, unique_site_id, trade_offer_url,
                                                                           steam_id, items_list)
 
@@ -53,119 +64,120 @@ class WaxpeerSteam(SteamManager):
                                 latest_offer = offer_info['latest offer']
                                 if not successfully_send and offer_status and int(offer_status) not in [1, 4, 8, 10]:
                                     self.make_steam_offer(history_docs, unique_site_id, trade_offer_url, steam_id,
-                                                          items_list)
-                                self.confirm_steam_offer(offer_status, latest_offer)
+                                                          items_list, site_item_id=site_item_id)
+                                self.confirm_steam_offer(offer_status, latest_offer, unique_site_id)
                         else:
                             raise ExitException
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"Steam Send Offers Global Error: {e}", self.steamclient.username)
             time.sleep(self.steam_send_offers_global_time)
 
-    def confirm_steam_offer(self, offer_status, latest_offer):
+    def cancel_steam_offer(self):
+        for offer in self.site_offers_cancel:
+            trade_id = offer['data']['trade_id']
+            if trade_id not in self.site_offers_cancelled:
+                response = self.steamclient.cancel_trade_offer(trade_id)
+                if response:
+                    self.site_offers_cancelled.append(trade_id)
+                    Logs.log(f"Steam Send Offers: {trade_id} tradeID cancelled by Socket info", self.steamclient.username)
+                time.sleep(1)
+
+    def confirm_steam_offer(self, offer_status, latest_offer, unique_site_id):
         trade_id = latest_offer['trade id']
         if offer_status:
             if int(offer_status) == 9:
-                self.steamclient.confirm_trade_offer(trade_id)
-                if int(time.time()) - latest_offer['time'] >= self.steam_detect_unconfirmed_offer_time:
-                    Logs.notify(self.tg_info, f"Steam Send Offers: "
-                                              f"Unconfirmed {trade_id} tradeID",
-                                self.steamclient.username)
-        try:
-            site_url = f'{self.site_url}/api/v2/trade-ready?key={self.tm_apikey}&tradeoffer={trade_id}'
-            response = requests.get(site_url, timeout=15)
-            if response['error'] in ["error InvalidResponseException", "error get info about trade",
-                                     "error not active offers"]:
-                Logs.notify(self.tg_info, f"Steam Send Offers: Site didn't see {trade_id} tradeID:"
-                                          f" {response['error']}", self.steamclient.username)
-                if self.steamclient.cancel_trade_offer(trade_id):
-                    Logs.log(f'Steam Send Offers: {trade_id} tradeID cancelled', self.steamclient.username)
-                time.sleep(1)
-        except:
-            pass
+                try:
+                    headers = {
+                        "tradeid": trade_id, "waxid": unique_site_id}
+                    site_url = f'{self.site_url}/v1/steam-trade?api={self.waxpeer_apikey}'
+                    response = requests.post(site_url, headers=headers, timeout=15).json()
+                except:
+                    response = None
+                if response:
+                    if 'success' in response and response['success']:
+                        self.steamclient.confirm_trade_offer(trade_id)
+                    else:
+                        Logs.notify(self.tg_info, f"Steam Send Offers: Site didn't see {trade_id} tradeID:"
+                                                  f" {response['msg']}", self.steamclient.username)
+                        if self.steamclient.cancel_trade_offer(trade_id):
+                            Logs.log(f"Steam Send Offers: {trade_id} tradeID cancelled", self.steamclient.username)
+                        time.sleep(1)
 
+                if int(time.time()) - latest_offer['time'] >= self.steam_detect_unconfirmed_offer_time:
+                    Logs.notify(self.tg_info, f"Steam Send Offers: Unconfirmed {trade_id} tradeID",
+                                self.steamclient.username)
     # endregion
 
     # region Site Socket
     def site_socket(self):  # Local Function by Steam Send Offers
-        self.socket_connect()
-
-        send_ping_thread = threading.Thread(target=self.send_ping)
-        send_auth_thread = threading.Thread(target=self.send_auth)
-        receive_messages_thread = threading.Thread(target=self.receive_messages)
-
-        send_ping_thread.start()
-        send_auth_thread.start()
-        receive_messages_thread.start()
-
-        send_ping_thread.join()
-        send_auth_thread.join()
-        receive_messages_thread.join()
-
-    def send_auth(self):
+        threading.Thread(target=self.receive_socket_events).start()
         while True:
-            if self.ws:
-                string = json.dumps({
-                    "name": "auth",
-                    "steamid": self.steamclient.steam_guard['steamid'],
-                    "waxApi": self.waxpeer_apikey,
-                    "tradeurl": self.trade_url
-                })
-                self.ws.send(string)
-                print("Sent 'auth' to server")
-                time.sleep(15)
-
-    def send_ping(self):
-        while True:
-            if self.ws:
-                online_send = json.dumps({"name": "ping"})
-                self.ws.send(online_send)
-                print("Sent 'ping' to server")
-                time.sleep(10)
-
-    def receive_messages(self):
-        while True:
-            try:
-                message = self.ws.recv()
-                message = json.loads(message)
-                if 'name' in message and 'data' in message:
-                    message_name = message['name']
-                    message_data = message['data']
-                    if message_name == 'pong':  # {'name': 'pong', 'data': {'msg': '1'}}
-                        if 'msg' in message_data and message['data']['msg'] != '1':
-                            Logs.notify(self.tg_info, f"Error during ping", self.steamclient.username)
-                    if message == {'name': 'pong', 'data': {'msg': '1'}}:  #t
-                        print(f'pong success')  #t
-
-                    if message_name == 'user_change':  # {"name": "user_change", "data": {"can_p2p": True}}
-                        if 'can_p2p' in message_data and not message_data['can_p2p']:
-                            Logs.notify(self.tg_info, f"Error during auth", self.steamclient.username)
-                    if message == {"name": "user_change", "data": {"can_p2p": True}}:  #t
-                        print(f'user_change success')  #t
-
-                    if message_name == 'send-trade':  # '{"name": "send-trade", "data": {"waxid": "d25s5f63-190s-46b4-8184-b9ec3d326932", "wax_id": "1234567", "json_tradeoffer": {"newversion": true, "version": 2, "me": {"assets": [{"appid": 730, "contextid": "2", "amount": 1, "assetid": "27509261111"}], "currency": [], "ready": false}, "them": {"assets": [{"appid": 730, "contextid": "2", "amount": 1, "assetid": "27509261111"}], "currency": [], "ready": false}}, "tradeoffermessage": "", "tradelink": "https://steamcommunity.com/tradeoffer/new/?partner=1234567890&token=asd1-5zF", "partner": "76561199059254XXX", "created": "2022-11-02T16:00:59.921Z", "now": "2022-11-02T16:01:16.311Z", "send_until": "2022-11-02T16:05:59.921Z"}}
-                        if message_data not in self.site_offers_send:
-                            self.site_offers_send.append(message_data)
-
-                    if message_name == 'cancelTrade':  # {"name":"cancelTrade","data":{"trade_id":"5521581234","seller_steamid":"76561199059254XXX"}}
-                        if message_data not in self.site_offers_cancel:
-                            self.site_offers_cancel.append(message_data)
-            except Exception as e:
-                self.socket_restart()
-                print(f"Error receiving message: {e}")
+            if self.ws.connected:
+                if self.active_socket:
+                    self.socket_ping()
+                else:
+                    self.socket_close()
+            else:
+                self.socket_connect()
+            time.sleep(25)
 
     def socket_connect(self):
-        if not self.ws:
-            self.ws = websocket.WebSocket()
-            self.ws.connect('wss://wssex.waxpeer.com', timeout=25)
+        if self.active_session:
+            try:
+                Logs.log(f"Socket connect", self.steamclient.username)
+                self.ws = websocket.WebSocket()
+                self.ws.connect('wss://wssex.waxpeer.com', timeout=60)
+                if self.ws.connected:
+                    self.active_socket = False
+                    auth = json.dumps({
+                        "name": "auth",
+                        "steamid": self.steamclient.steam_guard['steamid'],
+                        "waxApi": self.waxpeer_apikey,
+                        "accessToken": self.steamclient.access_token,
+                        "tradeurl": self.trade_url
+                    })
+                    self.ws.send(auth)
+                    Logs.log(f"Socket connected", self.steamclient.username)
+            except:
+                self.socket_close()
+
+    def socket_ping(self):
+        try:
+            ping = json.dumps({"name": "ping"})
+            self.ws.send(ping)
+        except:
+            self.socket_close()
 
     def socket_close(self):
-        if self.ws:
-            print("WebSocket connection closed")
+        if self.ws.connected:
+            try:
+                self.ws.close()
+                Logs.log(f"Socket closed", self.steamclient.username)
+            except:
+                pass
 
-    def socket_restart(self):
-        if self.ws:
-            self.socket_close()
-            time.sleep(5)
-            self.socket_connect()
-
+    def receive_socket_events(self):  # Local Function by Site Socket
+        while True:
+            try:
+                if self.ws.connected:
+                    message = self.ws.recv()
+                    message = json.loads(message)
+                    print(f'{message}')
+                    if 'name' in message and 'data' in message:
+                        message_name = message['name']
+                        message_data = message['data']
+                        if message_name == 'send-trade':  # Create trade
+                            self.site_offers_send.append(message_data)
+                        elif message_name == 'cancelTrade':  # Cancel trade
+                            self.site_offers_cancel.append(message_data)
+                        elif message_name == 'user_change' and 'can_p2p' in message_data:  # Change online status
+                            if message_data['can_p2p']:
+                                self.active_socket = True
+                                Logs.log(f"Socket authorized", self.steamclient.username)
+                            else:
+                                raise ExitException
+                else:
+                    time.sleep(5)
+            except:
+                self.socket_close()
     # endregion
