@@ -32,9 +32,12 @@ class ShadowPaySeller(ShadowPayGeneral, ShadowPayOnline, ShadowPayItems, ShadowP
         #
         # if manager.add_to_sale_global_time != 0:  # Add To Sale
         #     functions_list.append({"func": "add_to_sale", "class_for_account_functions": ShadowPaySeller})
+        #
+        # if manager.change_price_global_time != 0:  # Change Price
+        #     functions_list.append({"func": "change_price", "class_for_account_functions": ShadowPaySeller})
 
-        if manager.change_price_global_time != 0:  # Change Price
-            functions_list.append({"func": "change_price", "class_for_account_functions": ShadowPaySeller})
+        if manager.steam_send_offers_global_time != 0:  # Steam Send Offers
+            functions_list.append({"func": "confirm_steam_offer", "class_for_account_functions": ShadowPaySeller})
         return functions_list
 
 

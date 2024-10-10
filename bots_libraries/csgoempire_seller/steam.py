@@ -1,16 +1,25 @@
 import time
+import json
 import requests
 import calendar
+import websocket
+import threading
 from bots_libraries.sellpy.logs import Logs, ExitException
 from bots_libraries.sellpy.steam_manager import SteamManager
-from bots_libraries.steampy.client import Asset, SteamClient
-from bots_libraries.steampy.models import GameOptions
+from bots_libraries.steampy.client import SteamClient
+
 
 
 class CSGOEmpireSteam(SteamManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
         self.dispute_id_list = []
+
+        self.site_offers_send = []
+        self.site_offers_cancel = []
+        self.site_offers_cancelled = []
+        self.ws = websocket.WebSocket()
+        self.active_socket = False
 
     # region Steam Send Offers
     def steam_send_offers(self):  # Global Function (class_for_account_functions)
@@ -96,4 +105,76 @@ class CSGOEmpireSteam(SteamManager):
                 if int(time.time()) - latest_offer['time'] >= self.steam_detect_unconfirmed_offer_time:
                     Logs.notify(self.tg_info, f"Steam Send Offers: Unconfirmed {trade_id} tradeID",
                                 self.steamclient.username)
+    # endregion
+
+    # region Site Socket
+    def site_socket(self):  # Local Function by Steam Send Offers
+        threading.Thread(target=self.receive_socket_events).start()
+        while True:
+            if self.ws.connected:
+                if self.active_socket:
+                    self.socket_ping()
+                else:
+                    self.socket_close()
+            else:
+                self.socket_connect()
+            time.sleep(10)
+
+    def socket_connect(self):
+        if self.active_session:
+            try:
+                socket_info_url = f'{self.site_url}/api/v2/metadata/socket'
+                headers = {"Authorization": f"Bearer {self.csgoempire_apikey}"}
+                socket_response = requests.get(socket_info_url, headers=headers, timeout=15).json()
+                Logs.log(f"Socket connect", self.steamclient.username)
+                self.ws = websocket.WebSocket()
+                self.ws.connect(f'wss://trade.csgoempire.io/s/?EIO=3&transport=websocket', timeout=60)
+                if self.ws.connected:
+                    self.active_socket = False
+                    ping = f'40/trade,'
+                    self.ws.send(ping)
+                    if ('user' in socket_response and 'id' in socket_response['user']
+                            and 'socket_token' in socket_response and 'socket_signature' in socket_response and
+                            'last_session' in socket_response['user'] and
+                            'device_identifier' in socket_response['user']['last_session']):
+                        auth = {
+                            "uid": socket_response['user']['id'],
+                            "model": socket_response['user'],
+                            "authorizationToken": socket_response['socket_token'],
+                            "signature": socket_response['socket_signature'],
+                            "uuid": 'null'
+                        }
+                        string_to_send_2 = f'42/trade,["identify",{json.dumps(auth, separators=(",", ":"))}]'.replace(
+                            '\'', '"').replace('True', 'true').replace('False', 'false').replace('None', 'null')
+                        self.ws.send(string_to_send_2)
+                        Logs.log(f"Socket connected", self.steamclient.username)
+                    else:
+                        Logs.log(f"Socket NO connected", self.steamclient.username)
+            except:
+                self.socket_close()
+
+    def socket_ping(self):
+        try:
+            ping = '2'
+            self.ws.send(ping)
+        except:
+            self.socket_close()
+
+    def socket_close(self):
+        if self.ws.connected:
+            try:
+                self.ws.close()
+                Logs.log(f"Socket closed", self.steamclient.username)
+            except:
+                pass
+
+    def receive_socket_events(self):  # Local Function by Site Socket
+        while True:
+            try:
+                if self.ws.connected:
+                    message = self.ws.recv()
+                    if '{"authenticated":true' in message:
+                        self.active_socket = True
+            except:
+                self.socket_close()
     # endregion

@@ -105,6 +105,7 @@ class Mongo:
             self.tm_settings_general = self.get_key(self.content_tm_settings, 'general')
             self.site_url = f"https://{self.get_key(self.tm_settings_general, 'site url')}"
             self.site_apikey_global_time = self.get_key(self.tm_settings_general, 'site apikey global time')
+            self.update_site_data_global_time = self.get_key(self.tm_settings_general, 'update site data global time')
             self.balance_transfer_global_time = self.get_key(self.tm_settings_general, 'balance transfer global time')
             self.site_name = self.get_key(self.tm_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.tm_settings_general, 'saleprice bot name')
@@ -163,12 +164,14 @@ class Mongo:
             self.waxpeer_settings_general = self.get_key(self.content_waxpeer_settings, 'general')
             self.site_url = f"https://{self.get_key(self.waxpeer_settings_general, 'site url')}"
             self.site_apikey_global_time = self.get_key(self.waxpeer_settings_general, 'site apikey global time')
+            self.update_site_data_global_time = self.get_key(self.waxpeer_settings_general, 'update site data global time')
             self.balance_transfer_global_time = self.get_key(self.waxpeer_settings_general, 'balance transfer global time')
             self.site_name = self.get_key(self.waxpeer_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.waxpeer_settings_general, 'saleprice bot name')
 
             self.waxpeer_settings_online = self.get_key(self.content_waxpeer_settings, 'online')
             self.ping_global_time = self.get_key(self.waxpeer_settings_online, 'ping global time')
+            self.update_steam_access_token_global_time = self.get_key(self.waxpeer_settings_online, 'update steam access token global time')
             self.visible_store_max_number_of_inv_items = self.get_key(self.waxpeer_settings_online, 'visible store max number of inv items')
             self.visible_store_max_number_of_errors = self.get_key(self.waxpeer_settings_online,
                                                                    'visible store max number of errors')
@@ -221,6 +224,7 @@ class Mongo:
             self.csgoempire_settings_general = self.get_key(self.content_csgoempire_settings, 'general')
             self.site_url = f"https://{self.get_key(self.csgoempire_settings_general, 'site url')}"
             self.site_apikey_global_time = self.get_key(self.csgoempire_settings_general, 'site apikey global time')
+            self.update_site_data_global_time = self.get_key(self.csgoempire_settings_general, 'update site data global time')
             self.balance_transfer_global_time = self.get_key(self.csgoempire_settings_general, 'balance transfer global time')
             self.db_csgoempire_validity_time = self.get_key(self.csgoempire_settings_general, 'db csgoempire validity time')
             self.db_csgoempire_global_time = self.get_key(self.csgoempire_settings_general, 'db csgoempire global time')
@@ -281,6 +285,7 @@ class Mongo:
             self.csgo500_settings_general = self.get_key(self.content_csgo500_settings, 'general')
             self.site_url = f"https://{self.get_key(self.csgo500_settings_general, 'site url')}"
             self.site_apikey_global_time = self.get_key(self.csgo500_settings_general, 'site apikey global time')
+            self.update_site_data_global_time = self.get_key(self.csgo500_settings_general, 'update site data global time')
             self.balance_transfer_global_time = self.get_key(self.csgo500_settings_general, 'balance transfer global time')
             self.db_csgo500_validity_time = self.get_key(self.csgo500_settings_general, 'db csgo500 validity time')
             self.db_csgo500_global_time = self.get_key(self.csgo500_settings_general, 'db csgo500 global time')
@@ -347,6 +352,7 @@ class Mongo:
 
             self.shadowpay_settings_online = self.get_key(self.content_shadowpay_settings, 'online')
             self.ping_global_time = self.get_key(self.shadowpay_settings_online, 'ping global time')
+            self.update_steam_access_token_global_time = self.get_key(self.shadowpay_settings_online, 'update steam access token global time')
             self.visible_store_max_number_of_inv_items = self.get_key(self.shadowpay_settings_online,
                                                                       'visible store max number of inv items')
             self.visible_store_max_number_of_errors = self.get_key(self.shadowpay_settings_online, 'visible store max number of errors')
@@ -360,6 +366,7 @@ class Mongo:
 
             self.shadowpay_settings_steam = self.get_key(self.content_shadowpay_settings, 'steam')
             self.steam_send_offers_global_time = self.get_key(self.shadowpay_settings_steam, 'steam send offers global time')
+            self.steam_send_offers_validity_time = self.get_key(self.shadowpay_settings_steam, 'steam send offers validity time')
             self.steam_detect_unconfirmed_offer_time = self.get_key(self.shadowpay_settings_steam, 'steam detect unconfirmed offer time')
             self.steam_cancel_offers_sites_name = self.get_key(self.shadowpay_settings_steam,
                                                                'steam cancel offers sites name')  # list of dict
@@ -401,6 +408,7 @@ class Mongo:
             self.buff_settings_general = self.get_key(self.content_buff_settings, 'general')
             self.site_url = f"https://{self.get_key(self.buff_settings_general, 'site url')}"
             self.site_cookie_global_time = self.get_key(self.buff_settings_general, 'site cookie global time')
+            self.update_site_data_global_time = self.get_key(self.buff_settings_general, 'update site data global time')
             self.balance_transfer_global_time = self.get_key(self.buff_settings_general, 'balance transfer global time')
             self.site_name = self.get_key(self.buff_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.buff_settings_general, 'saleprice bot name')

@@ -40,8 +40,11 @@ class CSGOEmpireSeller(CSGOEmpireGeneral, CSGOEmpireOnline, CSGOEmpireItems, CSG
         # if manager.change_price_global_time != 0:  # Change Price
         #     functions_list.append({"func": "change_price", "class_for_account_functions": CSGOEmpireSeller})
         #
+        # if manager.steam_send_offers_global_time != 0:  # Steam Send Offers
+        #     functions_list.append({"func": "steam_send_offers", "class_for_account_functions": CSGOEmpireSeller})
+
         if manager.steam_send_offers_global_time != 0:  # Steam Send Offers
-            functions_list.append({"func": "steam_send_offers", "class_for_account_functions": CSGOEmpireSeller})
+            functions_list.append({"func": "site_socket", "class_for_account_functions": CSGOEmpireSeller})
         return functions_list
 
 

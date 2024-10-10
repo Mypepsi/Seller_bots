@@ -11,6 +11,10 @@ class WaxpeerOnline(SteamManager):
         self.ping_alert = False
         self.inventory_errors = self.listed_errors = 0
 
+    def update_steam_access_token(self):
+        pass
+
+
     def ping(self):  # Global Function (class_for_account_functions)
         while True:
             try:
