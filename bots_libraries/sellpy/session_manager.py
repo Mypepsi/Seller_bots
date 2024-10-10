@@ -65,7 +65,8 @@ class SessionManager(Mongo):
                     proxies = {'http': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}',
                                'https': f'http://{proxy_login}:{proxy_password}@{proxy_ip}:{proxy_port}'}
                 self.steamclient.proxies = proxies
-                self.steamclient.session.proxies.update(self.steamclient.proxies)
+                if self.steamclient.proxies:
+                    self.steamclient.session.proxies.update(self.steamclient.proxies)
                 self.trade_url = self.content_acc_settings_dict[self.steamclient.username]['trade url']
                 self.tm_apikey = self.content_acc_settings_dict[self.steamclient.username]['tm apikey']
                 self.waxpeer_apikey = self.content_acc_settings_dict[self.steamclient.username]['waxpeer apikey']

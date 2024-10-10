@@ -10,6 +10,7 @@ class TMOnline(SteamManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
         self.ping_alert = False
+        self.update_steam_access_token_alert = False
         self.inventory_errors = self.listed_errors = 0
 
     def ping(self):  # Global Function (class_for_account_functions)

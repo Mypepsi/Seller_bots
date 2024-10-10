@@ -7,6 +7,33 @@ from bots_libraries.sellpy.steam_manager import SteamManager
 class TMGeneral(SteamManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
+        self.update_steam_access_token_alert = False
+
+    def update_site_data(self):  # Global Function (class_for_account_functions)
+        Logs.log(f"Site Apikey: thread are running", '')
+        while True:
+            self.update_account_settings_info()
+            for acc_info in self.content_acc_settings_list:
+                username = None
+                try:
+                    username = acc_info['username']
+                    tm_apikey = acc_info['tm apikey']
+                    token = acc_info['trade url'].split('token=')[1]
+                    try:
+                        balance_url = f'{self.site_url}/api/v2/set-trade-token?key={tm_apikey}&token=1{token}'
+                        response = requests.get(balance_url, timeout=30).json()
+                        print(response)
+                    except:
+                        response = None
+                    if response:
+                        if 'error' in response and response['error'] == 'invalid trade token, reverify and try again':
+                            Logs.notify(self.tg_info, 'Update Site Data: Invalid trade url', username)
+                        elif 'token' in response and response['token'] != token:
+                            Logs.notify(self.tg_info, 'Update Site Data: Invalid trade url', username)
+                except Exception as e:
+                    Logs.notify_except(self.tg_info, f"Site Apikey Global Error: {e}", username)
+                time.sleep(10)
+            time.sleep(self.update_site_data_global_time)
 
     def site_apikey(self):  # Global Function (class_for_many_functions)
         Logs.log(f"Site Apikey: thread are running", '')

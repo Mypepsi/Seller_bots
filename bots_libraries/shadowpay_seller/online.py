@@ -1,5 +1,6 @@
 import time
 import random
+import base64
 import requests
 import urllib.parse
 from bots_libraries.sellpy.steam_manager import SteamManager
@@ -10,6 +11,31 @@ class ShadowPayOnline(SteamManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
         self.inventory_errors = self.listed_errors = 0
+        self.update_steam_access_token_alert = False
+
+    def update_steam_access_token(self):  # Global Function (class_for_account_functions)
+        while True:
+            try:
+                if self.active_session:
+                    try:
+                        headers = {"Authorization": f"Bearer {self.shadowpay_apikey}"}
+                        data = {"access_token": self.steamclient.access_token}
+                        url_to_update_steam_access_token = f'{self.site_url}/api/v2/user/token'
+                        response = requests.patch(url_to_update_steam_access_token, headers=headers, data=data,
+                                                  timeout=30).json()
+                    except:
+                        response = None
+                    if (response and 'status' in response and response['status'] == 'error'
+                            and 'error_message' in response):
+                        Logs.log(f"Update steam access token: Error in access token: {response['error_message']}",
+                                 self.steamclient.username)
+                        if not self.update_steam_access_token_alert:
+                            Logs.notify(self.tg_info, f"Update steam access token: Error in access token: "
+                                                      f"{response['error_message']}", self.steamclient.username)
+                            self.update_steam_access_token_alert = True
+            except Exception as e:
+                Logs.notify_except(self.tg_info, f'Ping Global Error: {e}', self.steamclient.username)
+            time.sleep(self.update_steam_access_token_global_time)
 
     # region Visible Store
     def visible_store(self):  # Global Function (class_for_account_functions)
