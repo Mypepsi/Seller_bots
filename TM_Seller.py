@@ -19,7 +19,7 @@ class TMSeller(TMGeneral, TMOnline, TMItems, TMSteam, TMHistory, Restarter):
     def collect_work_functions():
         functions_list = []
         if manager.update_site_data_global_time != 0:  # Update Site Data
-            functions_list.append({"func": "update_site_data", "class_for_account_functions": TMSeller})
+            functions_list.append({"func": "update_site_data", "class_for_many_functions": TMSeller})
         #
         # if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
         #     functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": TMSeller})

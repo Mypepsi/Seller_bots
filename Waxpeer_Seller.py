@@ -18,9 +18,11 @@ class WaxpeerSeller(WaxpeerGeneral, WaxpeerOnline, WaxpeerItems, WaxpeerSteam, W
     @staticmethod
     def collect_work_functions():
         functions_list = []
+        if manager.update_site_data_global_time != 0:  # Update Site Data
+            functions_list.append({"func": "update_site_data", "class_for_many_functions": WaxpeerSeller})
 
-        if manager.update_steam_access_token_global_time != 0:  # Update Steam Access Token
-            functions_list.append({"func": "update_steam_access_token", "class_for_account_functions": WaxpeerSeller})
+        # if manager.update_steam_access_token_global_time != 0:  # Update Steam Access Token
+        #     functions_list.append({"func": "update_steam_access_token", "class_for_account_functions": WaxpeerSeller})
 
         # if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
         #     functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": WaxpeerSeller})

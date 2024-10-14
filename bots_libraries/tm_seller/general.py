@@ -7,7 +7,6 @@ from bots_libraries.sellpy.steam_manager import SteamManager
 class TMGeneral(SteamManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
-        self.update_steam_access_token_alert = False
 
     def update_site_data(self):  # Global Function (class_for_account_functions)
         Logs.log(f"Site Apikey: thread are running", '')
@@ -22,7 +21,6 @@ class TMGeneral(SteamManager):
                     try:
                         balance_url = f'{self.site_url}/api/v2/set-trade-token?key={tm_apikey}&token=1{token}'
                         response = requests.get(balance_url, timeout=30).json()
-                        print(response)
                     except:
                         response = None
                     if response:
