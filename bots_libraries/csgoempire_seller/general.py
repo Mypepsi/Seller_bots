@@ -9,6 +9,32 @@ class CSGOEmpireGeneral(SteamManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
+    def update_site_data(self):  # Global Function (class_for_account_functions)
+        Logs.log(f"Site Apikey: thread are running", '')
+        while True:
+            self.update_account_settings_info()
+            for acc_info in self.content_acc_settings_list:
+                username = None
+                try:
+                    username = acc_info['username']
+                    csgoempire_apikey = acc_info['csgoempire apikey']
+                    trade_url = acc_info['trade url']
+                    headers = {
+                        'Authorization': f'Bearer {csgoempire_apikey}'
+                    }
+                    data = {"trade_url": trade_url}
+                    try:
+                        trade_url = f'{self.site_url}/api/v2/trading/user/settings'
+                        response = requests.get(trade_url, headers=headers, data=data, timeout=15).json()
+                    except:
+                        response = None
+                    if not (response and response.get('success') and response.get('escrow_seconds') == 0):
+                        Logs.notify(self.tg_info, "Update Site Data: Invalid trade url", username)
+                except Exception as e:
+                    Logs.notify_except(self.tg_info, f"Site Apikey Global Error: {e}", username)
+                time.sleep(10)
+            time.sleep(self.update_site_data_global_time)
+
     def database_csgoempire(self):  # Global Function (class_for_account_functions)
         Logs.log(f"Database CSGOEmpire: thread are running", '')
         while True:
