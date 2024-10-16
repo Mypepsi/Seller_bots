@@ -21,8 +21,15 @@ class CSGO500Seller(CSGO500General, CSGO500Online, CSGO500Items, CSGO500Steam, C
         # if manager.db_csgo500_global_time != 0:  # Database CSGO500
         #     functions_list.append({"func": "database_csgo500", "class_for_account_functions": CSGO500Seller})
 
+        if manager.update_site_data_global_time != 0:  # Update Site Data
+            functions_list.append({"func": "update_site_data", "class_for_many_functions": CSGO500Seller})
+
         # if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
         #     functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": CSGO500Seller})
+
+        # if manager.history_global_time != 0:  # History
+        #     functions_list.append({"func": "history", "class_for_account_functions": CSGO500Seller})
+        #
         #
         # if manager.restart_server_global_time != 0:  # Restart Server
         #     functions_list.append({"func": "restart_server", "class_for_many_functions": CSGO500Seller})
@@ -42,8 +49,8 @@ class CSGO500Seller(CSGO500General, CSGO500Online, CSGO500Items, CSGO500Steam, C
         # if manager.change_price_global_time != 0:  # Change Price
         #     functions_list.append({"func": "change_price", "class_for_account_functions": CSGO500Seller})
         #
-        if manager.steam_send_offers_global_time != 0:  # Steam Send Offers
-            functions_list.append({"func": "steam_send_offers", "class_for_account_functions": CSGO500Seller})
+        # if manager.steam_send_offers_global_time != 0:  # Steam Send Offers
+        #     functions_list.append({"func": "steam_send_offers", "class_for_account_functions": CSGO500Seller})
         return functions_list
 
 

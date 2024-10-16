@@ -27,6 +27,10 @@ class ShadowPaySeller(ShadowPayGeneral, ShadowPayOnline, ShadowPayItems, ShadowP
         #
         # if manager.restart_server_global_time != 0:  # Restart Server
         #     functions_list.append({"func": "restart_server", "class_for_many_functions": ShadowPaySeller})
+
+        # if manager.history_global_time != 0:  # History
+        #     functions_list.append({"func": "history", "class_for_account_functions": ShadowPaySeller})
+        #
         #
         # if manager.restart_bots_global_time != 0:    # Restart Bots
         #     functions_list.append({"func": "restart_bots", "class_for_many_functions": ShadowPaySeller})

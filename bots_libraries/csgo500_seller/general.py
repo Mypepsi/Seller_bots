@@ -10,6 +10,43 @@ class CSGO500General(SessionManager):
     def __init__(self, main_tg_info):
         super().__init__(main_tg_info)
 
+    def update_site_data(self):  # Global Function (class_for_account_functions)
+        Logs.log(f"Site Apikey: thread are running", '')
+        while True:
+            self.update_account_settings_info()
+            for acc_info in self.content_acc_settings_list:
+                username = None
+                try:
+                    username = acc_info['username']
+                    trade_url = acc_info['trade url']
+                    steam_apikey = self.content_acc_data_dict[username]['steam apikey']
+                    jwt_api_key = jwt.encode(
+                        {'userId': acc_info['csgo500 user id']},
+                        acc_info['csgo500 apikey'],
+                        algorithm="HS256"
+                    )
+                    csgo500_jwt_apikey = {'x-500-auth': jwt_api_key}
+                    try:
+                        data = {"tradeUrl": trade_url}
+                        tradelink_url = f'{self.site_url}/api/v1/user/set/trade-url'
+                        requests.post(tradelink_url, headers=csgo500_jwt_apikey, json=data, timeout=15)
+                    except:
+                        pass
+                    time.sleep(1)
+                    if steam_apikey:
+                        try:
+                            params = {
+                                "steamApiKey": steam_apikey
+                            }
+                            apikey_url = f'{self.site_url}/api/v1/user/set/steam-api-key'
+                            requests.post(apikey_url, headers=csgo500_jwt_apikey, data=params, timeout=15)
+                        except:
+                            pass
+                except Exception as e:
+                    Logs.notify_except(self.tg_info, f"Update Site Data Global Error: {e}", username)
+                time.sleep(3)
+            time.sleep(self.update_site_data_global_time)
+
     def database_csgo500(self):  # Global Function (class_for_account_functions)
         Logs.log(f"Database CSGO500: thread are running", '')
         while True:
