@@ -46,3 +46,24 @@ class WaxpeerGeneral(SteamManager):
                     Logs.notify_except(self.tg_info, f"Update Site Data Global Error: {e}", username)
                 time.sleep(3)
             time.sleep(self.update_site_data_global_time)
+
+    def site_apikey(self):  # Global Function (class_for_many_functions)
+        Logs.log(f"Site Apikey: thread are running", '')
+        while True:
+            self.update_account_settings_info()
+            for acc_info in self.content_acc_settings_list:
+                username = None
+                try:
+                    username = acc_info['username']
+                    waxpeer_apikey = acc_info['waxpeer apikey']
+                    try:
+                        balance_url = f'{self.site_url}/api/v1/user?api={waxpeer_apikey}'
+                        response = requests.get(balance_url, timeout=15).json()
+                    except:
+                        response = None
+                    if response and 'msg' in response and response['msg'] == 'wrong api':
+                        Logs.notify(self.tg_info, 'Site Apikey: Invalid apikey', username)
+                except Exception as e:
+                    Logs.notify_except(self.tg_info, f"Site Apikey Global Error: {e}", username)
+                time.sleep(10)
+            time.sleep(self.site_apikey_global_time)

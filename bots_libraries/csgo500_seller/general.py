@@ -47,6 +47,31 @@ class CSGO500General(SessionManager):
                 time.sleep(3)
             time.sleep(self.update_site_data_global_time)
 
+    def site_apikey(self):  # Global Function (class_for_many_functions)
+        Logs.log(f"Site Apikey: thread are running", '')
+        while True:
+            self.update_account_settings_info()
+            for acc_info in self.content_acc_settings_list:
+                username = None
+                try:
+                    username = acc_info['username']
+                    jwt_api_key = jwt.encode(
+                        {'userId': acc_info['csgo500 user id']},
+                        acc_info['csgo500 apikey'],
+                        algorithm="HS256"
+                    )
+                    try:
+                        balance_url = f'{self.site_url}/api/v1/user/balance?type=bux'
+                        response = requests.get(balance_url, headers=jwt_api_key, timeout=15).json()
+                    except:
+                        response = None
+                    if response and 'type' in response and response['type'] == 'AuthorizationError':
+                        Logs.notify(self.tg_info, 'Site Apikey: Invalid apikey', username)
+                except Exception as e:
+                    Logs.notify_except(self.tg_info, f"Site Apikey Global Error: {e}", username)
+                time.sleep(10)
+            time.sleep(self.site_apikey_global_time)
+
     def database_csgo500(self):  # Global Function (class_for_account_functions)
         Logs.log(f"Database CSGO500: thread are running", '')
         while True:
