@@ -19,8 +19,8 @@ class TMGeneral(SteamManager):
                     tm_apikey = acc_info['tm apikey']
                     token = acc_info['trade url'].split('token=')[1]
                     try:
-                        balance_url = f'{self.site_url}/api/v2/set-trade-token?key={tm_apikey}&token=1{token}'
-                        response = requests.get(balance_url, timeout=30).json()
+                        url = f'{self.site_url}/api/v2/set-trade-token?key={tm_apikey}&token=1{token}'
+                        response = requests.get(url, timeout=30).json()
                     except:
                         response = None
                     if response:

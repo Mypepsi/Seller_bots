@@ -57,7 +57,7 @@ class WaxpeerGeneral(SteamManager):
                     username = acc_info['username']
                     waxpeer_apikey = acc_info['waxpeer apikey']
                     try:
-                        balance_url = f'{self.site_url}/api/v1/user?api={waxpeer_apikey}'
+                        balance_url = f'{self.site_url}/v1/user?api={waxpeer_apikey}'
                         response = requests.get(balance_url, timeout=15).json()
                     except:
                         response = None
@@ -67,3 +67,49 @@ class WaxpeerGeneral(SteamManager):
                     Logs.notify_except(self.tg_info, f"Site Apikey Global Error: {e}", username)
                 time.sleep(10)
             time.sleep(self.site_apikey_global_time)
+
+    def balance_transfer(self):  # Global Function (class_for_many_functions)
+        Logs.log(f"Balance Transfer: thread are running", '')
+        while True:
+            time.sleep(self.balance_transfer_global_time)
+            self.update_account_settings_info()
+            self.update_database_info(settings=True)
+            try:
+                steam_id_to_withdraw = self.content_database_settings['DataBaseSettings']['Waxpeer_Seller'][
+                    'Waxpeer_Seller_transfer_apikey']
+            except:
+                steam_id_to_withdraw = None
+            if steam_id_to_withdraw:
+                for acc_info in self.content_acc_settings_list:
+                    username = None
+                    try:
+                        username = acc_info['username']
+                        waxpeer_apikey = acc_info['waxpeer apikey']
+                        try:
+                            current_balance_url = f'{self.site_url}/v1/user?api={waxpeer_apikey}'
+                            response = requests.get(current_balance_url, timeout=15).json()
+                            response_money = response['user']['wallet']
+                        except:
+                            response_money = None
+                        if response_money and response_money > 10:
+                            time.sleep(3)
+                            try:
+                                withdrawing_url = f'{self.site_url}/v1/transfer-money/'
+                                headers = {
+                                    'accept': 'application/json',
+                                    'Content-Type': 'application/json'
+                                }
+                                params = {
+                                    'api': waxpeer_apikey,
+                                    'steam_id': steam_id_to_withdraw,
+                                    'amount': response_money
+                                }
+                                data = requests.get(withdrawing_url, headers=headers, params=params, timeout=15).json()
+                            except:
+                                data = None
+                            if data and 'msg' in data:
+                                Logs.notify(self.tg_info, f"Balance Transfer: Invalid transfer: {data['msg']}", username)
+                    except Exception as e:
+                        Logs.notify_except(self.tg_info, f"Balance Transfer Global Error: {e}", username)
+                    time.sleep(10)
+

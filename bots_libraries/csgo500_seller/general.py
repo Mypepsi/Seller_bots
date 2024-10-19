@@ -61,8 +61,8 @@ class CSGO500General(SessionManager):
                         algorithm="HS256"
                     )
                     try:
-                        balance_url = f'{self.site_url}/api/v1/user/balance?type=bux'
-                        response = requests.get(balance_url, headers=jwt_api_key, timeout=15).json()
+                        url = f'{self.site_url}/api/v1/user/balance?type=bux'
+                        response = requests.get(url, headers=jwt_api_key, timeout=15).json()
                     except:
                         response = None
                     if response and 'type' in response and response['type'] == 'AuthorizationError':
@@ -71,6 +71,53 @@ class CSGO500General(SessionManager):
                     Logs.notify_except(self.tg_info, f"Site Apikey Global Error: {e}", username)
                 time.sleep(10)
             time.sleep(self.site_apikey_global_time)
+
+    def balance_transfer(self):  # Global Function (class_for_many_functions)
+        Logs.log(f"Balance Transfer: thread are running", '')
+        while True:
+            time.sleep(self.balance_transfer_global_time)
+            self.update_account_settings_info()
+            self.update_database_info(settings=True)
+            try:
+                user_id_to_withdraw = self.content_database_settings['DataBaseSettings']['CSGO500_Seller'][
+                    'CSGO500_Seller_transfer_id']
+            except:
+                user_id_to_withdraw = None
+            if user_id_to_withdraw:
+                for acc_info in self.content_acc_settings_list:
+                    username = None
+                    try:
+                        username = acc_info['username']
+                        jwt_api_key = jwt.encode(
+                            {'userId': acc_info['csgo500 user id']},
+                            acc_info['csgo500 apikey'],
+                            algorithm="HS256"
+                        )
+                        try:
+                            current_balance_url = f'{self.site_url}/api/v1/user/balance?type=bux'
+                            response = requests.get(current_balance_url, headers=jwt_api_key, timeout=15).json()
+                            response_money = response['data']['value']
+
+                        except:
+                            response_money = None
+                        if response_money and response_money > 10:
+                            time.sleep(3)
+                            try:
+                                withdrawing_url = f'{self.site_url}/api/v1/user/balance/send'
+                                data = {
+                                    "balanceType": "bux",
+                                    "message": "string",
+                                    "destinationUserId": user_id_to_withdraw,
+                                    "value": response_money
+                                }
+                                data = requests.post(withdrawing_url, headers=jwt_api_key, data=data, timeout=15).json()
+                            except:
+                                data = None
+                            if data and 'message' in data:
+                                Logs.notify(self.tg_info, f"Balance Transfer: Invalid transfer: {data['msg']}", username)
+                    except Exception as e:
+                        Logs.notify_except(self.tg_info, f"Balance Transfer Global Error: {e}", username)
+                    time.sleep(10)
 
     def database_csgo500(self):  # Global Function (class_for_account_functions)
         Logs.log(f"Database CSGO500: thread are running", '')
