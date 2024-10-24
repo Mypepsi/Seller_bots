@@ -20,8 +20,10 @@ class BuffSeller(BuffGeneral, BuffOnline, BuffItems, BuffSteam, BuffHistory, Res
         functions_list = []
         # if manager.update_site_data_global_time != 0:  # Update Site Data
         #     functions_list.append({"func": "update_site_data", "class_for_many_functions": BuffSeller})
+        # if manager.update_site_data_global_time != 0:  # Update Site Data
+        #     functions_list.append({"func": "site_cookie", "class_for_many_functions": BuffSeller})
         if manager.update_site_data_global_time != 0:  # Update Site Data
-            functions_list.append({"func": "site_cookie", "class_for_many_functions": BuffSeller})
+            functions_list.append({"func": "balance_transfer", "class_for_many_functions": BuffSeller})
 
         # if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
         #     functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": BuffSeller})
