@@ -120,6 +120,8 @@ class CreatorSteam(SessionManager):
                     "steam session": pickle.dumps(self.steamclient),
                     "steam session data": accounts_data,
                     "steam apikey": '',
+                    "time csgoempire cookie": 0,
+                    "csgoempire cookie": None,
                     "steam inventory tradable": {},
                     "steam inventory full": {},
                     "steam inventory phases": {}

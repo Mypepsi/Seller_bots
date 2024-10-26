@@ -22,8 +22,14 @@ class CSGOEmpireSeller(CSGOEmpireGeneral, CSGOEmpireOnline, CSGOEmpireItems, CSG
         # if manager.db_csgoempire_global_time != 0:  # Database CSGOEmpire
         #     functions_list.append({"func": "database_csgoempire", "class_for_account_functions": CSGOEmpireSeller})
 
-        if manager.update_site_data_global_time != 0:  # Update Site Data
-            functions_list.append({"func": "update_site_data", "class_for_many_functions": CSGOEmpireSeller})
+        # if manager.update_site_data_global_time != 0:  # Update Site Data
+        #     functions_list.append({"func": "update_site_data", "class_for_many_functions": CSGOEmpireSeller})
+
+        if manager.csgoempire_login_global_time != 0:  # Update Site Data
+            functions_list.append({"func": "balance_transfer", "class_for_many_functions": CSGOEmpireSeller})
+        #
+        # if manager.update_site_data_global_time != 0:  # Update Site Data
+        #     functions_list.append({"func": "balance_transfer", "class_for_many_functions": CSGOEmpireSeller})
 
         # if manager.steam_cancel_offers_global_time != 0:  # Steam Cancel Offers
         #     functions_list.append({"func": "steam_cancel_offers", "class_for_account_functions": CSGOEmpireSeller})

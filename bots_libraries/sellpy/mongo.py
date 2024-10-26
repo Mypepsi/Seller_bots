@@ -230,6 +230,8 @@ class Mongo:
             self.db_csgoempire_global_time = self.get_key(self.csgoempire_settings_general, 'db csgoempire global time')
             self.site_name = self.get_key(self.csgoempire_settings_general, 'site name')
             self.saleprice_bot_name = self.get_key(self.csgoempire_settings_general, 'saleprice bot name')
+            self.csgoempire_cookie_validity_time = self.get_key(self.csgoempire_settings_general, 'csgoempire cookie validity time')
+            self.csgoempire_login_global_time = self.get_key(self.csgoempire_settings_general, 'csgoempire login global time')
 
             self.csgoempire_settings_online = self.get_key(self.content_csgoempire_settings, 'online')
             self.ping_global_time = self.get_key(self.csgoempire_settings_online, 'ping global time')

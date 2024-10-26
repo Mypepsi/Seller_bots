@@ -24,7 +24,8 @@ class SessionManager(Mongo):
         self.shadowpay_apikey = None
         self.buff_cookie = None
         self.buff_user_id = None
-
+        self.csgoempire_cookie = None
+        self.csgoempire_uuid = None
         self.steam_inventory_tradable = self.steam_inventory_full = self.steam_inventory_phases = {}
 
     # region Session
@@ -84,6 +85,8 @@ class SessionManager(Mongo):
                 self.shadowpay_apikey = self.content_acc_settings_dict[self.steamclient.username]['shadowpay apikey']
                 self.buff_cookie = self.rework_buff_session()
                 self.buff_user_id = self.content_acc_settings_dict[self.steamclient.username]['buff user id']
+                self.csgoempire_cookie = self.content_acc_data_dict[self.steamclient.username]['csgoempire cookie']
+                self.csgoempire_uuid = self.content_acc_data_dict[self.steamclient.username]['csgoempire uuid']
 
                 # Info from account_data
                 self.steamclient._api_key = self.content_acc_data_dict[self.steamclient.username]['steam apikey']
