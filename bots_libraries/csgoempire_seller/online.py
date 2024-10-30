@@ -129,8 +129,8 @@ class CSGOEmpireOnline(SteamManager):
                             last_update_time = self.content_acc_data_dict[username].get('time csgoempire cookie', 0)
                             difference_to_update = current_timestamp - int(last_update_time)
                             if difference_to_update > self.csgoempire_cookie_validity_time:
-                                login_url = 'https://csgoempire.io/login'
-                                csgoempire_login_response = self.steamclient._session.get(login_url)
+                                login_url = f'{self.site_url}/login'
+                                csgoempire_login_response = self.steamclient.session.get(login_url)
                                 tree = html.fromstring(csgoempire_login_response.text)
                                 open_id_params = tree.xpath('//input[@name="openidparams"]')
                                 nonce = tree.xpath('//input[@name="nonce"]')
@@ -140,33 +140,36 @@ class CSGOEmpireOnline(SteamManager):
                                     "openidparams": open_id_params[0].get('value'),
                                     "nonce": nonce[0].get('value')
                                 }
-                                self.steamclient._session.post('https://steamcommunity.com/openid/login',
-                                                               data=data_to_send)
-                                empire_cookie_dict = {
-                                    cookie.name: cookie.value
-                                    for cookie in self.steamclient._session.cookies
-                                    if 'csgoempire.io' in cookie.domain
-                                }
                                 try:
+                                    self.steamclient.session.post('https://steamcommunity.com/openid/login',
+                                                                  data=data_to_send, timeout=15)
+                                    pure_domain = self.site_url.replace("https://", "")
+                                    empire_cookie_dict = {
+                                        cookie.name: cookie.value
+                                        for cookie in self.steamclient.session.cookies
+                                        if pure_domain in cookie.domain
+                                    }
+
                                     metadata_url = f'{self.site_url}/api/v2/metadata/socket'
-                                    metadata = requests.get(metadata_url, headers=headers, cookies=empire_cookie_dict,
-                                                            timeout=15).json()
+                                    metadata = requests.get(metadata_url, headers=headers, timeout=15).json()
                                 except:
+                                    empire_cookie_dict = None
                                     metadata = None
-                                try:
-                                    uuid = metadata['user']['session']['device_identifier']
-                                except:
-                                    try:
-                                        uuid = metadata['user']['last_session']['device_identifier']
-                                    except:
-                                        uuid = None
 
+                                if empire_cookie_dict and metadata:
+                                    uuid = metadata['user']['session'].get('device_identifier')
+                                    if uuid is None:
+                                        uuid = metadata['user']['last_session'].get('device_identifier')
 
-                                self.acc_data_collection.update_one({"username": self.steamclient.username},
-                                                                    {"$set": {
-                                                                        "time csgoempire cookie": current_timestamp,
-                                                                        "csgoempire cookie": empire_cookie_dict,
-                                                                        "csgoempire uuid": uuid}})
+                                    if uuid is None:
+                                        try:
+                                            self.acc_data_collection.update_one({"username": self.steamclient.username},
+                                                                                {"$set": {
+                                                                                    "time csgoempire cookie": current_timestamp,
+                                                                                    "csgoempire cookie": empire_cookie_dict,
+                                                                                    "csgoempire uuid": uuid}})
+                                        except:
+                                            pass
                 except Exception as e:
                     Logs.notify_except(self.tg_info, f"CSGOEmpire Cookie Global Error: {e}", username)
                 time.sleep(10)
@@ -177,6 +180,7 @@ class CSGOEmpireOnline(SteamManager):
         while True:
             time.sleep(self.balance_transfer_global_time)
             self.update_account_settings_info()
+            self.update_account_data_info()
             self.update_database_info(settings=True)
             try:
                 steam_id_to_withdraw = self.content_database_settings['DataBaseSettings']['CSGOEmpire_Seller'][
@@ -194,13 +198,12 @@ class CSGOEmpireOnline(SteamManager):
                         headers = {"Authorization": f"Bearer {acc_info['csgoempire apikey']}"}
                         try:
                             balance_url = f'{self.site_url}/api/v2/metadata/socket'
-                            balance_response = requests.get(balance_url, headers=headers, cookies=csgoempire_cookie,
-                                                            timeout=15).json()
-                            response_money = float(balance_response['user']['balances'][0]['balance']) * 100
+                            balance_response = requests.get(balance_url, headers=headers, timeout=15).json()
+                            response_money = float(round(balance_response['user']['balances'][0]['balance'], 2)) * 100
                         except:
                             response_money = None
                         if response_money and response_money > 1:
-                            time.sleep(3)
+                            time.sleep(1)
 
                             totp = pyotp.TOTP(secret_key)
                             code = str(totp.now())
@@ -211,7 +214,7 @@ class CSGOEmpireOnline(SteamManager):
                                           'uuid': csgoempire_uuid}
                             token_headers = {
                                 "X-Empire-Device-Identifier": csgoempire_uuid,
-                                "Referer": "https://csgoempire.io/profile/transactions",
+                                "Referer": f"{self.site_url}/profile/transactions",
                             }
                             try:
                                 token_url = f'{self.site_url}/api/v2/user/security/token'
@@ -222,7 +225,7 @@ class CSGOEmpireOnline(SteamManager):
                                 token = None
                             if token:
                                 withdrawing_headers = {
-                                    "Referer": "https://csgoempire.io/deposit",
+                                    "Referer": f"{self.site_url}/deposit",
                                     "X-Empire-Device-Identifier": csgoempire_uuid,
                                 }
                                 withdrawing_data = {'amount': response_money,

@@ -122,6 +122,7 @@ class CreatorSteam(SessionManager):
                     "steam apikey": '',
                     "time csgoempire cookie": 0,
                     "csgoempire cookie": None,
+                    "csgoempire uuid": None,
                     "steam inventory tradable": {},
                     "steam inventory full": {},
                     "steam inventory phases": {}
