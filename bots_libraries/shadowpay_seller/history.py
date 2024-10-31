@@ -84,7 +84,7 @@ class ShadowPayHistory(SteamManager):
                                     doc["site status"] = 'unavailable'
                                     doc['site status time'] = current_timestamp
                                     Logs.notify(self.tg_info,
-                                                f"'Unavailable' status on item with {site_item['id']} itemID",
+                                                f"'Unavailable' status on item with {site_item['id']} ID",
                                                 self.steamclient.username)
                                 try:
                                     self.acc_history_collection.update_one({'_id': doc['_id']},
@@ -106,7 +106,7 @@ class ShadowPayHistory(SteamManager):
         time.sleep(3)
 
     def site_history_new_docs(self, history_docs_with_new_id, trades):
-        current_timestamp_unique = current_timestamp = int(time.time())
+        current_timestamp_unique = int(time.time())
         for site_item in trades:
             if ((all(key in site_item for key in ['id', 'state', 'asset_id'])) and 'items' in site_item and 'steam_item'
                     in site_item['items'] and 'steam_market_hash_name' in site_item['items']['steam_item']):
@@ -137,8 +137,6 @@ class ShadowPayHistory(SteamManager):
                     }
                     state = str(site_item['state'])
                     if state == 'active':
-                        if (current_timestamp - int(site_item['time'])) < 86400:
-                            continue
                         data_append["site status"] = 'active deal'
                     elif state == 'finished':
                         data_append["site status"] = 'accepted'

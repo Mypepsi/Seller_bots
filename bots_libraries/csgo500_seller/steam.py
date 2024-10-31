@@ -19,7 +19,7 @@ class CSGO500Steam(SteamManager):
                 if self.active_session:
                     try:
                         url = f'{self.site_url}/api/v1/market/listings/deposit/pending?appId=730&page=1'
-                        request_site = requests.get(url, headers=self.csgoempire_headers, timeout=15).json()
+                        request_site = requests.get(url, headers=self.csgo500_jwt_apikey, timeout=15).json()
                         request_site_offers = request_site['data']['listings']
                     except:
                         request_site_offers = None

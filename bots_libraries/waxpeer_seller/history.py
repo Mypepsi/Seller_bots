@@ -150,7 +150,7 @@ class WaxpeerHistory(SteamManager):
         return history_docs_sorted_by_time
 
     def site_history_new_docs(self, history_docs_with_new_id, trades):
-        current_timestamp_unique = current_timestamp = int(time.time())
+        current_timestamp_unique = int(time.time())
         for site_item in trades:
             if all(key in site_item for key in ['id', 'status', 'name', 'item_id']):
 
@@ -180,8 +180,6 @@ class WaxpeerHistory(SteamManager):
                     }
                     status = str(site_item['status'])
                     if status in ['0', '2']:  # ще один
-                        if (current_timestamp - int(site_item['time'])) < 86400:
-                            continue
                         data_append["site status"] = 'active deal'
                     elif status == '5':
                         data_append["site status"] = 'accepted'

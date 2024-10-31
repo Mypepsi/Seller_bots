@@ -18,8 +18,8 @@ class TMHistory(SteamManager):
                     history_docs = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
                     if history_docs:
                         self.steam_history(history_docs)
-                        self.site_history(history_docs)
-                        self.money_history(history_docs)
+                        # self.site_history(history_docs)
+                        # self.money_history(history_docs)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"History Global Error: {e}", self.steamclient.username)
 
@@ -40,8 +40,8 @@ class TMHistory(SteamManager):
                 history_docs_sorted = [
                     doc for doc in history_docs
                     if doc.get('site') == self.site_name
-                    and doc.get('transaction') == 'sale_record'
-                    and all(key in doc for key in ['site item id', 'site status', 'asset id'])
+                       and doc.get('transaction') == 'sale_record'
+                       and all(key in doc for key in ['site item id', 'site status', 'asset id'])
                 ]
 
                 history_docs_with_new_id = self.search_site_item_id(history_docs_sorted, response_data)
@@ -57,16 +57,17 @@ class TMHistory(SteamManager):
                                 if stage == '1':
                                     if (current_timestamp - int(site_item['time'])) >= 86400:
                                         Logs.notify(self.tg_info, f"Site History: "
-                                                                            f"'Active_deal' status on item with "
-                                                                            f"{site_item['item_id']} itemID "
-                                                                            f"more than 24 hours",
+                                                                  f"'Active_deal' status on item with "
+                                                                  f"{site_item['item_id']} itemID "
+                                                                  f"more than 24 hours",
                                                     self.steamclient.username)
                                     break
                                 elif stage == '2':
                                     doc["site status"] = 'accepted'
                                     doc['site status time'] = current_timestamp
                                     try:
-                                        commission = self.content_database_settings['DataBaseSettings']['TM_Seller'][
+                                        commission = \
+                                        self.content_database_settings['DataBaseSettings']['TM_Seller'][
                                             'TM_Seller_commission']
                                         rate = self.content_database_settings['DataBaseSettings']['TM_Seller'][
                                             'TM_Seller_rate']
@@ -92,8 +93,10 @@ class TMHistory(SteamManager):
                                                 self.steamclient.username)
                                 try:
                                     self.acc_history_collection.update_one({'_id': doc['_id']},
-                                                                           {'$set': {'site status': doc['site status'],
-                                                                                     'site status time': doc['site status time']}})
+                                                                           {'$set': {
+                                                                               'site status': doc['site status'],
+                                                                               'site status time': doc[
+                                                                                   'site status time']}})
                                 except:
                                     pass
                                 time.sleep(1)
@@ -108,43 +111,6 @@ class TMHistory(SteamManager):
         except Exception as e:
             Logs.notify_except(self.tg_info, f"Site History Global Error: {e}", self.steamclient.username)
         time.sleep(3)
-
-    def search_site_item_id(self, history_docs_sorted, response_data):
-        current_timestamp = int(time.time())
-        history_docs_sorted_by_time = sorted(history_docs_sorted, key=lambda x: x.get('time', 0), reverse=True)
-
-        for doc in history_docs_sorted_by_time:
-            try:
-                if doc['site item id'] is None:
-                    list_of_matches = [
-                        site_item
-                        for site_item in response_data
-                        if all(key in site_item for key in ['assetid', 'item_id', 'time'])
-                        and str(doc['asset id']) == str(site_item['assetid'])
-                        and not any(
-                            str(inner_doc['site item id']) == str(site_item['item_id'])
-                            for inner_doc in history_docs_sorted_by_time)
-                    ]
-                    closest_site_item = min(
-                        (entry for entry in list_of_matches if int(entry['time']) <= current_timestamp),
-                        key=lambda entry: current_timestamp - int(entry['time']),
-                        default=None
-                    )
-                    if closest_site_item:
-                        doc['site item id'] = str(closest_site_item['item_id'])
-                        try:
-                            self.acc_history_collection.update_one({'_id': doc['_id']},
-                                                                   {'$set': {'site item id': doc['site item id']}})
-                        except:
-                            pass
-                        time.sleep(1)
-                        for index, element in enumerate(history_docs_sorted_by_time):
-                            if element.get('_id') == doc['_id']:
-                                history_docs_sorted_by_time[index] = doc
-                                break
-            except:
-                pass
-        return history_docs_sorted_by_time
 
     def site_history_new_docs(self, history_docs_with_new_id, response_data):
         current_timestamp_unique = current_timestamp = int(time.time())
@@ -191,12 +157,14 @@ class TMHistory(SteamManager):
                     except:
                         pass
                     time.sleep(1)
+
     # endregion
 
     def money_history(self, history_docs):
         try:
             try:
-                transfer_id = self.content_database_settings['DataBaseSettings']['TM_Seller']['TM_Seller_transfer_id']
+                transfer_id = self.content_database_settings['DataBaseSettings']['TM_Seller'][
+                    'TM_Seller_transfer_id']
                 money_history_url = f'{self.site_url}/api/v2/money-send-history/0?key={self.tm_apikey}'
                 response = requests.get(money_history_url, timeout=30).json()
                 response_money = response['data']
@@ -217,8 +185,9 @@ class TMHistory(SteamManager):
                         if not match:
                             if str(transfer_id) != str(money_transfer['to']):
                                 money_status = 'error_strange_id'
-                                Logs.notify(self.tg_info, f"Money History: Strange {money_transfer['to']} transferID in "
-                                                          f"{money_transfer['id']} transactionID", self.steamclient.username)
+                                Logs.notify(self.tg_info,
+                                            f"Money History: Strange {money_transfer['to']} transferID in "
+                                            f"{money_transfer['id']} transactionID", self.steamclient.username)
                             money = int(money_transfer['amount_from']) / 100
 
                             current_timestamp = int(time.time())
