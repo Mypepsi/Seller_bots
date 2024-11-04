@@ -77,7 +77,7 @@ class BuffHistory(SteamManager):
                                         except:
                                             rate = commission = 0
                                         if commission and rate:
-                                            site_price = round((price / 0.95 / 100), 2)
+                                            site_price = round(price, 2)
                                             sold_price = round((site_price / rate * commission), 3)
 
                                             self.send_sold_item_info(market_hash_name, site_price, sold_price,
