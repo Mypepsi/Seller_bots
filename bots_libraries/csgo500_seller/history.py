@@ -74,7 +74,9 @@ class CSGO500History(SteamManager):
 
                                         self.send_sold_item_info(hash_name, site_price, sold_price, 'coins', 'coins',
                                                                  doc)
-
+                                elif short_status == 'market_archived':
+                                    doc["site status"] = 'archived'
+                                    doc['site status time'] = current_timestamp
                                 elif short_status == 'market_cancelled':
                                     doc["site status"] = 'cancelled'
                                     doc['site status time'] = current_timestamp
@@ -138,6 +140,8 @@ class CSGO500History(SteamManager):
                         data_append["site status"] = 'disputed'
                     elif short_status == 'market_accepted':
                         data_append["site status"] = 'accepted'
+                    elif short_status == 'market_archived':
+                        data_append["site status"] = 'archived'
                     elif short_status == 'market_cancelled':
                         data_append["site status"] = 'cancelled'
                     else:
