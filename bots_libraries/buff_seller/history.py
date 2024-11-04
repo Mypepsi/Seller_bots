@@ -1,7 +1,6 @@
 import time
 import requests
 from lxml import html
-from datetime import datetime
 from bots_libraries.sellpy.logs import Logs
 from bots_libraries.sellpy.steam_manager import SteamManager
 
@@ -13,13 +12,13 @@ class BuffHistory(SteamManager):
     # region History
     def history(self):  # Global Function (class_for_account_functions)
         while True:
-            # time.sleep(self.history_global_time)
+            time.sleep(self.history_global_time)
             try:
                 if self.active_session:
                     self.update_database_info(prices=True, settings=True)
                     history_docs = self.get_all_docs_from_mongo_collection(self.acc_history_collection)
-                    # if history_docs:
-                        # self.steam_history(history_docs)
+                    if history_docs:
+                        self.steam_history(history_docs)
                     self.site_history(history_docs)
             except Exception as e:
                 Logs.notify_except(self.tg_info, f"History Global Error: {e}", self.steamclient.username)
