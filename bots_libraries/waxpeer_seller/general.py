@@ -76,7 +76,7 @@ class WaxpeerGeneral(SteamManager):
             self.update_database_info(settings=True)
             try:
                 steam_id_to_withdraw = self.content_database_settings['DataBaseSettings']['Waxpeer_Seller'][
-                    'Waxpeer_Seller_transfer_apikey']
+                    'Waxpeer_Seller_transfer_steamid']
             except:
                 steam_id_to_withdraw = None
             if steam_id_to_withdraw:
@@ -92,7 +92,7 @@ class WaxpeerGeneral(SteamManager):
                         except:
                             response_money = None
                         if response_money and response_money > 10:
-                            time.sleep(3)
+                            time.sleep(1)
                             try:
                                 withdrawing_url = f'{self.site_url}/v1/transfer-money/'
                                 headers = {
@@ -104,9 +104,27 @@ class WaxpeerGeneral(SteamManager):
                                     'steam_id': steam_id_to_withdraw,
                                     'amount': response_money
                                 }
-                                data = requests.get(withdrawing_url, headers=headers, params=params, timeout=15).json()
+
+                                data = requests.post(withdrawing_url, headers=headers, params=params, timeout=15).json()
                             except:
                                 data = None
+
+                            if data:  # добавить условие при успешном переводе
+                                current_timestamp = int(time.time())
+                                data_append = {
+                                    'transaction': 'money_record',
+                                    'site': self.site_name,
+                                    'time': current_timestamp,
+                                    'money status': 'accepted',
+                                    'money': response_money / 1000,
+                                    'currency': '$',
+                                    'money id': None
+                                }
+                                try:
+                                    self.acc_history_collection.insert_one(data_append)
+                                except:
+                                    pass
+
                             if data and 'msg' in data:
                                 Logs.notify(self.tg_info, f"Balance Transfer: Invalid transfer: {data['msg']}", username)
                     except Exception as e:

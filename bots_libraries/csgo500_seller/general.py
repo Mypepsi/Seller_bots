@@ -75,14 +75,15 @@ class CSGO500General(SessionManager):
     def balance_transfer(self):  # Global Function (class_for_many_functions)
         Logs.log(f"Balance Transfer: thread are running", '')
         while True:
-            time.sleep(self.balance_transfer_global_time)
+            # time.sleep(self.balance_transfer_global_time)
             self.update_account_settings_info()
             self.update_database_info(settings=True)
             try:
                 user_id_to_withdraw = self.content_database_settings['DataBaseSettings']['CSGO500_Seller'][
-                    'CSGO500_Seller_transfer_id']
+                    'CSGO500_Seller_transfer_user_id']
             except:
                 user_id_to_withdraw = None
+            user_id_to_withdraw = '5f98b8f552d84a72a18f8138'
             if user_id_to_withdraw:
                 for acc_info in self.content_acc_settings_list:
                     username = None
@@ -95,13 +96,13 @@ class CSGO500General(SessionManager):
                         )
                         try:
                             current_balance_url = f'{self.site_url}/api/v1/user/balance?type=bux'
-                            response = requests.get(current_balance_url, headers=jwt_api_key, timeout=15).json()
+                            response = requests.post(current_balance_url, headers={'x-500-auth': jwt_api_key}, timeout=15).json()
                             response_money = response['data']['value']
-
                         except:
                             response_money = None
-                        if response_money and response_money > 10:
-                            time.sleep(3)
+                        response_money = 500
+                        if response_money and response_money >= 10:
+                            time.sleep(1)
                             try:
                                 withdrawing_url = f'{self.site_url}/api/v1/user/balance/send'
                                 data = {
@@ -110,11 +111,30 @@ class CSGO500General(SessionManager):
                                     "destinationUserId": user_id_to_withdraw,
                                     "value": response_money
                                 }
-                                data = requests.post(withdrawing_url, headers=jwt_api_key, data=data, timeout=15).json()
+                                new_balance = requests.post(withdrawing_url, headers={'x-500-auth': jwt_api_key},
+                                                            data=data, timeout=15).json()
+                                print(new_balance)
                             except:
-                                data = None
-                            if data and 'message' in data:
-                                Logs.notify(self.tg_info, f"Balance Transfer: Invalid transfer: {data['msg']}", username)
+                                new_balance = None
+                            if (new_balance and 'data' in new_balance and 'newBalance' in new_balance['data']
+                                    and new_balance['data']['newBalance'] < 10):
+                                current_timestamp = int(time.time())
+                                data_append = {
+                                    'transaction': 'money_record',
+                                    'site': self.site_name,
+                                    'time': current_timestamp,
+                                    'money status': 'accepted',
+                                    'money': response_money,
+                                    'currency': '$',
+                                    'money id': None
+                                }
+                                try:
+                                    self.acc_history_collection.insert_one(data_append)
+                                except:
+                                    pass
+                            if new_balance and 'message' in new_balance:
+                                Logs.notify(self.tg_info,
+                                            f"Balance Transfer: Invalid transfer: {new_balance['message']}", username)
                     except Exception as e:
                         Logs.notify_except(self.tg_info, f"Balance Transfer Global Error: {e}", username)
                     time.sleep(10)
